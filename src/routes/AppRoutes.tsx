@@ -3,6 +3,7 @@ import Cadastro from '../pages/Cadastro/Cadastro'
 import Home from '../pages/Home/Home'
 import Locais from '../pages/Locais/Locais'
 import Sobre from '../pages/Sobre/Sobre'
+import NotFound from '../pages/NotFound/NotFound'
 
 export default function AppRoutes() {
   return (
@@ -11,6 +12,7 @@ export default function AppRoutes() {
       <Route path="/locais" element={<Locais />} />
       <Route path="/cadastrar" element={<Cadastro />} />
       <Route path="/sobre" element={<Sobre />} />
+      <Route path="/*" element={<NotFound/>}/>
     </Routes>
   )
 }
