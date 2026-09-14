@@ -1,3 +1,12 @@
+export type Local = {
+  id: number;
+  nome: string;
+  endereco: string;
+  cep: string;
+  categoria: Categoria;
+  recursosAcessibilidade: RecursosAcessibilidade;
+};
+
 export type Categoria = 'restaurante' | 'saude' | 'educacao' | 'lazer' | 'servico_publico';
 
 export type RecursosAcessibilidade = {
@@ -7,13 +16,4 @@ export type RecursosAcessibilidade = {
   sinalizacaoVisual: boolean;
   vagasEstacionamento: boolean;
   braile: boolean;
-};
-
-export type Local = {
-  id: number;
-  nome: string;
-  endereco: string;
-  cep: string;
-  categoria: Categoria;
-  recursosAcessibilidade: RecursosAcessibilidade;
 };
