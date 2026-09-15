@@ -1,4 +1,4 @@
-import { Route, Routes } from 'react-router-dom'
+import { Route, Routes } from 'react-router'
 import Cadastro from '../pages/Cadastro/Cadastro'
 import Home from '../pages/Home/Home'
 import Locais from '../pages/Locais/Locais'
