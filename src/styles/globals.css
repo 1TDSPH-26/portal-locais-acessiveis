@@ -1,0 +1,23 @@
+:root {
+  --color-background: var(--color-neutral-0);
+  --color-text: var(--color-neutral-900);
+  --color-primary: var(--color-blue-600);
+}
+
+:root[data-contrast="high"] {
+  --color-background: #FFFFFF;
+  --color-text: #0F172A;
+  --color-primary: #4F46E5;
+}
+:root {
+  --accessibility-font-scale: 1;
+}
+
+html {
+  font-size: calc(100% * var(--accessibility-font-scale));
+}
+
+body {
+  background-color: var(--color-background);
+  color: var(--color-text);
+}
