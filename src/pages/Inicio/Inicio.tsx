@@ -140,8 +140,8 @@ export default function Inicio() {
 
   return (
     <div className="w-full bg-fundo text-texto font-corpo">
-      {/* Seção Hero: width 1440, min-height 492, padding 88px 64px, gap 24px, background #312E81 */}
-      <section className="w-full bg-[#312E81] text-fundo">
+      {/* Seção Hero: usa exclusivamente os tokens globais do design system. */}
+      <section className="w-full bg-fundo-escuro text-fundo">
         <div className="max-w-[1440px] min-h-[492px] mx-auto px-4 md:px-16 py-12 md:py-[88px] flex flex-col justify-center gap-6">
           <div className="flex flex-col gap-3">
             <h1 className="font-display text-h1 md:text-display font-bold leading-tight text-fundo">
@@ -186,7 +186,7 @@ export default function Inicio() {
               </div>
               <button
                 type="submit"
-                className="w-full sm:w-auto h-12 px-6 bg-fundo text-[#312E81] font-display font-bold text-botao rounded-lg hover:bg-fundo-suave transition-colors cursor-pointer shrink-0"
+                className="w-full sm:w-auto h-12 px-6 bg-fundo text-fundo-escuro font-display font-bold text-botao rounded-lg hover:bg-fundo-suave transition-colors cursor-pointer shrink-0"
               >
                 Buscar
               </button>

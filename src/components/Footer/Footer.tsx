@@ -2,7 +2,7 @@ import { Link } from 'react-router'
 
 export default function Footer() {
   return (
-    <footer id="rodape" className="w-full bg-[#0F172A] text-fundo" role="contentinfo">
+    <footer id="rodape" className="w-full bg-texto text-fundo" role="contentinfo">
       <div className="max-w-[1440px] min-h-[86px] mx-auto px-4 md:px-16 py-8 flex flex-col md:flex-row items-center justify-between gap-4">
         {/* Identificação da iniciativa */}
         <p className="font-corpo text-corpo-14 text-fundo text-center md:text-left m-0">
