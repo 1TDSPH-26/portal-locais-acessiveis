@@ -1,4 +1,3 @@
-
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap');
 @import "tailwindcss";
 
@@ -7,8 +6,11 @@
   --color-primaria-600: #4F46E5;
   --color-primaria-700: #4338CA;
   --color-fundo: #FFFFFF;
+  --color-fundo-branco: #FFFFFF;
   --color-fundo-suave: #EEF2FF;
+  --color-fundo-escuro: #312E81;
   --color-texto: #0F172A;
+  --color-texto-principal: #0F172A;
   --color-secundaria: #475569;
   --color-borda-decorativa: #E2E8F0;
   --color-borda-funcional: #64748B;
@@ -31,4 +33,13 @@
   --text-corpo-16: 1rem;     /* 16px */
   --text-corpo-14: 0.875rem; /* 14px */
   --text-legenda: 0.75rem;   /* 12px */
+}
+
+:root {
+  --Fundo-Escuro: #312E81;
+  --Fundo-Branco: #FFFFFF;
+  --Fundo-Suave: #EEF2FF;
+  --Texto-Principal: #0F172A;
+  --Borda-Decorativa: #E2E8F0;
+  --Borda-Funcional: #64748B;
 }
