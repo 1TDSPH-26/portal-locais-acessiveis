@@ -1,23 +1,34 @@
-:root {
-  --color-background: var(--color-neutral-0);
-  --color-text: var(--color-neutral-900);
-  --color-primary: var(--color-blue-600);
-}
 
-:root[data-contrast="high"] {
-  --color-background: #FFFFFF;
-  --color-text: #0F172A;
-  --color-primary: #4F46E5;
-}
-:root {
-  --accessibility-font-scale: 1;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap');
+@import "tailwindcss";
 
-html {
-  font-size: calc(100% * var(--accessibility-font-scale));
-}
+@theme {
+  /* Cores */
+  --color-primaria-600: #4F46E5;
+  --color-primaria-700: #4338CA;
+  --color-fundo: #FFFFFF;
+  --color-fundo-suave: #EEF2FF;
+  --color-texto: #0F172A;
+  --color-secundaria: #475569;
+  --color-borda-decorativa: #E2E8F0;
+  --color-borda-funcional: #64748B;
+  --color-sucesso: #15803D;
+  --color-aviso: #A16207;
+  --color-erro: #DC2626;
 
-body {
-  background-color: var(--color-background);
-  color: var(--color-text);
+  /* Tipografia - famílias */
+  --font-display: "Atkinson Hyperlegible Next", sans-serif;
+  --font-corpo: "Inter", sans-serif;
+
+  /* Tipografia - tamanhos (hierarquia do Figma) */
+  --text-display: 3rem;      /* 48px */
+  --text-h1: 2rem;           /* 32px */
+  --text-h2: 1.5rem;         /* 24px */
+  --text-h3: 1.25rem;        /* 20px */
+  --text-botao: 1rem;        /* 16px */
+  --text-label: 0.875rem;    /* 14px */
+  --text-corpo-18: 1.125rem; /* 18px */
+  --text-corpo-16: 1rem;     /* 16px */
+  --text-corpo-14: 0.875rem; /* 14px */
+  --text-legenda: 0.75rem;   /* 12px */
 }

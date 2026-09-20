@@ -1,27 +1,33 @@
-import { useAccessibility } from "../../contexts/AccessibilityContext";
+import { useEffect, useState } from "react";
 
 export function ContrastControl() {
-  const { contrast, toggleContrast } = useAccessibility();
+  const [highContrast, setHighContrast] = useState(false);
 
-  const isHighContrast = contrast === "high";
+  useEffect(() => {
+    document.documentElement.classList.toggle(
+      "high-contrast",
+      highContrast,
+    );
+
+    return () => {
+      document.documentElement.classList.remove("high-contrast");
+    };
+  }, [highContrast]);
 
   return (
     <button
       type="button"
-      onClick={toggleContrast}
-      aria-pressed={isHighContrast}
+      className="accessibility-button"
+      aria-pressed={highContrast}
       aria-label={
-        isHighContrast
-          ? "Contraste aumentado."
-          : "Contraste reduzido."
+        highContrast
+          ? "Desativar alto contraste"
+          : "Ativar alto contraste"
       }
-      title={
-        isHighContrast
-          ? "Reduzir contraste"
-          : "Aumentar contraste"
-      }
+      onClick={() => setHighContrast((current) => !current)}
     >
-      Contraste: {isHighContrast ? "Alto" : "Normal"}
+      C
     </button>
   );
 }
+

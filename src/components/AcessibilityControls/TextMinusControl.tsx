@@ -1,16 +1,25 @@
-import { useAccessibility } from "../../contexts/AccessibilityContext";
+export function TextMinusControl() {
+  const handleDecrease = () => {
+    const html = document.documentElement;
 
-export function TextPlusControl() {
-  const { fontScale, decreaseFontSize } = useAccessibility();
+    if (html.classList.contains("font-size-xlarge")) {
+      html.classList.remove("font-size-xlarge");
+      html.classList.add("font-size-large");
+      return;
+    }
 
-  const percentage = Math.round(fontScale * 100);
+    if (html.classList.contains("font-size-large")) {
+      html.classList.remove("font-size-large");
+    }
+  };
 
   return (
     <button
       type="button"
-      onClick={decreaseFontSize}
-      aria-label={`Tamanho atual: ${percentage}%`}
-      title="Diminuir tamanho da fonte"
+      className="accessibility-button"
+      aria-label="Reduzir tamanho do texto"
+      title="Reduzir tamanho do texto"
+      onClick={handleDecrease}
     >
       A-
     </button>
