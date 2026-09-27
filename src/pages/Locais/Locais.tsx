@@ -43,8 +43,7 @@ export default function Locais() {
     setCategoriaSelecionada('');
     setRecursosSelecionados([]);
   }
-}
-
+  
 const locaisFiltrados = listaLocais.filter((local) => {
     const passaCategoria =
       categoriaSelecionada === '' || local.categoria === categoriaSelecionada;
@@ -55,3 +54,65 @@ const locaisFiltrados = listaLocais.filter((local) => {
 
     return passaCategoria && passaRecursos;
   });
+
+  return (
+      <div>
+        <h1>Listagem de locais</h1>
+  
+        <div>
+          <label htmlFor="filtro-categoria">Categoria</label>
+          <select
+            id="filtro-categoria"
+            value={categoriaSelecionada}
+            onChange={(e) => setCategoriaSelecionada(e.target.value as Categoria | '')}
+          >
+            <option value="">Todas</option>
+            {categorias.map((categoria) => (
+              <option key={categoria} value={categoria}>
+                {categoria}
+              </option>
+            ))}
+          </select>
+  
+          <fieldset>
+            <legend>Recursos de acessibilidade</legend>
+            {recursos.map((recurso) => {
+              const inputId = `recurso-${recurso}`;
+              return (
+                <div key={recurso}>
+                  <input
+                    type="checkbox"
+                    id={inputId}
+                    checked={recursosSelecionados.includes(recurso)}
+                    onChange={() => alternarRecurso(recurso)}
+                  />
+                  <label htmlFor={inputId}>{recurso}</label>
+                </div>
+              );
+            })}
+          </fieldset>
+  
+          <button type="button" onClick={limparFiltros}>
+            Limpar filtros
+          </button>
+        </div>
+  
+        {locaisFiltrados.length === 0 ? (
+          <EmptyState
+            title="Nenhum local encontrado"
+            message="Não encontramos locais para os filtros selecionados."
+          />
+        ) : (
+          <ul>
+            {locaisFiltrados.map((local) => (
+              <li key={local.id}>
+                <h3>{local.nome}</h3>
+                <p>{local.endereco} - {local.cep}</p>
+                <p>{local.categoria}</p>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    );
+  }
