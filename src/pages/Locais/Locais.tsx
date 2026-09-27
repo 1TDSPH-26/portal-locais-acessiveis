@@ -43,4 +43,15 @@ export default function Locais() {
     setCategoriaSelecionada('');
     setRecursosSelecionados([]);
   }
-}  
+}
+
+const locaisFiltrados = listaLocais.filter((local) => {
+    const passaCategoria =
+      categoriaSelecionada === '' || local.categoria === categoriaSelecionada;
+
+    const passaRecursos = recursosSelecionados.every((recurso) =>
+      local.recursosAcessibilidade.includes(recurso)
+    );
+
+    return passaCategoria && passaRecursos;
+  });
