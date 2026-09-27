@@ -25,3 +25,22 @@ const recursos: RecursoAcessibilidade[] = [
   'espaco_tranquilo',
   'cao_guia',
 ];
+
+export default function Locais() {
+  const [categoriaSelecionada, setCategoriaSelecionada] = useState<Categoria | ''>('');
+
+  const [recursosSelecionados, setRecursosSelecionados] = useState<RecursoAcessibilidade[]>([]);
+
+  function alternarRecurso(recurso: RecursoAcessibilidade) {
+    if (recursosSelecionados.includes(recurso)) {
+      setRecursosSelecionados(recursosSelecionados.filter((r) => r !== recurso));
+    } else {
+      setRecursosSelecionados([...recursosSelecionados, recurso]);
+    }
+  }
+
+  function limparFiltros() {
+    setCategoriaSelecionada('');
+    setRecursosSelecionados([]);
+  }
+}  
