@@ -11,12 +11,18 @@ export default function Locais() {
   const [error, setError] = useState(false)
 
   useEffect(() => {
-    try {
-      setLocais(listaLocais)
-    } catch {
-      setError(true)
-    } finally {
-      setLoading(false)
+    const timer = setTimeout(() => {
+      try {
+        setLocais(listaLocais)
+      } catch {
+        setError(true)
+      } finally {
+        setLoading(false)
+      }
+    }, 0)
+
+    return () => {
+      clearTimeout(timer)
     }
   }, [])
 
