@@ -1,0 +1,57 @@
+nav ul {
+  display: flex;
+  gap: 1rem;
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  flex-wrap: wrap;
+}
+
+.menu-mobile-button {
+  display: none;
+  padding: 0.5rem 0.75rem;
+  font-size: 1.5rem;
+  cursor: pointer;
+  background: transparent;
+  border: 1px solid currentColor;
+  border-radius: 4px;
+}
+
+/* =========================
+   MOBILE
+   320px até 767px
+   ========================= */
+
+@media (max-width: 767px) {
+  .menu-mobile-button {
+    display: block;
+  }
+
+  nav ul {
+    display: none;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  nav ul.menu-aberto {
+    display: flex;
+  }
+}
+
+/* =========================
+   TABLET / DESKTOP
+   768px ou maior
+   ========================= */
+
+@media (min-width: 768px) {
+  nav ul {
+    display: flex;
+  }
+}
+
+/* Foco visível para teclado */
+
+.menu-mobile-button:focus-visible {
+  outline: 3px solid currentColor;
+  outline-offset: 2px;
+}
