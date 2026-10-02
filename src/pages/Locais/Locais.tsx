@@ -69,14 +69,6 @@ export default function Locais() {
     }
   }
 
-  if (locais.length === 0) {
-  return (
-    <EmptyState
-      title="Nenhum local encontrado"
-      message="Não há locais cadastrados para exibir."
-    />
-  )
-}
 if (loading) {
     return <LoadingState message="Carregando locais..." />;
   }
@@ -86,7 +78,14 @@ if (loading) {
       <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
     );
   }
-
+  if (locais.length === 0) {
+  return (
+    <EmptyState
+      title="Nenhum local encontrado"
+      message="Não há locais cadastrados para exibir."
+    />
+  )
+}
   
   function limparFiltros() {
     setCategoriaSelecionada('');
