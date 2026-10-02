@@ -69,12 +69,7 @@ export default function Locais() {
     }
   }
 
-  function limparFiltros() {
-    setCategoriaSelecionada('');
-    setRecursosSelecionados([]);
-  }
-
-if (locais.length === 0) {
+  if (locais.length === 0) {
   return (
     <EmptyState
       title="Nenhum local encontrado"
@@ -82,6 +77,22 @@ if (locais.length === 0) {
     />
   )
 }
+if (loading) {
+    return <LoadingState message="Carregando locais..." />;
+  }
+
+  if (error) {
+    return (
+      <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
+    );
+  }
+
+  
+  function limparFiltros() {
+    setCategoriaSelecionada('');
+    setRecursosSelecionados([]);
+  }
+
 
   const locaisFiltrados = locais.filter((local) => {
     const passaCategoria =
@@ -95,16 +106,7 @@ if (locais.length === 0) {
     return passaCategoria && passaRecursos;
   });
 
-  if (loading) {
-    return <LoadingState message="Carregando locais..." />;
-  }
-
-  if (error) {
-    return (
-      <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
-    );
-  }
-
+  
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
       <h1 className="mb-6 font-display text-3xl font-bold text-texto">
