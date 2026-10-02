@@ -74,6 +74,15 @@ export default function Locais() {
     setRecursosSelecionados([]);
   }
 
+if (locais.length === 0) {
+  return (
+    <EmptyState
+      title="Nenhum local encontrado"
+      message="Não há locais cadastrados para exibir."
+    />
+  )
+}
+
   const locaisFiltrados = locais.filter((local) => {
     const passaCategoria =
       categoriaSelecionada === '' ||
