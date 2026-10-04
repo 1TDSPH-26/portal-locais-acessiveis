@@ -1,6 +1,5 @@
 import { NavLink } from 'react-router'
 import { useEffect, useState } from 'react'
-import './Header.css'
 
 // Cada item daqui vira um link no menu
 // O "end" é usado quando queremos q a rota seja exata (ex: "/")
@@ -36,24 +35,38 @@ export default function Header() {
   }, [])
 
   return (
-    <header>
-      <h1>Portal de Locais Acessíveis</h1>
+    <header className="relative flex flex-wrap items-center justify-between gap-4">
+      <h1 className="text-xl font-bold">
+        Portal de Locais Acessíveis
+      </h1>
 
       <button
         type="button"
-        className="menu-mobile-button"
+        className="rounded p-2 focus-visible:outline-2 focus-visible:outline-offset-2 md:hidden"
         onClick={() => setMenuAberto((aberto) => !aberto)}
         aria-expanded={menuAberto}
         aria-controls="menu-mobile"
         aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
       >
-        ☰
+        <span aria-hidden="true">
+          {menuAberto ? '✕' : '☰'}
+        </span>
       </button>
 
-      <nav aria-label="Navegação principal">
+      <nav
+        className="w-full md:w-auto"
+        aria-label="Navegação principal"
+      >
         <ul
           id="menu-mobile"
-          className={menuAberto ? 'menu-aberto' : ''}
+          className={`
+            ${menuAberto ? 'flex' : 'hidden'}
+            absolute left-0 top-full z-50 w-full flex-col gap-2
+            bg-white p-4 shadow-md
+            md:static md:flex md:w-auto md:flex-row
+            md:items-center md:gap-2 md:bg-transparent
+            md:p-0 md:shadow-none
+          `}
         >
           {navItems.map(({ to, label, end }) => (
             <li key={to}>
@@ -61,15 +74,15 @@ export default function Header() {
                 to={to}
                 end={end}
                 onClick={() => setMenuAberto(false)}
-                style={({ isActive }) => ({
-                  display: 'inline-block',
-                  padding: '0.5rem 0.75rem',
-                  textDecoration: isActive ? 'underline' : 'none',
-                  fontWeight: isActive ? 700 : 400,
-                  borderBottom: isActive
-                    ? '3px solid currentColor'
-                    : '3px solid transparent',
-                })}
+                className={({ isActive }) => `
+                  inline-block rounded px-3 py-2
+                  focus-visible:outline-2
+                  focus-visible:outline-offset-2
+                  ${isActive
+                    ? 'border-b-[3px] border-current font-bold'
+                    : 'border-b-[3px] border-transparent'
+                  }
+                `}
               >
                 {label}
               </NavLink>
@@ -80,4 +93,5 @@ export default function Header() {
     </header>
   )
 }
+
 
