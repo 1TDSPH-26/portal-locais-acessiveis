@@ -8,14 +8,10 @@ type MainLayoutProps = {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div style={{minHeight: '100vh', display: 'flex', flexDirection: 'column',}}>
-      <a href="#main-content" className="sr-only focus:not-sr-only focus:absolute focus:left-4 focus:top-4 focus:z-50 focus:rounded focus:bg-white focus:px-4 focus:py-2 focus:text-black focus:outline-2 focus:outline-offset-2">
-        Pular para o conteúdo principal
-      </a>
-
+    <div className="min-h-screen flex flex-col bg-fundo text-texto">
       <Header />
 
-      <main id="main-content" tabIndex={-1} style={{ flex: 1 }}>
+      <main id="conteudo-principal" tabIndex={-1} className="flex-1 focus:outline-none">
         {children}
       </main>
 
