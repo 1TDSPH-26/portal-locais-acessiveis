@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
 import type { Local } from '../../types/local';
+import { filtrarLocais } from '../../utils/filtrarLocais';
 
 const categorias: Categoria[] = [
   'restaurante',
@@ -93,19 +94,12 @@ if (loading) {
   }
 
 
-  const locaisFiltrados = locais.filter((local) => {
-    const passaCategoria =
-      categoriaSelecionada === '' ||
-      local.categoria === categoriaSelecionada;
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    categoriaSelecionada,
+    recursosSelecionados
+  );
 
-    const passaRecursos = recursosSelecionados.every((recurso) =>
-      local.recursosAcessibilidade.includes(recurso)
-    );
-
-    return passaCategoria && passaRecursos;
-  });
-
-  
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
       <h1 className="mb-6 font-display text-3xl font-bold text-texto">
