@@ -66,6 +66,13 @@ export default function Locais() {
 
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
+      <h1
+        ref={tituloRef}
+        tabIndex={-1}
+        className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+      >
+        Locais acessíveis
+      </h1>
       
       <section className="grid gap-6 md:grid-cols-2">
         {locaisPaginados.map((local) => (
