@@ -1,10 +1,25 @@
 import { Link } from 'react-router'
 
+const FAVORITOS_STORAGE_KEY = 'locais-favoritos'
+
+function lerFavoritos(): number[] {
+  try {
+    const dados = localStorage.getItem(FAVORITOS_STORAGE_KEY)
+    const favoritos: unknown = dados ? JSON.parse(dados) : []
+    return Array.isArray(favoritos)
+      ? favoritos.filter((id): id is number => Number.isInteger(id))
+      : []
+  } catch {
+    return []
+  }
+}
+
 interface RecursoAcessibilidade {
   texto: string
 }
 
 interface LocalCardProps {
+  id: number
   nome: string
   localizacao: string
   recursos: RecursoAcessibilidade[]
@@ -13,6 +28,7 @@ interface LocalCardProps {
 }
 
 export default function LocalCard({
+  id,
   nome,
   localizacao,
   recursos,
