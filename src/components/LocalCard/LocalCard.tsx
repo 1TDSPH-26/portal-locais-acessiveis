@@ -20,15 +20,23 @@ export default function LocalCard({
   detalhesUrl,
 }: LocalCardProps) {
   return (
-    <div className="border border-borda-decorativa rounded-lg p-4 bg-fundo flex flex-col gap-3">
-      <div>
-        <h3 className="text-h3 font-display text-texto">{nome}</h3>
-        <p className="text-corpo-14 text-secundaria">{localizacao}</p>
+    <div className="flex min-w-0 flex-col gap-3 rounded-lg border border-borda-decorativa bg-fundo p-4 sm:p-5">
+      <div className="min-w-0">
+        <h3 className="break-words font-display text-h3 text-texto">
+          {nome}
+        </h3>
+
+        <p className="break-words text-corpo-14 text-secundaria">
+          {localizacao}
+        </p>
       </div>
 
-      <ul className="flex flex-col gap-1">
+      <ul className="flex min-w-0 flex-col gap-1">
         {recursos.map((recurso, index) => (
-          <li key={index} className="text-corpo-14 text-texto">
+          <li
+            key={index}
+            className="break-words text-corpo-14 text-texto"
+          >
             {recurso.texto}
           </li>
         ))}
@@ -36,12 +44,12 @@ export default function LocalCard({
 
       <Link
         to={detalhesUrl}
-        className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"
+        className="w-full rounded-md border border-primaria-600 px-4 py-2 text-center font-corpo text-botao text-primaria-600 hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 sm:w-auto sm:self-start"
       >
         Ver detalhes
       </Link>
 
-      <p className="text-legenda text-secundaria">
+      <p className="break-words text-legenda text-secundaria">
         Verificado em {dataVerificacao}
       </p>
     </div>
