@@ -19,23 +19,19 @@ interface RecursoAcessibilidade {
   texto: string
 }
 
-interface LocalCardProps {
-  id: number
-  nome: string
-  localizacao: string
-  recursos: RecursoAcessibilidade[]
-  dataVerificacao: string
-  detalhesUrl: string
-}
+type LocalCardProps =
+  | { id: number }
+  | {
+      id: number
+      nome: string
+      localizacao: string
+      recursos: RecursoAcessibilidade[]
+      dataVerificacao: string
+      detalhesUrl: string
+    }
 
-export default function LocalCard({
-  id,
-  nome,
-  localizacao,
-  recursos,
-  dataVerificacao,
-  detalhesUrl,
-}: LocalCardProps) {
+export default function LocalCard(props: LocalCardProps) {
+  const { id } = props
   const [favoritado, setFavoritado] = useState(() => lerFavoritos().includes(id))
 
   function alternarFavorito() {
@@ -48,9 +44,27 @@ export default function LocalCard({
       localStorage.setItem(FAVORITOS_STORAGE_KEY, JSON.stringify(novosFavoritos))
       setFavoritado(novosFavoritos.includes(id))
     } catch {
-      // Mant?m o estado atual se o navegador bloquear o armazenamento.
+      return
     }
   }
+
+  const botaoFavorito = (
+    <button
+      type="button"
+      onClick={alternarFavorito}
+      aria-label={favoritado ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+      aria-pressed={favoritado}
+      className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"
+    >
+      {favoritado ? 'Favoritado' : 'Favoritar'}
+    </button>
+  )
+
+  if (!('localizacao' in props)) {
+    return botaoFavorito
+  }
+
+  const { nome, localizacao, recursos, dataVerificacao, detalhesUrl } = props
 
   return (
     <div className="border border-borda-decorativa rounded-lg p-4 bg-fundo flex flex-col gap-3">
@@ -59,15 +73,7 @@ export default function LocalCard({
         <p className="text-corpo-14 text-secundaria">{localizacao}</p>
       </div>
 
-      <button
-        type="button"
-        onClick={alternarFavorito}
-        aria-label={favoritado ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-        aria-pressed={favoritado}
-        className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"
-      >
-        {favoritado ? '? Favoritado' : '? Favoritar'}
-      </button>
+      {botaoFavorito}
 
       <ul className="flex flex-col gap-1">
         {recursos.map((recurso, index) => (

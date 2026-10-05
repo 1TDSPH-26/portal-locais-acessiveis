@@ -1,4 +1,5 @@
 import { listaLocais } from '../../data/locais';
+import LocalCard from '../../components/LocalCard/LocalCard';
 import type { Categoria, RecursoAcessibilidade } from '../../types/local';
 import EmptyState from '../../components/Feedback/EmptyState';
 import { useEffect, useState } from 'react';
@@ -203,6 +204,7 @@ if (loading) {
                   ))}
                 </ul>
               </div>
+            <LocalCard id={local.id} />
             </article>
           ))}
         </section>
