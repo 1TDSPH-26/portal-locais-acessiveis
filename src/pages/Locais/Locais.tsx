@@ -46,30 +46,30 @@ export default function Locais() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-6">
-      <h1 className="mb-6 font-display text-3xl font-bold text-texto">
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
+      <h1 className="mb-6 font-display text-2xl font-bold text-texto sm:text-3xl">
         Locais acessíveis
       </h1>
 
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2">
         {locais.map((local) => (
           <article
             key={local.id}
-            className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+            className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5"
           >
-            <h2 className="mb-2 font-display text-xl font-bold text-texto">
+            <h2 className="mb-2 break-words font-display text-xl font-bold text-texto">
               {local.nome}
             </h2>
 
-            <p className="font-corpo text-corpo-16 text-texto">
+            <p className="break-words font-corpo text-corpo-16 text-texto">
               <strong>Endereço:</strong> {local.endereco}
             </p>
 
-            <p className="font-corpo text-corpo-16 text-texto">
+            <p className="break-words font-corpo text-corpo-16 text-texto">
               <strong>CEP:</strong> {local.cep}
             </p>
 
-            <p className="mt-2 font-corpo text-corpo-16 text-texto">
+            <p className="mt-2 break-words font-corpo text-corpo-16 text-texto">
               <strong>Categoria:</strong> {local.categoria}
             </p>
 
@@ -78,7 +78,7 @@ export default function Locais() {
                 Recursos de acessibilidade
               </h3>
 
-              <ul className="list-disc pl-5 font-corpo text-corpo-16 text-texto">
+              <ul className="list-disc break-words pl-5 font-corpo text-corpo-16 text-texto">
                 {local.recursosAcessibilidade.map((recurso) => (
                   <li key={recurso}>{recurso}</li>
                 ))}
