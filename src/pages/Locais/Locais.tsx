@@ -1,3 +1,4 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import { useEffect, useState } from 'react'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
@@ -6,6 +7,8 @@ import { listaLocais } from '../../data/locais'
 import type { Local } from '../../types/local'
 
 export default function Locais() {
+  usePageTitle('Locais acessíveis')
+
   const [locais, setLocais] = useState<Local[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(false)

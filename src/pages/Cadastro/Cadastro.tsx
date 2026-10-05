@@ -1,3 +1,4 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import { useState, type ChangeEvent, type FormEvent } from 'react'
 import type { Categoria, Local, RecursoAcessibilidade } from '../../types/local'
 
@@ -37,6 +38,8 @@ const dadosIniciais: DadosFormulario = {
 }
 
 export default function Cadastro() {
+  usePageTitle('Cadastro de local')
+
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
 
   function atualizarTexto(campo: 'nome' | 'endereco' | 'cep') {

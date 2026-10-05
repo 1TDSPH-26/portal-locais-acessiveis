@@ -1,3 +1,4 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import { Link } from 'react-router'
 
 const recursos = [
@@ -35,6 +36,8 @@ function IconeRecurso({ tipo }: { tipo: string }) {
 const tituloSecao = 'font-display text-h3 font-bold leading-snug'
 
 export default function Sobre() {
+  usePageTitle('Sobre')
+
   return (
     <article className="bg-fundo font-corpo text-corpo-16 leading-relaxed text-texto" aria-labelledby="sobre-titulo">
       <header className="bg-primaria-600 text-fundo">
