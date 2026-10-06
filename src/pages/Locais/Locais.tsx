@@ -35,7 +35,6 @@ export default function Locais() {
   }, [])
 
   const totalPaginas = Math.ceil(locais.length / itensPorPagina)
-  const indiceInicial = (paginaAtual - 1) * itensPorPagina
 
   const mudarPagina = (novaPagina: number) => {
     if (novaPagina >= 1 && novaPagina <= totalPaginas) {
