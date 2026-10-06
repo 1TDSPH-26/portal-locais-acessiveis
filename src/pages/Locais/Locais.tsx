@@ -5,6 +5,17 @@ import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
 
+export default function Locais() {
+  const [locais, setLocais] = useState<Local[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
+
+
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const itensPorPagina = 4 
+
+  const tituloRef = useRef<HTMLHeadingElement>(null)
+
 const categorias: Categoria[] = [
   'restaurante',
   'saude',
@@ -44,7 +55,7 @@ export default function Locais() {
         setLocais(listaLocais);
       } catch {
         setError(true);
-      } finaly {
+      } finally {
         setLoading(false);
       }
     }, 0);
