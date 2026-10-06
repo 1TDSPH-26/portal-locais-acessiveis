@@ -5,17 +5,6 @@ import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
 
-export default function Locais() {
-  const [locais, setLocais] = useState<Local[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
-
-  const [paginaAtual, setPaginaAtual] = useState(1)
-  const itensPorPagina = 4 
-
-  const tituloRef = useRef<HTMLHeadingElement>(null)
-
 const categorias: Categoria[] = [
   'restaurante',
   'saude',
@@ -64,7 +53,6 @@ export default function Locais() {
     };
   }, []);
 
-  // Reseta para a primeira página sempre que um filtro mudar
   useEffect(() => {
     setPaginaAtual(1);
   }, [categoriaSelecionada, recursosSelecionados]);
@@ -103,7 +91,6 @@ export default function Locais() {
     );
   }
 
-  // 1. Aplica os filtros primeiro
   const locaisFiltrados = locais.filter((local) => {
     const passaCategoria =
       categoriaSelecionada === '' || local.categoria === categoriaSelecionada;
@@ -113,7 +100,6 @@ export default function Locais() {
     return passaCategoria && passaRecursos;
   });
 
-  // 2. Calcula a paginação baseando-se nos dados filtrados
   const totalPaginas = Math.ceil(locaisFiltrados.length / itensPorPagina);
   const indiceInicial = (paginaAtual - 1) * itensPorPagina;
   const locaisPaginados = locaisFiltrados.slice(
@@ -140,7 +126,6 @@ export default function Locais() {
         Locais acessíveis
       </h1>
 
-      {/* Seção de Filtros */}
       <section className="mb-6">
         <div>
           <label htmlFor="filtro-categoria">Categoria</label>
@@ -183,7 +168,6 @@ export default function Locais() {
         </button>
       </section>
 
-      {/* Lista de Resultados Modificada para usar a paginação correta */}
       {locaisFiltrados.length === 0 ? (
         <EmptyState
           title="Nenhum local encontrado"
@@ -223,7 +207,6 @@ export default function Locais() {
             ))}
           </section>
 
-          {/* Paginação */}
           {totalPaginas > 1 && (
             <nav
               aria-label="Navegação por páginas de locais"
