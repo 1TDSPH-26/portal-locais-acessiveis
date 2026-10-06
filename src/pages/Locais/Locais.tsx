@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react'
+import { useRef, useState } from 'react'
 import { Link } from 'react-router'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LoadingState from '../../components/Feedback/LoadingState'
-import { listaLocais } from '../../data/locais'
-import type { Local } from '../../types/local'
+import { useConsulta } from '../../hooks/useConsulta'
+import { listarLocais } from '../../services/locais-consulta'
 
 const classeLinkDetalhes = [
  'mt-4 inline-flex min-h-12 items-center rounded-md border border-primaria-600',
@@ -15,31 +15,13 @@ const classeLinkDetalhes = [
 
 
 export default function Locais() {
-  const [locais, setLocais] = useState<Local[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-
+  const { estado, tentarNovamente } = useConsulta(listarLocais)
+  const locais = estado.status === 'sucesso' ? estado.dados : []
 
   const [paginaAtual, setPaginaAtual] = useState(1)
   const itensPorPagina = 4 
 
   const tituloRef = useRef<HTMLHeadingElement>(null)
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setLocais(listaLocais)
-      } catch {
-        setError(true)
-      } finally {
-        setLoading(false)
-      }
-    }, 0)
-
-    return () => {
-      clearTimeout(timer)
-    }
-  }, [])
 
   const totalPaginas = Math.ceil(locais.length / itensPorPagina)
   const indiceInicial = (paginaAtual - 1) * itensPorPagina
@@ -54,35 +36,54 @@ export default function Locais() {
     }
   }
 
-  if (loading) {
-    return <LoadingState message="Carregando locais..." />
+  const titulo = (
+    <h1
+      ref={tituloRef}
+      tabIndex={-1}
+      className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+    >
+      Locais acessíveis
+    </h1>
+  )
+
+  if (estado.status === 'carregando') {
+    return (
+      <div className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+        <LoadingState message="Carregando locais..." />
+      </div>
+    )
   }
 
-  if (error) {
+  if (estado.status === 'erro') {
     return (
-      <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
+      <div className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+        <ErrorMessage
+          title="Não foi possível carregar os locais"
+          message={estado.mensagem}
+          onRetry={tentarNovamente}
+        />
+      </div>
     )
   }
 
   if (locais.length === 0) {
     return (
-      <EmptyState
-        title="Nenhum local encontrado"
-        message="Não há locais cadastrados para exibir."
-      />
+      <div className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+        <EmptyState
+          title="Nenhum local encontrado"
+          message="Não há locais cadastrados para exibir."
+        />
+      </div>
     )
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-6">
-      <h1
-        ref={tituloRef}
-        tabIndex={-1}
-        className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-      >
-        Locais acessíveis
-      </h1>
-      
+    <div className="mx-auto w-full max-w-6xl p-6">
+      {titulo}
+
       <section className="grid gap-6 md:grid-cols-2">
         {locaisPaginados.map((local) => (
           <article
@@ -175,6 +176,6 @@ export default function Locais() {
           </button>
         </nav>
       )}
-    </main>
+    </div>
   )
 }
