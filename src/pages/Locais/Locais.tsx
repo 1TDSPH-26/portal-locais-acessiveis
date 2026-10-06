@@ -112,20 +112,6 @@ export default function Locais() {
     setCategoriaSelecionada('');
     setRecursosSelecionados([]);
   }
-
-
-  const locaisFiltrados = locais.filter((local) => {
-    const passaCategoria =
-      categoriaSelecionada === '' ||
-      local.categoria === categoriaSelecionada;
-
-    const passaRecursos = recursosSelecionados.every((recurso) =>
-      local.recursosAcessibilidade.includes(recurso)
-    );
-
-    return passaCategoria && passaRecursos;
-  });
-
   
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
