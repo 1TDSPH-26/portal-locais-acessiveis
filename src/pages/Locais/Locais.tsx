@@ -1,7 +1,7 @@
 import { listaLocais } from '../../data/locais';
 import type { Categoria, RecursoAcessibilidade } from '../../types/local';
 import EmptyState from '../../components/Feedback/EmptyState';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
 import type { Local } from '../../types/local';
@@ -41,6 +41,11 @@ export default function Locais() {
   const [recursosSelecionados, setRecursosSelecionados] =
     useState<RecursoAcessibilidade[]>([]);
 
+  const [paginaAtual, setPaginaAtual] = useState(1);
+  const itensPorPagina = 4;
+
+  const tituloRef = useRef<HTMLHeadingElement>(null);
+
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
@@ -57,20 +62,48 @@ export default function Locais() {
     };
   }, []);
 
+  useEffect(() => {
+    setPaginaAtual(1);
+  }, [categoriaSelecionada, recursosSelecionados]);
+
   function alternarRecurso(recurso: RecursoAcessibilidade) {
     if (recursosSelecionados.includes(recurso)) {
       setRecursosSelecionados(
         recursosSelecionados.filter((r) => r !== recurso)
       );
     } else {
-      setRecursosSelecionados([
-        ...recursosSelecionados,
-        recurso,
-      ]);
+      setRecursosSelecionados([...recursosSelecionados, recurso]);
     }
   }
 
-if (loading) {
+  function limparFiltros() {
+    setCategoriaSelecionada('');
+    setRecursosSelecionados([]);
+  }
+
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    categoriaSelecionada,
+    recursosSelecionados
+  );
+
+  const totalPaginas = Math.ceil(locaisFiltrados.length / itensPorPagina);
+  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
+  const locaisPaginados = locaisFiltrados.slice(
+    indiceInicial,
+    indiceInicial + itensPorPagina
+  );
+
+  const mudarPagina = (novaPagina: number) => {
+    if (novaPagina >= 1 && novaPagina <= totalPaginas) {
+      setPaginaAtual(novaPagina);
+      if (tituloRef.current) {
+        tituloRef.current.focus();
+      }
+    }
+  };
+
+  if (loading) {
     return <LoadingState message="Carregando locais..." />;
   }
 
@@ -79,48 +112,39 @@ if (loading) {
       <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
     );
   }
+
   if (locais.length === 0) {
-  return (
-    <EmptyState
-      title="Nenhum local encontrado"
-      message="Não há locais cadastrados para exibir."
-    />
-  )
-}
-  
-  function limparFiltros() {
-    setCategoriaSelecionada('');
-    setRecursosSelecionados([]);
+    return (
+      <EmptyState
+        title="Nenhum local encontrado"
+        message="Não há locais cadastrados para exibir."
+      />
+    );
   }
-
-
-  const locaisFiltrados = filtrarLocais(
-    locais,
-    categoriaSelecionada,
-    recursosSelecionados
-  );
 
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
-      <h1 className="mb-6 font-display text-3xl font-bold text-texto">
+      <h1
+        ref={tituloRef}
+        tabIndex={-1}
+        className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+      >
         Locais acessíveis
       </h1>
 
-      <section className="mb-6">
-        <div>
-          <label htmlFor="filtro-categoria">Categoria</label>
-
+     
+      <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="mb-4">
+          <label htmlFor="select-categoria" className="block mb-2 font-bold">
+            Filtrar por Categoria
+          </label>
           <select
-            id="filtro-categoria"
+            id="select-categoria"
             value={categoriaSelecionada}
-            onChange={(e) =>
-              setCategoriaSelecionada(
-                e.target.value as Categoria | ''
-              )
-            }
+            onChange={(e) => setCategoriaSelecionada(e.target.value as Categoria | '')}
+            className="w-full max-w-xs rounded border border-gray-300 p-2"
           >
             <option value="">Todas</option>
-
             {categorias.map((categoria) => (
               <option key={categoria} value={categoria}>
                 {categoria}
@@ -129,30 +153,33 @@ if (loading) {
           </select>
         </div>
 
-        <fieldset>
-          <legend>Recursos de acessibilidade</legend>
-
-          {recursos.map((recurso) => {
-            const inputId = `recurso-${recurso}`;
-
-            return (
-              <div key={recurso}>
-                <input
-                  type="checkbox"
-                  id={inputId}
-                  checked={recursosSelecionados.includes(recurso)}
-                  onChange={() => alternarRecurso(recurso)}
-                />
-
-                <label htmlFor={inputId}>
-                  {recurso}
-                </label>
-              </div>
-            );
-          })}
+        <fieldset className="mb-4">
+          <legend className="mb-2 font-bold">Recursos de acessibilidade</legend>
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {recursos.map((recurso) => {
+              const inputId = `recurso-${recurso}`;
+              return (
+                <div key={recurso} className="flex items-center gap-2">
+                  <input
+                    type="checkbox"
+                    id={inputId}
+                    checked={recursosSelecionados.includes(recurso)}
+                    onChange={() => alternarRecurso(recurso)}
+                  />
+                  <label htmlFor={inputId} className="capitalize text-sm">
+                    {recurso.replace('_', ' ')}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
         </fieldset>
 
-        <button type="button" onClick={limparFiltros}>
+        <button
+          type="button"
+          onClick={limparFiltros}
+          className="rounded bg-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-300"
+        >
           Limpar filtros
         </button>
       </section>
@@ -163,42 +190,97 @@ if (loading) {
           message="Não encontramos locais para os filtros selecionados."
         />
       ) : (
-        <section className="grid gap-6 md:grid-cols-2">
-          {locaisFiltrados.map((local) => (
-            <article
-              key={local.id}
-              className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+        <>
+          <section className="grid gap-6 md:grid-cols-2">
+            {locaisPaginados.map((local) => (
+              <article
+                key={local.id}
+                className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+              >
+                <h2 className="mb-2 font-display text-xl font-bold text-texto">
+                  {local.nome}
+                </h2>
+
+                <p className="font-corpo text-corpo-16 text-texto">
+                  <strong>Endereço:</strong> {local.endereco}
+                </p>
+
+                <p className="font-corpo text-corpo-16 text-texto">
+                  <strong>CEP:</strong> {local.cep}
+                </p>
+
+                <p className="mt-2 font-corpo text-corpo-16 text-texto">
+                  <strong>Categoria:</strong> {local.categoria}
+                </p>
+
+                <div className="mt-4">
+                  <h3 className="mb-2 font-display text-corpo-16 font-bold text-texto">
+                    Recursos de acessibilidade
+                  </h3>
+
+                  <ul className="list-disc pl-5 font-corpo text-corpo-16 text-texto">
+                    {local.recursosAcessibilidade.map((recurso) => (
+                      <li key={recurso} className="capitalize">
+                        {recurso.replace('_', ' ')}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </article>
+            ))}
+          </section>
+
+          {totalPaginas > 1 && (
+            <nav
+              aria-label="Navegação por páginas de locais"
+              className="mt-8 flex flex-wrap items-center justify-center gap-2"
             >
-              <h2 className="mb-2 font-display text-xl font-bold text-texto">
-                {local.nome}
-              </h2>
+              <button
+                type="button"
+                onClick={() => mudarPagina(paginaAtual - 1)}
+                disabled={paginaAtual === 1}
+                aria-label="Ir para a página anterior"
+                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                Anterior
+              </button>
 
-              <p className="font-corpo text-corpo-16 text-texto">
-                <strong>Endereço:</strong> {local.endereco}
-              </p>
+              <div className="flex gap-1" role="group" aria-label="Páginas">
+                {Array.from({ length: totalPaginas }, (_, index) => {
+                  const pagina = index + 1;
+                  const ehPaginaAtual = pagina === paginaAtual;
 
-              <p className="font-corpo text-corpo-16 text-texto">
-                <strong>CEP:</strong> {local.cep}
-              </p>
-
-              <p className="mt-2 font-corpo text-corpo-16 text-texto">
-                <strong>Categoria:</strong> {local.categoria}
-              </p>
-
-              <div className="mt-4">
-                <h3 className="mb-2 font-display text-corpo-16 font-bold text-texto">
-                  Recursos de acessibilidade
-                </h3>
-
-                <ul className="list-disc pl-5 font-corpo text-corpo-16 text-texto">
-                  {local.recursosAcessibilidade.map((recurso) => (
-                    <li key={recurso}>{recurso}</li>
-                  ))}
-                </ul>
+                  return (
+                    <button
+                      key={pagina}
+                      type="button"
+                      onClick={() => mudarPagina(pagina)}
+                      aria-current={ehPaginaAtual ? 'page' : undefined}
+                      aria-label={`Página ${pagina}`}
+                      className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                        ehPaginaAtual
+                          ? 'bg-blue-600 text-white font-bold'
+                          : 'border border-gray-300 text-texto hover:bg-gray-100'
+                      }`}
+                    >
+                      {pagina}
+                    </button>
+                  );
+                })}
               </div>
-            </article>
-          ))}
-        </section>
+
+              <button
+                type="button"
+                onClick={() => mudarPagina(paginaAtual + 1)}
+                disabled={paginaAtual === totalPaginas}
+                aria-label="Ir para a próxima página"
+                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                Próxima
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </main>
   );
