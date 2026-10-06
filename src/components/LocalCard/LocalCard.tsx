@@ -54,6 +54,22 @@ export default function LocalCard({ local, detalhesUrl }: LocalCardProps) {
     }
   }
 
+   const botaoFavorito = (
+    <button
+      type="button"
+      onClick={alternarFavorito}
+      aria-label={favoritado ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+      aria-pressed={favoritado}
+      className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"
+    >
+      {favoritado ? 'Favoritado' : 'Favoritar'}
+    </button>
+  )
+
+  if (!('localizacao' in props)) {
+    return botaoFavorito
+  }
+  
   const localizacao = `${local.endereco} · CEP ${local.cep}`
 
   return (
