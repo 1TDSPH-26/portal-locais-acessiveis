@@ -30,8 +30,7 @@ type LocalCardProps =
       detalhesUrl: string
     }
 
-export default function LocalCard(props: LocalCardProps) {
-  const { id } = props
+export default function LocalCard({ id, ...dados }: LocalCardProps) {
   const [favoritado, setFavoritado] = useState(() => lerFavoritos().includes(id))
 
   function alternarFavorito() {
@@ -60,11 +59,11 @@ export default function LocalCard(props: LocalCardProps) {
     </button>
   )
 
-  if (!('localizacao' in props)) {
+  if (!('localizacao' in dados)) {
     return botaoFavorito
   }
 
-  const { nome, localizacao, recursos, dataVerificacao, detalhesUrl } = props
+  const { nome, localizacao, recursos, dataVerificacao, detalhesUrl } = dados
 
   return (
     <div className="border border-borda-decorativa rounded-lg p-4 bg-fundo flex flex-col gap-3">
