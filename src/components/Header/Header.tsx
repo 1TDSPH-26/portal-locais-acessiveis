@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Link } from 'react-router'
 
 type NavItem = {
@@ -16,6 +16,24 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
+  const botaoMenuRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!menuAberto) return
+
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuAberto(false)
+        botaoMenuRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', fecharComEscape)
+
+    return () => {
+      document.removeEventListener('keydown', fecharComEscape)
+    }
+  }, [menuAberto])
 
   return (
     <header className="w-full bg-fundo" role="banner">
@@ -76,6 +94,7 @@ export default function Header() {
 
           {/* Botão Hambúrguer Mobile */}
           <button
+            ref={botaoMenuRef}
             type="button"
             onClick={() => setMenuAberto(!menuAberto)}
             className="md:hidden p-2 rounded-lg border border-borda-decorativa text-texto hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer"
