@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LoadingState from '../../components/Feedback/LoadingState'
+import LocalCard from '../../components/LocalCard/LocalCard'
 import { listaLocais } from '../../data/locais'
 import type { Local } from '../../types/local'
 
