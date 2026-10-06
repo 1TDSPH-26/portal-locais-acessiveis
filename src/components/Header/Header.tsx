@@ -100,8 +100,9 @@ export default function Header() {
             className="md:hidden p-2 rounded-lg border border-borda-decorativa text-texto hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer"
             aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={menuAberto}
+            aria-controls="menu-mobile"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               {menuAberto ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (
@@ -113,7 +114,7 @@ export default function Header() {
 
         {/* Menu Retrátil Mobile */}
         {menuAberto && (
-          <nav aria-label="Navegação móvel" className="md:hidden px-4 pb-4 bg-fundo border-t border-borda-decorativa">
+          <nav id="menu-mobile" aria-label="Navegação móvel" className="md:hidden px-4 pb-4 bg-fundo border-t border-borda-decorativa">
             <ul className="flex flex-col gap-3 list-none m-0 pt-3 p-0">
               {navItems.map(({ to, label, end }) => (
                 <li key={to}>
