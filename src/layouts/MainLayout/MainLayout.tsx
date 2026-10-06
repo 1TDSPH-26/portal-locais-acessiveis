@@ -8,16 +8,10 @@ type MainLayoutProps = {
 
 export default function MainLayout({ children }: MainLayoutProps) {
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'flex',
-        flexDirection: 'column',
-      }}
-    >
+    <div className="min-h-screen flex flex-col bg-fundo text-texto">
       <Header />
 
-      <main style={{ flex: 1 }}>
+      <main id="conteudo-principal" tabIndex={-1} className="flex-1 focus:outline-none">
         {children}
       </main>
 
