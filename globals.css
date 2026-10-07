@@ -57,7 +57,11 @@ html[data-font-size="3"] {
    ACESSIBILIDADE — ALTO CONTRASTE
    ========================================================= */
 
-html.high-contrast {
+/* ACESSIBILIDADE — ALTO CONTRASTE */
+html[data-contrast="high"] {
+  background-color: #000000;
+  color: #FFFFFF;
+
   --color-fundo: #000000;
   --color-fundo-suave: #000000;
   --color-texto: #FFFFFF;
@@ -69,62 +73,45 @@ html.high-contrast {
   --color-primaria-700: #FFFFFF;
 
   --color-sucesso: #00FF00;
-  --color-aviso: #FFFF00;
+  --color-aviso: #1c15ac;
   --color-erro: #FF5555;
 }
 
-html.high-contrast body {
+html[data-contrast="high"] body {
   background-color: #000000;
   color: #FFFFFF;
 }
 
-html.high-contrast header,
-html.high-contrast main,
-html.high-contrast footer {
+html[data-contrast="high"] header,
+html[data-contrast="high"] main,
+html[data-contrast="high"] footer {
   background-color: #000000;
   color: #FFFFFF;
 }
 
-html.high-contrast a {
+html[data-contrast="high"] a {
   color: #FFFFFF;
 }
 
-html.high-contrast a:hover {
-  color: #FFFF00;
+html[data-contrast="high"] a:hover {
+  color: #1c15ac;
 }
 
-html.high-contrast .accessibility-button {
+html[data-contrast="high"] .accessibility-button {
   border-color: #FFFFFF;
   background-color: #000000;
   color: #FFFFFF;
 }
 
-html.high-contrast .accessibility-button:hover {
+html[data-contrast="high"] .accessibility-button:hover {
   background-color: #FFFFFF;
   color: #000000;
 }
 
-html.high-contrast .accessibility-button:focus-visible {
-  outline: 3px solid #FFFF00;
-  outline-offset: 2px;
-}
+html[data-contrast="high"] .accessibility-button:focus-visible {
+  outline: 3px solid #1c15ac;
+  outline-offset: 2px;}
 
-
-/* =========================================================
-   ESTILOS GERAIS
-   ========================================================= */
-
-html {
-  font-family: var(--font-corpo);
-  color: var(--color-texto);
-  background-color: var(--color-fundo);
-}
-
-body {
-  margin: 0;
-  background-color: var(--color-fundo);
-  color: var(--color-texto);
-}
 
 
 /* =========================================================

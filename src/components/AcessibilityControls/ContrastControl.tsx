@@ -9,10 +9,11 @@ export function ContrastControl() {
 
     setHighContrast(nextContrast)
 
-    document.documentElement.classList.toggle(
-      'high-contrast',
-      nextContrast,
-    )
+    if (nextContrast) {
+      document.documentElement.setAttribute('data-contrast', 'high')
+    } else {
+      document.documentElement.removeAttribute('data-contrast')
+    }
   }
 
   return (
@@ -34,6 +35,4 @@ export function ContrastControl() {
     >
       C
     </button>
-  )
-}
-
+  )}
