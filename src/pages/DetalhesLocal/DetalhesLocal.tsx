@@ -1,5 +1,9 @@
+import { useCallback } from 'react'
 import { Link, useParams } from 'react-router'
-import { listaLocais } from '../../data/locais'
+import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import LoadingState from '../../components/Feedback/LoadingState'
+import { useConsulta } from '../../hooks/useConsulta'
+import { buscarLocalPorId } from '../../services/locais-consulta'
 import type { Categoria, RecursoAcessibilidade } from '../../types/local'
 
 const nomesCategoria: Record<Categoria, string> = {
@@ -44,8 +48,42 @@ function LinkVoltar() {
 }
 
 export default function DetalhesLocal() {
-  const { id } = useParams()
-  const local = listaLocais.find((item) => String(item.id) === id)
+  const { id = '' } = useParams()
+  const consultarLocal = useCallback(() => buscarLocalPorId(id), [id])
+  const { estado, tentarNovamente } = useConsulta(consultarLocal)
+
+  if (estado.status === 'carregando') {
+    return (
+      <section aria-label="Detalhes do local" className="mx-auto w-full max-w-3xl p-6">
+        <LinkVoltar />
+        <LoadingState message="Carregando detalhes do local..." />
+      </section>
+    )
+  }
+
+  if (estado.status === 'erro') {
+    return (
+      <section
+        aria-labelledby="detalhe-erro"
+        className="mx-auto w-full max-w-3xl p-6"
+      >
+        <LinkVoltar />
+        <h1
+          id="detalhe-erro"
+          className="mt-4 mb-4 font-display text-h1 font-bold text-texto"
+        >
+          Detalhes do local
+        </h1>
+        <ErrorMessage
+          title="Não foi possível carregar este local"
+          message={estado.mensagem}
+          onRetry={tentarNovamente}
+        />
+      </section>
+    )
+  }
+
+  const local = estado.dados
 
   if (!local) {
     return (
