@@ -43,3 +43,17 @@
   --Borda-Decorativa: #E2E8F0;
   --Borda-Funcional: #64748B;
 }
+
+html.alto-contraste {
+  --color-fundo: #000000;
+  --color-fundo-branco: #000000;
+  --color-fundo-suave: #111111;
+  --color-fundo-escuro: #000000;
+  --color-texto: #ffffff;
+  --color-texto-principal: #ffffff;
+  --color-secundaria: #ffff00;
+  --color-primaria-600: #ffff00;
+  --color-primaria-700: #ffff00;
+  --color-borda-decorativa: #ffffff;
+  --color-borda-funcional: #ffff00;
+}

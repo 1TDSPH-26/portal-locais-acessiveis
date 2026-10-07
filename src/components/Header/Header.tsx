@@ -17,10 +17,14 @@ const navItems: NavItem[] = [
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
   const [tamanhoFonte, setTamanhoFonte] = useState(100)
+  const [altoContraste, setAltoContraste] = useState(false)
 
   useEffect(() => {
     document.documentElement.style.fontSize = `${tamanhoFonte}%`
   }, [tamanhoFonte])
+  useEffect(() => {
+    document.documentElement.classList.toggle('alto-contraste', altoContraste)
+  }, [altoContraste])
   function diminuirFonte() {
     setTamanhoFonte((tamanhoAtual) => Math.max(tamanhoAtual - 10, 80))
   }
@@ -30,6 +34,10 @@ export default function Header() {
   function restaurarFonte() {
     setTamanhoFonte(100)
   }
+  function alternarContraste() {
+    setAltoContraste((contrasteAtual) => !contrasteAtual)
+  }
+  
 
   return (
     <header className="w-full bg-fundo" role="banner">
@@ -61,6 +69,9 @@ export default function Header() {
             </button>
                 <button type="button" onClick={aumentarFonte} disabled={tamanhoFonte >= 120} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"  aria-label="Aumentar tamanho da fonte" title="Aumentar fonte">
                A+
+            </button>
+                <button type="button" onClick={alternarContraste} aria-pressed={altoContraste} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer"  aria-label={altoContraste ? 'Desativar alto contraste' : 'Ativar alto contraste'} title={altoContraste ? 'Desativar alto contraste' : 'Ativar alto contraste'} >
+                  Contraste
             </button>
           </div>
         </div>
