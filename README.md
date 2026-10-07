@@ -1,5 +1,12 @@
 # Portal de Locais e Serviços Acessíveis — CP1
 
+## Documentação técnica — CP2
+
+- [Modelo de dados Local](docs/modelo-local.md): campos, tipos, categorias, recursos de acessibilidade, exemplo e uso na implementação atual.
+- [Validação da documentação do modelo](docs/validacao-modelo-local.md): verificações executadas e pendências de entrega.
+
+> As seções de CP1 abaixo preservam o histórico daquela entrega. Para o modelo `Local` e seu uso atual, consulte a documentação de CP2 acima.
+
 O Portal de Locais e Serviços Acessíveis é uma aplicação web que tem como objetivo facilitar a descoberta de estabelecimentos e serviços com recursos de acessibilidade. A proposta é permitir a consulta e o cadastro de locais, organizados por categoria e por recursos como rampas, banheiros adaptados, piso tátil e atendimento em Libras.
 
 Este documento reúne as instruções de execução e as informações disponíveis para a entrega do CP1. Foi preparado na branch `feature/issue-48-README`, referente à issue 48, sem alterações no código da aplicação.
