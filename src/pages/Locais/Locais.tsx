@@ -1,11 +1,16 @@
-import { listaLocais } from '../../data/locais';
-import LocalCard from '../../components/LocalCard/LocalCard';
-import type { Categoria, RecursoAcessibilidade } from '../../types/local';
-import EmptyState from '../../components/Feedback/EmptyState';
 import { useEffect, useRef, useState } from 'react';
+import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
-import type { Local } from '../../types/local';
+import LocalCard from '../../components/LocalCard/LocalCard';
+import { listarLocais } from '../../services/locaisService';
+import type {
+  Categoria,
+  RecursoAcessibilidade,
+  Local,
+} from '../../types/local';
+import { useConsulta } from '../../hooks/useConsulta';
+import { filtrarLocais } from '../../utils/filtrarLocais';
 
 const categorias: Categoria[] = [
   'restaurante',
@@ -31,9 +36,9 @@ const recursos: RecursoAcessibilidade[] = [
 ];
 
 export default function Locais() {
-  const [locais, setLocais] = useState<Local[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { estado, tentarNovamente } = useConsulta<Local[]>(
+    listarLocais
+  );
 
   const [categoriaSelecionada, setCategoriaSelecionada] =
     useState<Categoria | ''>('');
@@ -41,29 +46,23 @@ export default function Locais() {
   const [recursosSelecionados, setRecursosSelecionados] =
     useState<RecursoAcessibilidade[]>([]);
 
+  const [paginaAtual, setPaginaAtual] = useState(1);
 
-  const [paginaAtual, setPaginaAtual] = useState(1)
-  const itensPorPagina = 4 
+  const itensPorPagina = 4;
 
-  const tituloRef = useRef<HTMLHeadingElement>(null)
+  const tituloRef = useRef<HTMLHeadingElement>(null);
+
+  const locais = estado.status === 'sucesso'
+    ? estado.dados
+    : [];
 
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setLocais(listaLocais);
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    }, 0);
+    setPaginaAtual(1);
+  }, [categoriaSelecionada, recursosSelecionados]);
 
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
-
-  function alternarRecurso(recurso: RecursoAcessibilidade) {
+  function alternarRecurso(
+    recurso: RecursoAcessibilidade
+  ) {
     if (recursosSelecionados.includes(recurso)) {
       setRecursosSelecionados(
         recursosSelecionados.filter((r) => r !== recurso)
@@ -76,160 +75,256 @@ export default function Locais() {
     }
   }
 
-  const totalPaginas = Math.ceil(locais.length / itensPorPagina)
-  const indiceInicial = (paginaAtual - 1) * itensPorPagina
-  const locaisPaginados = locais.slice(indiceInicial, indiceInicial + itensPorPagina)
-
-  const mudarPagina = (novaPagina: number) => {
-    if (novaPagina >= 1 && novaPagina <= totalPaginas) {
-      setPaginaAtual(novaPagina)
-      if (tituloRef.current) {
-        tituloRef.current.focus()
-      }
-    }
+  function limparFiltros() {
+    setCategoriaSelecionada('');
+    setRecursosSelecionados([]);
   }
 
-  if (loading) {
-    return <LoadingState message="Carregando locais..." />
-  }
+  const titulo = (
+    <h1
+      ref={tituloRef}
+      tabIndex={-1}
+      className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+    >
+      Locais acessíveis
+    </h1>
+  );
 
-  if (error) {
+  if (estado.status === 'carregando') {
     return (
-      <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
+      <main className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+
+        <LoadingState message="Carregando locais..." />
+      </main>
+    );
+  }
+
+  if (estado.status === 'erro') {
+    return (
+      <main className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+
+        <ErrorMessage
+          title="Não foi possível carregar os locais"
+          message={estado.mensagem}
+          onRetry={tentarNovamente}
+        />
+      </main>
     );
   }
 
   if (locais.length === 0) {
     return (
-      <EmptyState
-        title="Nenhum local encontrado"
-        message="Não há locais cadastrados para exibir."
-      />
-    )
+      <main className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+
+        <EmptyState
+          title="Nenhum local encontrado"
+          message="Não há locais cadastrados para exibir."
+        />
+      </main>
+    );
   }
-  
-  function limparFiltros() {
-    setCategoriaSelecionada('');
-    setRecursosSelecionados([]);
-  }
-  
+
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    categoriaSelecionada,
+    recursosSelecionados
+  );
+
+  const totalPaginas = Math.ceil(
+    locaisFiltrados.length / itensPorPagina
+  );
+
+  const indiceInicial =
+    (paginaAtual - 1) * itensPorPagina;
+
+  const locaisPaginados = locaisFiltrados.slice(
+    indiceInicial,
+    indiceInicial + itensPorPagina
+  );
+
+  const mudarPagina = (novaPagina: number) => {
+    if (
+      novaPagina >= 1 &&
+      novaPagina <= totalPaginas
+    ) {
+      setPaginaAtual(novaPagina);
+      tituloRef.current?.focus();
+    }
+  };
+
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
-      <h1
-        ref={tituloRef}
-        tabIndex={-1}
-        className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-      >
-        Locais acessíveis
-      </h1>
-      
-      <section className="mb-6">
-        <div>
-          <label htmlFor="filtro-categoria">Categoria</label>
+      {titulo}
+
+      <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        <div className="mb-4">
+          <label
+            htmlFor="select-categoria"
+            className="mb-2 block font-bold"
+          >
+            Filtrar por Categoria
+          </label>
 
           <select
-            id="filtro-categoria"
+            id="select-categoria"
             value={categoriaSelecionada}
             onChange={(e) =>
               setCategoriaSelecionada(
                 e.target.value as Categoria | ''
               )
             }
+            className="w-full max-w-xs rounded border border-gray-300 p-2"
           >
             <option value="">Todas</option>
 
             {categorias.map((categoria) => (
-              <option key={categoria} value={categoria}>
+              <option
+                key={categoria}
+                value={categoria}
+              >
                 {categoria}
               </option>
             ))}
           </select>
         </div>
 
-        <fieldset>
-          <legend>Recursos de acessibilidade</legend>
+        <fieldset className="mb-4">
+          <legend className="mb-2 font-bold">
+            Recursos de acessibilidade
+          </legend>
 
-          {recursos.map((recurso) => {
-            const inputId = `recurso-${recurso}`;
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+            {recursos.map((recurso) => {
+              const inputId = `recurso - ${ recurso } `;
 
-            return (
-              <div key={recurso}>
-                <input
-                  type="checkbox"
-                  id={inputId}
-                  checked={recursosSelecionados.includes(recurso)}
-                  onChange={() => alternarRecurso(recurso)}
-                />
+              return (
+                <div
+                  key={recurso}
+                  className="flex items-center gap-2"
+                >
+                  <input
+                    type="checkbox"
+                    id={inputId}
+                    checked={recursosSelecionados.includes(
+                      recurso
+                    )}
+                    onChange={() =>
+                      alternarRecurso(recurso)
+                    }
+                  />
 
-                <label htmlFor={inputId}>
-                  {recurso}
-                </label>
-              </div>
-            );
-          })}
+                  <label
+                    htmlFor={inputId}
+                    className="capitalize text-sm"
+                  >
+                    {recurso.replace('_', ' ')}
+                  </label>
+                </div>
+              );
+            })}
+          </div>
         </fieldset>
 
-        <button type="button" onClick={limparFiltros}>
+        <button
+          type="button"
+          onClick={limparFiltros}
+          className="rounded bg-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-300"
+        >
           Limpar filtros
         </button>
       </section>
 
-      <section className="grid gap-6 md:grid-cols-2">
-        {locaisPaginados.map((local) => (
-          <LocalCard key={local.id} local={local} />
-        ))}
-      </section>
+      {locaisFiltrados.length === 0 ? (
+        <EmptyState
+          title="Nenhum local encontrado"
+          message="Não encontramos locais para os filtros selecionados."
+        />
+      ) : (
+        <>
+          <section className="grid gap-6 md:grid-cols-2">
+            {locaisPaginados.map((local) => (
+              <LocalCard
+                key={local.id}
+                local={local}
+              />
+            ))}
+          </section>
 
-      {totalPaginas > 1 && (
-        <nav
-          aria-label="Navegação por páginas de locais"
-          className="mt-8 flex flex-wrap items-center justify-center gap-2"
-        >
-          <button
-            type="button"
-            onClick={() => mudarPagina(paginaAtual - 1)}
-            disabled={paginaAtual === 1}
-            aria-label="Ir para a página anterior"
-            className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-          >
-            Anterior
-          </button>
+          {totalPaginas > 1 && (
+            <nav
+              aria-label="Navegação por páginas de locais"
+              className="mt-8 flex flex-wrap items-center justify-center gap-2"
+            >
+              <button
+                type="button"
+                onClick={() =>
+                  mudarPagina(paginaAtual - 1)
+                }
+                disabled={paginaAtual === 1}
+                aria-label="Ir para a página anterior"
+                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                Anterior
+              </button>
 
-          <div className="flex gap-1" role="group" aria-label="Páginas">
-            {Array.from({ length: totalPaginas }, (_, index) => {
-              const pagina = index + 1
-              const ehPaginaAtual = pagina === paginaAtual
+              <div
+                className="flex gap-1"
+                role="group"
+                aria-label="Páginas"
+              >
+                {Array.from(
+                  { length: totalPaginas },
+                  (_, index) => {
+                    const pagina = index + 1;
+                    const ehPaginaAtual =
+                      pagina === paginaAtual;
 
-              return (
-                <button
-                  key={pagina}
-                  type="button"
-                  onClick={() => mudarPagina(pagina)}
-                  aria-current={ehPaginaAtual ? 'page' : undefined}
-                  aria-label={`Página ${pagina}`}
-                  className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                    ehPaginaAtual
-                      ? 'bg-blue-600 text-white font-bold'
-                      : 'border border-gray-300 text-texto hover:bg-gray-100'
-                  }`}
-                >
-                  {pagina}
-                </button>
-              )
-            })}
-          </div>
+                    return (
+                      <button
+                        key={pagina}
+                        type="button"
+                        onClick={() =>
+                          mudarPagina(pagina)
+                        }
+                        aria-current={
+                          ehPaginaAtual
+                            ? 'page'
+                            : undefined
+                        }
+                        aria-label={`Página ${ pagina } `}
+                        className={`min - w - [40px] rounded - md px - 3 py - 2 font - corpo text - sm font - medium transition - colors focus: outline - none focus: ring - 2 focus: ring - blue - 600 focus: ring - offset - 2 ${
+  ehPaginaAtual
+    ? 'bg-blue-600 font-bold text-white'
+    : 'border border-gray-300 text-texto hover:bg-gray-100'
+} `}
+                      >
+                        {pagina}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
 
-          <button
-            type="button"
-            onClick={() => mudarPagina(paginaAtual + 1)}
-            disabled={paginaAtual === totalPaginas}
-            aria-label="Ir para a próxima página"
-            className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-          >
-            Próxima
-          </button>
-        </nav>
+              <button
+                type="button"
+                onClick={() =>
+                  mudarPagina(paginaAtual + 1)
+                }
+                disabled={
+                  paginaAtual === totalPaginas
+                }
+                aria-label="Ir para a próxima página"
+                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+              >
+                Próxima
+              </button>
+            </nav>
+          )}
+        </>
       )}
     </main>
-  )
+  );
 }
