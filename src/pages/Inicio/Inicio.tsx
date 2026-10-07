@@ -80,7 +80,7 @@ export default function Inicio() {
                   value={termoBusca}
                   onChange={(e) => setTermoBusca(e.target.value)}
                   placeholder="Ex.: biblioteca, parque, restaurante..."
-                  className="w-full h-12 pl-10 pr-4 rounded-lg bg-fundo text-texto text-corpo-16 border border-borda-funcional focus:outline-none focus:ring-2 focus:ring-primaria-600"
+                  className="w-full h-12 pl-10 pr-10 rounded-lg bg-fundo text-texto text-corpo-16 border border-borda-funcional focus:outline-none focus:ring-2 focus:ring-primaria-600 [&::-webkit-search-cancel-button]:appearance-none"
                 />
                 {termoBusca !== "" ? (
                   <button
