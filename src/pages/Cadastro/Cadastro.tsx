@@ -1,10 +1,13 @@
-import { useState, type ChangeEvent, type FormEvent } from 'react'
+import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { cadastrarLocal } from '../../services/locais-service'
 import type { Categoria, Local, RecursoAcessibilidade } from '../../types/local'
+import { validarCep } from '../../utils/validacoes'
 
 type DadosFormulario = Omit<Local, 'id' | 'categoria'> & {
   categoria: Categoria | ''
 }
+
+type ErrosFormulario = Partial<Record<keyof DadosFormulario, string>>
 
 const categorias: ReadonlyArray<{ valor: Categoria; rotulo: string }> = [
   { valor: 'restaurante', rotulo: 'Restaurante' },
@@ -14,20 +17,26 @@ const categorias: ReadonlyArray<{ valor: Categoria; rotulo: string }> = [
   { valor: 'servico_publico', rotulo: 'Serviço público' },
 ]
 
-const recursos: ReadonlyArray<{ valor: RecursoAcessibilidade; rotulo: string }> = [
-  { valor: 'rampa_acesso', rotulo: 'Rampa de acesso' },
-  { valor: 'banheiro_adaptado', rotulo: 'Banheiro adaptado' },
-  { valor: 'piso_tatil', rotulo: 'Piso tátil' },
-  { valor: 'sinalizacao_visual', rotulo: 'Sinalização visual' },
-  { valor: 'vagas_estacionamento', rotulo: 'Vagas de estacionamento acessíveis' },
-  { valor: 'braile', rotulo: 'Informações em braile' },
-  { valor: 'libras', rotulo: 'Atendimento em Libras' },
-  { valor: 'elevador', rotulo: 'Elevador acessível' },
-  { valor: 'balcao_acessivel', rotulo: 'Balcão acessível' },
-  { valor: 'assentos_prioritarios', rotulo: 'Assentos prioritários' },
-  { valor: 'espaco_tranquilo', rotulo: 'Espaço tranquilo' },
-  { valor: 'cao_guia', rotulo: 'Entrada permitida para cão-guia' },
-]
+const recursos: ReadonlyArray<{
+  valor: RecursoAcessibilidade
+  rotulo: string
+}> = [
+    { valor: 'rampa_acesso', rotulo: 'Rampa de acesso' },
+    { valor: 'banheiro_adaptado', rotulo: 'Banheiro adaptado' },
+    { valor: 'piso_tatil', rotulo: 'Piso tátil' },
+    { valor: 'sinalizacao_visual', rotulo: 'Sinalização visual' },
+    {
+      valor: 'vagas_estacionamento',
+      rotulo: 'Vagas de estacionamento acessíveis',
+    },
+    { valor: 'braile', rotulo: 'Informações em braile' },
+    { valor: 'libras', rotulo: 'Atendimento em Libras' },
+    { valor: 'elevador', rotulo: 'Elevador acessível' },
+    { valor: 'balcao_acessivel', rotulo: 'Balcão acessível' },
+    { valor: 'assentos_prioritarios', rotulo: 'Assentos prioritários' },
+    { valor: 'espaco_tranquilo', rotulo: 'Espaço tranquilo' },
+    { valor: 'cao_guia', rotulo: 'Entrada permitida para cão-guia' },
+  ]
 
 const dadosIniciais: DadosFormulario = {
   nome: '',
@@ -39,13 +48,29 @@ const dadosIniciais: DadosFormulario = {
 
 export default function Cadastro() {
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
+  const [erros, setErros] = useState<ErrosFormulario>({})
   const [enviando, setEnviando] = useState(false)
+  const [statusEnvio, setStatusEnvio] = useState<'sucesso' | 'erro' | null>(
+    null,
+  )
   const [mensagem, setMensagem] = useState('')
-  const [erro, setErro] = useState('')
+
+  const nomeRef = useRef<HTMLInputElement>(null)
+  const categoriaRef = useRef<HTMLSelectElement>(null)
+  const enderecoRef = useRef<HTMLInputElement>(null)
+  const cepRef = useRef<HTMLInputElement>(null)
 
   function atualizarTexto(campo: 'nome' | 'endereco' | 'cep') {
     return (evento: ChangeEvent<HTMLInputElement>) => {
-      setDados((atual) => ({ ...atual, [campo]: evento.target.value }))
+      setDados((atual) => ({
+        ...atual,
+        [campo]: evento.target.value,
+      }))
+
+      setErros((atual) => ({
+        ...atual,
+        [campo]: undefined,
+      }))
     }
   }
 
@@ -53,6 +78,11 @@ export default function Cadastro() {
     setDados((atual) => ({
       ...atual,
       categoria: evento.target.value as Categoria | '',
+    }))
+
+    setErros((atual) => ({
+      ...atual,
+      categoria: undefined,
     }))
   }
 
@@ -67,14 +97,68 @@ export default function Cadastro() {
     }))
   }
 
+  function validarFormulario(): ErrosFormulario {
+    const novosErros: ErrosFormulario = {}
+
+    if (!dados.nome.trim()) {
+      novosErros.nome = 'Informe o nome do local.'
+    }
+
+    if (!dados.categoria) {
+      novosErros.categoria = 'Selecione uma categoria.'
+    }
+
+    if (!dados.endereco.trim()) {
+      novosErros.endereco = 'Informe o endereço completo do local.'
+    }
+
+    if (!dados.cep.trim()) {
+      novosErros.cep = 'Informe o CEP do local.'
+    } else if (!validarCep(dados.cep)) {
+      novosErros.cep = 'Informe um CEP válido com 8 dígitos.'
+    }
+
+    return novosErros
+  }
+
+  
+
+  function focarCampo(campo: keyof DadosFormulario) {
+    const campos = {
+      nome: nomeRef,
+      categoria: categoriaRef,
+      endereco: enderecoRef,
+      cep: cepRef,
+    }
+
+    if (campo !== 'recursosAcessibilidade') {
+      campos[campo].current?.focus()
+    }
+  }
+
   async function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
+    if (enviando) {
+      return
+    }
+
     setMensagem('')
-    setErro('')
+    setStatusEnvio(null)
+
+    const novosErros = validarFormulario()
+    setErros(novosErros)
+
+    const primeiroErro = Object.keys(novosErros)[0] as
+      | keyof DadosFormulario
+      | undefined
+
+    if (primeiroErro) {
+      focarCampo(primeiroErro)
+      return
+    }
 
     if (!dados.categoria) {
-      setErro('Selecione uma categoria.')
       return
     }
 
@@ -90,9 +174,12 @@ export default function Cadastro() {
       })
 
       setMensagem(`Local "${localCadastrado.nome}" cadastrado com sucesso.`)
+      setStatusEnvio('sucesso')
       setDados(dadosIniciais)
+      setErros({})
     } catch (erroRecebido) {
-      setErro(
+      setStatusEnvio('erro')
+      setMensagem(
         erroRecebido instanceof Error
           ? erroRecebido.message
           : 'Não foi possível cadastrar o local.',
@@ -102,13 +189,23 @@ export default function Cadastro() {
     }
   }
 
-  const classeCampo = 'mt-1 block w-full rounded-md border border-borda-funcional bg-fundo px-3 py-2 text-texto shadow-sm outline-offset-2 focus:outline-3 focus:outline-primaria-600'
+  const classeCampo =
+    'mt-1 block w-full rounded-md border border-borda-funcional bg-fundo px-3 py-2 text-texto shadow-sm outline-offset-2 focus:outline-3 focus:outline-primaria-600'
+
+  const camposComErro = Object.entries(erros) as [
+    keyof DadosFormulario,
+    string,
+  ][]
 
   return (
     <section className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 sm:py-12">
-      <h1 className="font-display text-h1 font-bold text-texto">Cadastro de local</h1>
+      <h1 className="font-display text-h1 font-bold text-texto">
+        Cadastro de local
+      </h1>
+
       <p className="mt-2 font-corpo text-corpo-16 text-secundaria">
-        Informe os dados conhecidos sobre o local e seus recursos de acessibilidade.
+        Informe os dados conhecidos sobre o local e seus recursos de
+        acessibilidade.
       </p>
 
       <form
@@ -116,20 +213,40 @@ export default function Cadastro() {
         className="mt-8 space-y-8"
         aria-busy={enviando}
       >
-        {erro && (
-          <p
+        {camposComErro.length > 0 && (
+          <div
             role="alert"
-            className="rounded-md border border-borda-funcional p-4 text-texto"
+            aria-labelledby="titulo-erros"
+            className="rounded-md border border-erro p-4"
           >
-            {erro}
-          </p>
+            <h2
+              id="titulo-erros"
+              className="font-display text-h2 font-bold text-texto"
+            >
+              Corrija os seguintes campos:
+            </h2>
+
+            <ul className="mt-2 list-disc pl-5">
+              {camposComErro.map(([campo, mensagemErro]) => (
+                <li key={campo}>
+                  <button
+                    type="button"
+                    onClick={() => focarCampo(campo)}
+                    className="font-corpo text-corpo-14 text-erro underline"
+                  >
+                    {mensagemErro}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
         )}
 
         {mensagem && (
           <p
-            role="status"
+            role={statusEnvio === 'erro' ? 'alert' : 'status'}
             aria-live="polite"
-            className="rounded-md border border-borda-funcional p-4 text-texto"
+            className="rounded-md border border-borda-funcional p-4 font-corpo text-corpo-16 text-texto"
           >
             {mensagem}
           </p>
@@ -145,17 +262,29 @@ export default function Cadastro() {
               htmlFor="nome"
               className="font-corpo text-label font-semibold text-texto"
             >
-              Nome do local
+              Nome do local — obrigatório
             </label>
+
             <input
+              ref={nomeRef}
               id="nome"
               name="nome"
               type="text"
               value={dados.nome}
               onChange={atualizarTexto('nome')}
               className={classeCampo}
-              required
+              aria-invalid={Boolean(erros.nome)}
+              aria-describedby={erros.nome ? 'erro-nome' : undefined}
             />
+
+            {erros.nome && (
+              <p
+                id="erro-nome"
+                className="mt-2 font-corpo text-corpo-14 font-semibold text-erro"
+              >
+                Erro: {erros.nome}
+              </p>
+            )}
           </div>
 
           <div className="mt-5">
@@ -163,23 +292,38 @@ export default function Cadastro() {
               htmlFor="categoria"
               className="font-corpo text-label font-semibold text-texto"
             >
-              Categoria
+              Categoria — obrigatório
             </label>
+
             <select
+              ref={categoriaRef}
               id="categoria"
               name="categoria"
               value={dados.categoria}
               onChange={atualizarCategoria}
               className={classeCampo}
-              required
+              aria-invalid={Boolean(erros.categoria)}
+              aria-describedby={
+                erros.categoria ? 'erro-categoria' : undefined
+              }
             >
               <option value="">Selecione uma categoria</option>
+
               {categorias.map(({ valor, rotulo }) => (
                 <option key={valor} value={valor}>
                   {rotulo}
                 </option>
               ))}
             </select>
+
+            {erros.categoria && (
+              <p
+                id="erro-categoria"
+                className="mt-2 font-corpo text-corpo-14 font-semibold text-erro"
+              >
+                Erro: {erros.categoria}
+              </p>
+            )}
           </div>
         </fieldset>
 
@@ -193,17 +337,29 @@ export default function Cadastro() {
               htmlFor="endereco"
               className="font-corpo text-label font-semibold text-texto"
             >
-              Endereço completo
+              Endereço completo — obrigatório
             </label>
+
             <input
+              ref={enderecoRef}
               id="endereco"
               name="endereco"
               type="text"
               value={dados.endereco}
               onChange={atualizarTexto('endereco')}
               className={classeCampo}
-              required
+              aria-invalid={Boolean(erros.endereco)}
+              aria-describedby={erros.endereco ? 'erro-endereco' : undefined}
             />
+
+            {erros.endereco && (
+              <p
+                id="erro-endereco"
+                className="mt-2 font-corpo text-corpo-14 font-semibold text-erro"
+              >
+                Erro: {erros.endereco}
+              </p>
+            )}
           </div>
 
           <div className="mt-5 max-w-xs">
@@ -211,9 +367,11 @@ export default function Cadastro() {
               htmlFor="cep"
               className="font-corpo text-label font-semibold text-texto"
             >
-              CEP
+              CEP — obrigatório
             </label>
+
             <input
+              ref={cepRef}
               id="cep"
               name="cep"
               type="text"
@@ -222,8 +380,18 @@ export default function Cadastro() {
               value={dados.cep}
               onChange={atualizarTexto('cep')}
               className={classeCampo}
-              required
+              aria-invalid={Boolean(erros.cep)}
+              aria-describedby={erros.cep ? 'erro-cep' : undefined}
             />
+
+            {erros.cep && (
+              <p
+                id="erro-cep"
+                className="mt-2 font-corpo text-corpo-14 font-semibold text-erro"
+              >
+                Erro: {erros.cep}
+              </p>
+            )}
           </div>
         </fieldset>
 
@@ -231,6 +399,7 @@ export default function Cadastro() {
           <legend className="px-1 font-display text-h2 font-bold text-texto">
             Recursos de acessibilidade
           </legend>
+
           <p className="mt-2 text-corpo-16 text-secundaria">
             Marque os recursos disponíveis no local.
           </p>
@@ -247,6 +416,7 @@ export default function Cadastro() {
                   onChange={alternarRecurso}
                   className="mt-1 size-4 accent-primaria-600"
                 />
+
                 <label
                   htmlFor={valor}
                   className="font-corpo text-corpo-16 text-texto"
