@@ -1,11 +1,18 @@
-import { listaLocais } from '../../data/locais';
-import type { Categoria, RecursoAcessibilidade } from '../../types/local';
-import EmptyState from '../../components/Feedback/EmptyState';
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router';
+import { listaLocais } from '../../data/locais';
+import type { Categoria, RecursoAcessibilidade, Local } from '../../types/local';
+import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
-import type { Local } from '../../types/local';
 import { filtrarLocais } from '../../utils/filtrarLocais';
+
+const classeLinkDetalhes = [
+  'mt-4 inline-flex min-h-12 items-center rounded-md border border-primaria-600',
+  'px-4 py-2 font-corpo text-botao font-semibold text-primaria-600',
+  'hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4',
+  'focus-visible:outline-primaria-600',
+].join(' ');
 
 const categorias: Categoria[] = [
   'restaurante',
@@ -42,6 +49,7 @@ export default function Locais() {
     useState<RecursoAcessibilidade[]>([]);
 
   const [paginaAtual, setPaginaAtual] = useState(1);
+
   const itensPorPagina = 4;
 
   const tituloRef = useRef<HTMLHeadingElement>(null);
@@ -81,28 +89,6 @@ export default function Locais() {
     setRecursosSelecionados([]);
   }
 
-  const locaisFiltrados = filtrarLocais(
-    locais,
-    categoriaSelecionada,
-    recursosSelecionados
-  );
-
-  const totalPaginas = Math.ceil(locaisFiltrados.length / itensPorPagina);
-  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
-  const locaisPaginados = locaisFiltrados.slice(
-    indiceInicial,
-    indiceInicial + itensPorPagina
-  );
-
-  const mudarPagina = (novaPagina: number) => {
-    if (novaPagina >= 1 && novaPagina <= totalPaginas) {
-      setPaginaAtual(novaPagina);
-      if (tituloRef.current) {
-        tituloRef.current.focus();
-      }
-    }
-  };
-
   if (loading) {
     return <LoadingState message="Carregando locais..." />;
   }
@@ -122,6 +108,33 @@ export default function Locais() {
     );
   }
 
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    categoriaSelecionada,
+    recursosSelecionados
+  );
+
+  const totalPaginas = Math.ceil(
+    locaisFiltrados.length / itensPorPagina
+  );
+
+  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
+
+  const locaisPaginados = locaisFiltrados.slice(
+    indiceInicial,
+    indiceInicial + itensPorPagina
+  );
+
+  const mudarPagina = (novaPagina: number) => {
+    if (novaPagina >= 1 && novaPagina <= totalPaginas) {
+      setPaginaAtual(novaPagina);
+
+      if (tituloRef.current) {
+        tituloRef.current.focus();
+      }
+    }
+  };
+
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
       <h1
@@ -132,19 +145,27 @@ export default function Locais() {
         Locais acessíveis
       </h1>
 
-     
       <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-4">
-          <label htmlFor="select-categoria" className="block mb-2 font-bold">
+          <label
+            htmlFor="select-categoria"
+            className="mb-2 block font-bold"
+          >
             Filtrar por Categoria
           </label>
+
           <select
             id="select-categoria"
             value={categoriaSelecionada}
-            onChange={(e) => setCategoriaSelecionada(e.target.value as Categoria | '')}
+            onChange={(e) =>
+              setCategoriaSelecionada(
+                e.target.value as Categoria | ''
+              )
+            }
             className="w-full max-w-xs rounded border border-gray-300 p-2"
           >
             <option value="">Todas</option>
+
             {categorias.map((categoria) => (
               <option key={categoria} value={categoria}>
                 {categoria}
@@ -154,10 +175,14 @@ export default function Locais() {
         </div>
 
         <fieldset className="mb-4">
-          <legend className="mb-2 font-bold">Recursos de acessibilidade</legend>
+          <legend className="mb-2 font-bold">
+            Recursos de acessibilidade
+          </legend>
+
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
             {recursos.map((recurso) => {
               const inputId = `recurso-${recurso}`;
+
               return (
                 <div key={recurso} className="flex items-center gap-2">
                   <input
@@ -166,7 +191,11 @@ export default function Locais() {
                     checked={recursosSelecionados.includes(recurso)}
                     onChange={() => alternarRecurso(recurso)}
                   />
-                  <label htmlFor={inputId} className="capitalize text-sm">
+
+                  <label
+                    htmlFor={inputId}
+                    className="capitalize text-sm"
+                  >
                     {recurso.replace('_', ' ')}
                   </label>
                 </div>
@@ -226,6 +255,14 @@ export default function Locais() {
                     ))}
                   </ul>
                 </div>
+
+                <Link
+                  to={`/locais/${local.id}`}
+                  className={classeLinkDetalhes}
+                >
+                  Ver detalhes
+                  <span className="sr-only"> de {local.nome}</span>
+                </Link>
               </article>
             ))}
           </section>
@@ -245,28 +282,36 @@ export default function Locais() {
                 Anterior
               </button>
 
-              <div className="flex gap-1" role="group" aria-label="Páginas">
-                {Array.from({ length: totalPaginas }, (_, index) => {
-                  const pagina = index + 1;
-                  const ehPaginaAtual = pagina === paginaAtual;
+              <div
+                className="flex gap-1"
+                role="group"
+                aria-label="Páginas"
+              >
+                {Array.from(
+                  { length: totalPaginas },
+                  (_, index) => {
+                    const pagina = index + 1;
+                    const ehPaginaAtual = pagina === paginaAtual;
 
-                  return (
-                    <button
-                      key={pagina}
-                      type="button"
-                      onClick={() => mudarPagina(pagina)}
-                      aria-current={ehPaginaAtual ? 'page' : undefined}
-                      aria-label={`Página ${pagina}`}
-                      className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                        ehPaginaAtual
-                          ? 'bg-blue-600 text-white font-bold'
+                    return (
+                      <button
+                        key={pagina}
+                        type="button"
+                        onClick={() => mudarPagina(pagina)}
+                        aria-current={
+                          ehPaginaAtual ? 'page' : undefined
+                        }
+                        aria-label={`Página ${pagina}`}
+                        className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${ehPaginaAtual
+                          ? 'bg-blue-600 font-bold text-white'
                           : 'border border-gray-300 text-texto hover:bg-gray-100'
-                      }`}
-                    >
-                      {pagina}
-                    </button>
-                  );
-                })}
+                          }`}
+                      >
+                        {pagina}
+                      </button>
+                    );
+                  }
+                )}
               </div>
 
               <button
