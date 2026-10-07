@@ -1,14 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
-import { listaLocais } from '../../data/locais';
+import EmptyState from '../../components/Feedback/EmptyState';
+import ErrorMessage from '../../components/Feedback/ErrorMessage';
+import LoadingState from '../../components/Feedback/LoadingState';
+import { listarLocais } from '../../services/locaisService';
 import type {
   Categoria,
   RecursoAcessibilidade,
   Local,
 } from '../../types/local';
-import EmptyState from '../../components/Feedback/EmptyState';
-import ErrorMessage from '../../components/Feedback/ErrorMessage';
-import LoadingState from '../../components/Feedback/LoadingState';
 import { useConsulta } from '../../hooks/useConsulta';
 import { filtrarLocais } from '../../utils/filtrarLocais';
 
@@ -44,7 +44,7 @@ const recursos: RecursoAcessibilidade[] = [
 
 export default function Locais() {
   const { estado, tentarNovamente } = useConsulta<Local[]>(
-    async () => listaLocais
+    listarLocais
   );
 
   const [categoriaSelecionada, setCategoriaSelecionada] =
@@ -147,7 +147,6 @@ export default function Locais() {
   const mudarPagina = (novaPagina: number) => {
     if (novaPagina >= 1 && novaPagina <= totalPaginas) {
       setPaginaAtual(novaPagina);
-
       tituloRef.current?.focus();
     }
   };
