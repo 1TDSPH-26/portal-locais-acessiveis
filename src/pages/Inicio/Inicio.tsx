@@ -1,33 +1,33 @@
-import { useId, useState } from 'react'
-import { Link } from 'react-router'
-import LocalCard from '../../components/LocalCard/LocalCard'
-import { listaLocais } from '../../data/locais'
+import { useId, useState } from "react";
+import { Link } from "react-router";
+import LocalCard from "../../components/LocalCard/LocalCard";
+import { listaLocais } from "../../data/locais";
 
 export default function Inicio() {
-  const [termoBusca, setTermoBusca] = useState('')
-  const [buscaAtiva, setBuscaAtiva] = useState('')
-  const searchInputId = useId()
+  const [termoBusca, setTermoBusca] = useState("");
+  const [buscaAtiva, setBuscaAtiva] = useState("");
+  const searchInputId = useId();
 
   const handleBuscar = (e: React.FormEvent) => {
-    e.preventDefault()
-    setBuscaAtiva(termoBusca.trim())
-  }
+    e.preventDefault();
+    setBuscaAtiva(termoBusca.trim());
+  };
 
   const handleLimparBusca = () => {
-    setTermoBusca('')
-    setBuscaAtiva('')
-  }
+    setTermoBusca("");
+    setBuscaAtiva("");
+  };
 
-  const locaisDestaque = listaLocais.slice(0, 3)
+  const locaisDestaque = listaLocais.slice(0, 3);
 
   const locaisFiltrados = buscaAtiva
     ? listaLocais.filter((local) => {
-        const termo = buscaAtiva.toLowerCase()
-        const matchNome = local.nome.toLowerCase().includes(termo)
-        const matchEndereco = local.endereco.toLowerCase().includes(termo)
-        return matchNome || matchEndereco
+        const termo = buscaAtiva.toLowerCase();
+        const matchNome = local.nome.toLowerCase().includes(termo);
+        const matchEndereco = local.endereco.toLowerCase().includes(termo);
+        return matchNome || matchEndereco;
       })
-    : locaisDestaque
+    : locaisDestaque;
 
   return (
     <div className="w-full bg-fundo text-texto font-corpo">
@@ -39,11 +39,15 @@ export default function Inicio() {
               de sair de casa.
             </h1>
             <p className="text-corpo-16 md:text-corpo-18 text-fundo-suave max-w-2xl">
-              Entrada, circulação, banheiro e atendimento — verificados, não presumidos.
+              Entrada, circulação, banheiro e atendimento — verificados, não
+              presumidos.
             </p>
           </div>
 
-          <form onSubmit={handleBuscar} className="w-full max-w-xl flex flex-col gap-2">
+          <form
+            onSubmit={handleBuscar}
+            className="w-full max-w-xl flex flex-col gap-2"
+          >
             <label
               htmlFor={searchInputId}
               className="text-label text-fundo-suave font-medium"
@@ -56,7 +60,12 @@ export default function Inicio() {
                   aria-hidden="true"
                   className="absolute inset-y-0 left-0 flex items-center pl-3 pointer-events-none text-secundaria"
                 >
-                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <svg
+                    className="w-5 h-5"
+                    fill="none"
+                    stroke="currentColor"
+                    viewBox="0 0 24 24"
+                  >
                     <path
                       strokeLinecap="round"
                       strokeLinejoin="round"
@@ -73,15 +82,25 @@ export default function Inicio() {
                   placeholder="Ex.: biblioteca, parque, restaurante..."
                   className="w-full h-12 pl-10 pr-4 rounded-lg bg-fundo text-texto text-corpo-16 border border-borda-funcional focus:outline-none focus:ring-2 focus:ring-primaria-600"
                 />
-                {termoBusca !== '' ? (
+                {termoBusca !== "" ? (
                   <button
                     type="button"
                     onClick={handleLimparBusca}
                     aria-label="Limpar campo de busca"
                     className="absolute inset-y-0 right-0 flex items-center pr-3 text-secundaria hover:text-texto focus:outline-none focus:ring-2 focus:ring-primaria-600 rounded-r-lg cursor-pointer"
                   >
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    <svg
+                      className="w-5 h-5"
+                      fill="none"
+                      stroke="currentColor"
+                      viewBox="0 0 24 24"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth={2}
+                        d="M6 18L18 6M6 6l12 12"
+                      />
                     </svg>
                   </button>
                 ) : null}
@@ -100,7 +119,7 @@ export default function Inicio() {
       <section className="max-w-[1440px] mx-auto py-10 px-4 md:px-16 lg:py-14">
         <header className="mb-6 flex items-center justify-between">
           <h2 className="font-display text-h2 font-bold text-texto">
-            {buscaAtiva ? 'Resultados da busca' : 'Locais em destaque'}
+            {buscaAtiva ? "Resultados da busca" : "Locais em destaque"}
           </h2>
           {buscaAtiva && (
             <button
@@ -119,12 +138,13 @@ export default function Inicio() {
               Nenhum local encontrado
             </h3>
             <p className="text-corpo-14 text-secundaria">
-              Não encontramos locais com esse termo. Tente buscar pelo bairro ou pelo nome do local.
+              Não encontramos locais com esse termo. Tente buscar pelo bairro ou
+              pelo nome do local.
             </p>
             <button
               type="button"
               onClick={handleLimparBusca}
-              className="mt-2 px-6 py-2.5 border-2 border-primaria-600 text-primaria-600 font-display font-semibold text-botao rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors cursor-pointer"
+              className="mt-2 px-6 py-2.5 border-2 border-primaria-600 text-primaria-600 font-display font-semibold text-botao rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2"
             >
               Limpar busca
             </button>
@@ -145,7 +165,8 @@ export default function Inicio() {
               Como você pode participar
             </h2>
             <p className="text-corpo-16 text-secundaria">
-              Conheça os fluxos do portal para consultar ou registrar novos espaços acessíveis.
+              Conheça os fluxos do portal para consultar ou registrar novos
+              espaços acessíveis.
             </p>
           </div>
 
@@ -156,7 +177,8 @@ export default function Inicio() {
                   Explorar catálogo
                 </h3>
                 <p className="text-corpo-14 text-secundaria">
-                  Acesse a lista completa de locais mapeados e filtre por recursos específicos de acessibilidade.
+                  Acesse a lista completa de locais mapeados e filtre por
+                  recursos específicos de acessibilidade.
                 </p>
               </div>
               <Link
@@ -173,7 +195,8 @@ export default function Inicio() {
                   Indicar um espaço
                 </h3>
                 <p className="text-corpo-14 text-secundaria">
-                  Conhece um estabelecimento ou espaço público acessível? Envie os dados para nossa equipe verificar.
+                  Conhece um estabelecimento ou espaço público acessível? Envie
+                  os dados para nossa equipe verificar.
                 </p>
               </div>
               <Link
@@ -190,7 +213,8 @@ export default function Inicio() {
                   Critérios do projeto
                 </h3>
                 <p className="text-corpo-14 text-secundaria">
-                  Entenda como as verificações são feitas e quem são os responsáveis pela iniciativa.
+                  Entenda como as verificações são feitas e quem são os
+                  responsáveis pela iniciativa.
                 </p>
               </div>
               <Link
@@ -204,5 +228,5 @@ export default function Inicio() {
         </div>
       </section>
     </div>
-  )
+  );
 }
