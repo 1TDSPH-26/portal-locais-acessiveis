@@ -42,13 +42,13 @@ const dadosIniciais: DadosFormulario = {
 export default function Cadastro() {
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
   const [erros, setErros] = useState<ErrosFormulario>({})
+  const [enviando, setEnviando] = useState(false)
+  const [statusEnvio, setStatusEnvio] = useState<'sucesso' | 'erro' | null>(null)
 
   const nomeRef = useRef<HTMLInputElement>(null)
   const categoriaRef = useRef<HTMLSelectElement>(null)
   const enderecoRef = useRef<HTMLInputElement>(null)
   const cepRef = useRef<HTMLInputElement>(null)
-  const [enviando, setEnviando] = useState(false)
-  const [statusEnvio, setStatusEnvio] = useState<'sucesso' | 'erro' | null>(null)
 
   function atualizarTexto(campo: 'nome' | 'endereco' | 'cep') {
     return (evento: ChangeEvent<HTMLInputElement>) => {
@@ -117,6 +117,10 @@ export default function Cadastro() {
   function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
+    if (enviando) {
+      return
+    }
+
     const novosErros = validarFormulario()
     setErros(novosErros)
     setStatusEnvio(null)
@@ -133,8 +137,14 @@ export default function Cadastro() {
     setEnviando(true)
 
     // Simulação do envio enquanto a API não está implementada.
-    setTimeout(() => {
+    window.setTimeout(() => {
       setEnviando(false)
+
+      if (!navigator.onLine) {
+        setStatusEnvio('erro')
+        return
+      }
+
       setStatusEnvio('sucesso')
     }, 1500)
   }
@@ -159,7 +169,6 @@ export default function Cadastro() {
       </p>
 
       <form onSubmit={enviarFormulario} className="mt-8 space-y-8">
-
         {camposComErro.length > 0 && (
           <div
             role="alert"
@@ -365,23 +374,23 @@ export default function Cadastro() {
           </div>
         </fieldset>
 
-        <button
-          type="submit"
-          className="w-full rounded-md bg-primaria-600 px-5 py-3 font-corpo text-botao font-bold text-white hover:bg-primaria-700 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 sm:w-auto"
-        >
-          Cadastrar local
         {statusEnvio === 'sucesso' && (
-          <p role="status" aria-live="polite" className="font-corpo text-corpo-16">
+          <p
+            role="status"
+            aria-live="polite"
+            className="font-corpo text-corpo-16"
+          >
             Local cadastrado com sucesso.
           </p>
         )}
 
         {statusEnvio === 'erro' && (
           <p role="alert" className="font-corpo text-corpo-16">
-            Não foi possível enviar o cadastro. Verifique os campos e tente novamente.
+            Não foi possível enviar o cadastro. Seus dados foram mantidos para
+            uma nova tentativa.
           </p>
         )}
-        </button>
+
         <button
           type="submit"
           disabled={enviando}
