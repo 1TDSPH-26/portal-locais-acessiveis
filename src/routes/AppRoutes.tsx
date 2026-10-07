@@ -5,6 +5,8 @@ import Locais from '../pages/Locais/Locais'
 import Sobre from '../pages/Sobre/Sobre'
 import NotFound from '../pages/NotFound/NotFound'
 import Acessibilidade from '../pages/Acessibilidade/Acessibilidade'
+import DetalhesLocal from '../pages/DetalhesLocal/DetalhesLocal'
+
 
 export default function AppRoutes() {
   return (
@@ -14,6 +16,7 @@ export default function AppRoutes() {
       <Route path="/cadastrar" element={<Cadastro />} />
       <Route path="/sobre" element={<Sobre />} />
       <Route path="/acessibilidade" element={<Acessibilidade />} />
+      <Route path="/locais/:id" element={<DetalhesLocal />} />
       <Route path="/*" element={<NotFound/>}/>
     </Routes>
   )

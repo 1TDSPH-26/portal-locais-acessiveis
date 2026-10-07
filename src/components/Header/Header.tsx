@@ -1,5 +1,5 @@
+import { useEffect, useRef, useState } from 'react'
 import { NavLink, Link } from 'react-router'
-import { useEffect, useState } from 'react'
 
 // Cada item daqui vira um link no menu
 // O "end" é usado quando queremos q a rota seja exata (ex: "/")
@@ -19,6 +19,24 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
+  const botaoMenuRef = useRef<HTMLButtonElement>(null)
+
+  useEffect(() => {
+    if (!menuAberto) return
+
+    const fecharComEscape = (event: KeyboardEvent) => {
+      if (event.key === 'Escape') {
+        setMenuAberto(false)
+        botaoMenuRef.current?.focus()
+      }
+    }
+
+    document.addEventListener('keydown', fecharComEscape)
+
+    return () => {
+      document.removeEventListener('keydown', fecharComEscape)
+    }
+  }, [menuAberto])
 
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -79,15 +97,16 @@ export default function Header() {
           </nav>
 
           {/* Botão Hambúrguer Mobile */}
-          <button 
-            type="button" 
-            onClick={() => setMenuAberto(!menuAberto)} 
-            className="md:hidden p-2 rounded-lg border border-borda-decorativa text-texto hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer" 
-            aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'} 
+          <button
+            ref={botaoMenuRef}
+            type="button"
+            onClick={() => setMenuAberto(!menuAberto)}
+            className="md:hidden p-2 rounded-lg border border-borda-decorativa text-texto hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer"
+            aria-label={menuAberto ? 'Fechar menu' : 'Abrir menu'}
             aria-expanded={menuAberto}
-            aria-controls="menu-mobile" // 🛠️ Melhoria a11y: Conecta o botão ao nav mobile
+            aria-controls="menu-mobile"
           >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
               {menuAberto ? (
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
               ) : (

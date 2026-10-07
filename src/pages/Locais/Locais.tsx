@@ -1,9 +1,18 @@
 import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LoadingState from '../../components/Feedback/LoadingState'
 import { listaLocais } from '../../data/locais'
 import type { Local } from '../../types/local'
+
+const classeLinkDetalhes = [
+ 'mt-4 inline-flex min-h-12 items-center rounded-md border border-primaria-600',
+ 'px-4 py-2 font-corpo text-botao font-semibold text-primaria-600',
+ 'hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4',
+ 'focus-visible:outline-primaria-600',
+].join(' ')
+
 
 export default function Locais() {
   const [locais, setLocais] = useState<Local[]>([])
@@ -107,6 +116,11 @@ export default function Locais() {
                 ))}
               </ul>
             </div>
+            <Link to={`/locais/${local.id}`} className={classeLinkDetalhes} >
+                Ver detalhes
+              <span className="sr-only"> de {local.nome}</span>
+            </Link>
+
           </article>
         ))}
       </section>
