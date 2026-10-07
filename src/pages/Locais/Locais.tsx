@@ -1,58 +1,65 @@
-import { useEffect, useMemo, useRef, useState } from 'react'
-import EmptyState from '../../components/Feedback/EmptyState'
-import ErrorMessage from '../../components/Feedback/ErrorMessage'
-import LoadingState from '../../components/Feedback/LoadingState'
-import LocalCard from '../../components/LocalCard/LocalCard'
+import { useEffect, useId, useRef, useState } from 'react'
+import { Link, useSearchParams } from 'react-router'
 import { listaLocais } from '../../data/locais'
 import {
-  CATEGORIA_LABELS,
-  RECURSO_LABELS,
+  CATEGORIAS,
+  CATEGORIA_ROTULOS,
+  RECURSOS,
+  RECURSO_ROTULOS,
 } from '../../data/rotulos'
 import type {
   Categoria,
-  Local,
   RecursoAcessibilidade,
 } from '../../types/local'
 import {
+  FILTROS_VAZIOS,
+  contarFiltrosAtivos,
   filtrarLocais,
   type FiltrosLocais,
 } from '../../utils/filtrarLocais'
+import {
+  filtrosParaUrl,
+  lerFiltrosDaUrl,
+} from '../../utils/filtrosUrl'
 
-const FILTROS_INICIAIS: FiltrosLocais = {
-  busca: '',
-  categoria: '',
-  recurso: '',
-}
+const ITENS_POR_PAGINA = 4
 
-const classeControle = [
-  'min-h-12 w-full rounded-md border border-gray-300 bg-white px-4 py-2',
-  'font-corpo text-corpo-16 text-texto',
-  'focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2',
-].join(' ')
+const foco =
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
 
-const classeBotao = [
-  'min-h-12 rounded-md border border-primaria-600 px-4 py-2',
-  'font-corpo text-botao font-semibold text-primaria-600',
-  'hover:bg-fundo-suave',
-  'focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2',
-].join(' ')
+const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
 
 export default function Locais() {
-  const [locais, setLocais] = useState<Local[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState(false)
-  const [paginaAtual, setPaginaAtual] = useState(1)
-  const [filtros, setFiltros] = useState<FiltrosLocais>(FILTROS_INICIAIS)
+  const [searchParams, setSearchParams] = useSearchParams()
 
-  const itensPorPagina = 4
+  const filtros = lerFiltrosDaUrl(searchParams)
+
+  const [locais, setLocais] = useState<typeof listaLocais>([])
+  const [loading, setLoading] = useState(true)
+  const [erro, setErro] = useState(false)
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [paginaAtual, setPaginaAtual] = useState(1)
+
+  const buscaRef = useRef<HTMLInputElement>(null)
+  const resultadoRef = useRef<HTMLParagraphElement>(null)
   const tituloRef = useRef<HTMLHeadingElement>(null)
 
+  const buscaId = useId()
+  const categoriaId = useId()
+  const recursosId = useId()
+
+  /*
+   * Carrega os locais.
+   *
+   * O setTimeout evita atualizar o estado de forma síncrona
+   * durante a execução inicial do efeito.
+   */
   useEffect(() => {
     const timer = setTimeout(() => {
       try {
         setLocais(listaLocais)
       } catch {
-        setError(true)
+        setErro(true)
       } finally {
         setLoading(false)
       }
@@ -63,296 +70,515 @@ export default function Locais() {
     }
   }, [])
 
-  const locaisFiltrados = useMemo(
-    () => filtrarLocais(locais, filtros),
-    [locais, filtros],
-  )
+  /*
+   * Atualiza os filtros na URL e retorna para a primeira página.
+   *
+   * Este é o único lugar necessário para resetar a paginação
+   * quando os filtros mudam.
+   */
+  const atualizarFiltros = (novos: Partial<FiltrosLocais>) => {
+    setSearchParams(
+      filtrosParaUrl({
+        ...filtros,
+        ...novos,
+      }),
+      { replace: true },
+    )
 
-  useEffect(() => {
     setPaginaAtual(1)
-  }, [filtros.busca, filtros.categoria, filtros.recurso])
-
-  const totalPaginas = Math.ceil(
-    locaisFiltrados.length / itensPorPagina,
-  )
-
-  const indiceInicial = (paginaAtual - 1) * itensPorPagina
-
-  const locaisPaginados = locaisFiltrados.slice(
-    indiceInicial,
-    indiceInicial + itensPorPagina,
-  )
-
-  const possuiFiltrosAtivos =
-    filtros.busca !== '' ||
-    filtros.categoria !== '' ||
-    filtros.recurso !== ''
-
-  const atualizarBusca = (
-    evento: React.ChangeEvent<HTMLInputElement>,
-  ) => {
-    setFiltros((estadoAtual) => ({
-      ...estadoAtual,
-      busca: evento.target.value,
-    }))
   }
 
-  const atualizarCategoria = (
-    evento: React.ChangeEvent<HTMLSelectElement>,
+  const alternarRecurso = (
+    recurso: RecursoAcessibilidade,
   ) => {
-    setFiltros((estadoAtual) => ({
-      ...estadoAtual,
-      categoria: evento.target.value as Categoria | '',
-    }))
-  }
+    const recursos = filtros.recursos.includes(recurso)
+      ? filtros.recursos.filter(
+          (item) => item !== recurso,
+        )
+      : [...filtros.recursos, recurso]
 
-  const atualizarRecurso = (
-    evento: React.ChangeEvent<HTMLSelectElement>,
-  ) => {
-    setFiltros((estadoAtual) => ({
-      ...estadoAtual,
-      recurso: evento.target.value as RecursoAcessibilidade | '',
-    }))
+    atualizarFiltros({ recursos })
   }
 
   const limparFiltros = () => {
-    setFiltros(FILTROS_INICIAIS)
-  }
+    atualizarFiltros(FILTROS_VAZIOS)
 
-  const removerBusca = () => {
-    setFiltros((estadoAtual) => ({
-      ...estadoAtual,
-      busca: '',
-    }))
-  }
-
-  const removerCategoria = () => {
-    setFiltros((estadoAtual) => ({
-      ...estadoAtual,
-      categoria: '',
-    }))
-  }
-
-  const removerRecurso = () => {
-    setFiltros((estadoAtual) => ({
-      ...estadoAtual,
-      recurso: '',
-    }))
-  }
-
-  const mudarPagina = (novaPagina: number) => {
-    if (novaPagina >= 1 && novaPagina <= totalPaginas) {
-      setPaginaAtual(novaPagina)
-
-      if (tituloRef.current) {
-        tituloRef.current.focus()
-      }
+    if (buscaRef.current?.offsetParent) {
+      buscaRef.current.focus()
+    } else {
+      resultadoRef.current?.focus()
     }
   }
 
-  if (loading) {
-    return <LoadingState message="Carregando locais..." />
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    filtros,
+  )
+
+  const totalFiltrosAtivos =
+    contarFiltrosAtivos(filtros)
+
+  const totalPaginas = Math.ceil(
+    locaisFiltrados.length / ITENS_POR_PAGINA,
+  )
+
+  const paginaValida = Math.min(
+    paginaAtual,
+    Math.max(totalPaginas, 1),
+  )
+
+  const indiceInicial =
+    (paginaValida - 1) * ITENS_POR_PAGINA
+
+  const locaisPaginados = locaisFiltrados.slice(
+    indiceInicial,
+    indiceInicial + ITENS_POR_PAGINA,
+  )
+
+  const mudarPagina = (pagina: number) => {
+    if (
+      pagina >= 1 &&
+      pagina <= totalPaginas
+    ) {
+      setPaginaAtual(pagina)
+      tituloRef.current?.focus()
+    }
   }
 
-  if (error) {
+  const removerFiltro = (
+    tipo: 'busca' | 'categoria' | 'recurso',
+    recurso?: RecursoAcessibilidade,
+  ) => {
+    if (tipo === 'busca') {
+      atualizarFiltros({ busca: '' })
+    }
+
+    if (tipo === 'categoria') {
+      atualizarFiltros({ categoria: '' })
+    }
+
+    if (
+      tipo === 'recurso' &&
+      recurso
+    ) {
+      atualizarFiltros({
+        recursos: filtros.recursos.filter(
+          (item) => item !== recurso,
+        ),
+      })
+    }
+
+    window.setTimeout(() => {
+      resultadoRef.current?.focus()
+    }, 0)
+  }
+
+  if (loading) {
     return (
-      <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
+      <main className="mx-auto max-w-6xl px-4 py-16">
+        <p role="status">
+          Carregando locais...
+        </p>
+      </main>
     )
   }
 
-  if (locais.length === 0) {
+  if (erro) {
     return (
-      <EmptyState
-        title="Nenhum local encontrado"
-        message="Não há locais cadastrados para exibir."
-      />
+      <main className="mx-auto max-w-6xl px-4 py-16">
+        <p role="alert">
+          Não foi possível carregar os locais. Tente novamente.
+        </p>
+      </main>
     )
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-6">
+    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
       <h1
         ref={tituloRef}
         tabIndex={-1}
-        className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+        className="text-3xl font-bold tracking-tight focus:outline-none"
       >
         Locais acessíveis
       </h1>
 
-      <section
-        aria-labelledby="filtros-titulo"
-        className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+      <p className="mt-2 max-w-2xl text-slate-600">
+        Combine os filtros para encontrar locais que atendam às suas necessidades.
+      </p>
+
+      <button
+        type="button"
+        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 lg:hidden ${foco}`}
+        aria-expanded={filtrosAbertos}
+        aria-controls="painel-filtros"
+        onClick={() =>
+          setFiltrosAbertos(
+            (aberto) => !aberto,
+          )
+        }
       >
-        <div className="mb-5">
-          <h2
-            id="filtros-titulo"
-            className="font-display text-xl font-bold text-texto"
+        {filtrosAbertos
+          ? 'Ocultar filtros'
+          : `Mostrar filtros${
+              totalFiltrosAtivos
+                ? ` (${totalFiltrosAtivos})`
+                : ''
+            }`}
+      </button>
+
+      <div className="mt-6 grid gap-8 lg:grid-cols-[18rem_1fr]">
+        <section
+          id="painel-filtros"
+          className={`${
+            filtrosAbertos
+              ? 'block'
+              : 'hidden'
+          } lg:block`}
+          aria-label="Filtros de locais"
+        >
+          <form
+            role="search"
+            onSubmit={(event) =>
+              event.preventDefault()
+            }
+            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
           >
-            Filtrar locais
-          </h2>
+            <div>
+              <label
+                htmlFor={buscaId}
+                className="mb-2 block font-semibold"
+              >
+                Buscar
+              </label>
 
-          <p className="mt-1 font-corpo text-corpo-14 text-secundaria">
-            Combine os filtros para encontrar locais que atendam aos
-            critérios desejados.
-          </p>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-3">
-          <div>
-            <label
-              htmlFor="busca-local"
-              className="mb-2 block font-corpo text-corpo-16 font-semibold text-texto"
-            >
-              Buscar local
-            </label>
-
-            <input
-              id="busca-local"
-              type="search"
-              value={filtros.busca}
-              onChange={atualizarBusca}
-              placeholder="Nome, endereço ou CEP"
-              className={classeControle}
-            />
-          </div>
-
-          <div>
-            <label
-              htmlFor="categoria-local"
-              className="mb-2 block font-corpo text-corpo-16 font-semibold text-texto"
-            >
-              Categoria
-            </label>
-
-            <select
-              id="categoria-local"
-              value={filtros.categoria}
-              onChange={atualizarCategoria}
-              className={classeControle}
-            >
-              <option value="">Todas as categorias</option>
-
-              {Object.entries(CATEGORIA_LABELS).map(
-                ([valor, label]) => (
-                  <option key={valor} value={valor}>
-                    {label}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
-
-          <div>
-            <label
-              htmlFor="recurso-local"
-              className="mb-2 block font-corpo text-corpo-16 font-semibold text-texto"
-            >
-              Recurso de acessibilidade
-            </label>
-
-            <select
-              id="recurso-local"
-              value={filtros.recurso}
-              onChange={atualizarRecurso}
-              className={classeControle}
-            >
-              <option value="">Todos os recursos</option>
-
-              {Object.entries(RECURSO_LABELS).map(
-                ([valor, label]) => (
-                  <option key={valor} value={valor}>
-                    {label}
-                  </option>
-                ),
-              )}
-            </select>
-          </div>
-        </div>
-
-        {possuiFiltrosAtivos && (
-          <div className="mt-5">
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <span className="font-corpo text-corpo-14 font-semibold text-texto">
-                Filtros ativos:
-              </span>
-
-              {filtros.busca !== '' && (
-                <button
-                  type="button"
-                  onClick={removerBusca}
-                  aria-label={`Remover filtro de busca: ${filtros.busca}`}
-                  className="min-h-10 rounded-full border border-primaria-600 bg-fundo-suave px-3 py-2 font-corpo text-corpo-14 text-primaria-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2"
-                >
-                  Busca: {filtros.busca} ×
-                </button>
-              )}
-
-              {filtros.categoria !== '' && (
-                <button
-                  type="button"
-                  onClick={removerCategoria}
-                  aria-label={`Remover filtro de categoria: ${CATEGORIA_LABELS[filtros.categoria]}`}
-                  className="min-h-10 rounded-full border border-primaria-600 bg-fundo-suave px-3 py-2 font-corpo text-corpo-14 text-primaria-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2"
-                >
-                  Categoria: {CATEGORIA_LABELS[filtros.categoria]} ×
-                </button>
-              )}
-
-              {filtros.recurso !== '' && (
-                <button
-                  type="button"
-                  onClick={removerRecurso}
-                  aria-label={`Remover filtro de recurso: ${RECURSO_LABELS[filtros.recurso]}`}
-                  className="min-h-10 rounded-full border border-primaria-600 bg-fundo-suave px-3 py-2 font-corpo text-corpo-14 text-primaria-600 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2"
-                >
-                  Recurso: {RECURSO_LABELS[filtros.recurso]} ×
-                </button>
-              )}
+              <input
+                ref={buscaRef}
+                id={buscaId}
+                type="search"
+                value={filtros.busca}
+                onChange={(event) =>
+                  atualizarFiltros({
+                    busca: event.target.value,
+                  })
+                }
+                placeholder="Nome, endereço ou CEP"
+                className={campo}
+              />
             </div>
+
+            <div className="mt-5">
+              <label
+                htmlFor={categoriaId}
+                className="mb-2 block font-semibold"
+              >
+                Categoria
+              </label>
+
+              <select
+                id={categoriaId}
+                value={filtros.categoria}
+                onChange={(event) =>
+                  atualizarFiltros({
+                    categoria:
+                      event.target
+                        .value as Categoria | '',
+                  })
+                }
+                className={campo}
+              >
+                <option value="">
+                  Todas as categorias
+                </option>
+
+                {CATEGORIAS.map(
+                  (categoria) => (
+                    <option
+                      key={categoria}
+                      value={categoria}
+                    >
+                      {CATEGORIA_ROTULOS[
+                        categoria
+                      ]}
+                    </option>
+                  ),
+                )}
+              </select>
+            </div>
+
+            <fieldset className="mt-5">
+              <legend
+                id={recursosId}
+                className="font-semibold"
+              >
+                Recursos de acessibilidade
+              </legend>
+
+              <div className="mt-3 space-y-2">
+                {RECURSOS.map(
+                  (recurso) => (
+                    <label
+                      key={recurso}
+                      className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-slate-50"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filtros.recursos.includes(
+                          recurso,
+                        )}
+                        onChange={() =>
+                          alternarRecurso(
+                            recurso,
+                          )
+                        }
+                        className="h-4 w-4"
+                      />
+
+                      <span className="text-sm">
+                        {
+                          RECURSO_ROTULOS[
+                            recurso
+                          ]
+                        }
+                      </span>
+                    </label>
+                  ),
+                )}
+              </div>
+            </fieldset>
 
             <button
               type="button"
               onClick={limparFiltros}
-              className={classeBotao}
+              disabled={
+                totalFiltrosAtivos === 0
+              }
+              className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
             >
               Limpar filtros
             </button>
+          </form>
+        </section>
+
+        <section aria-label="Resultados dos locais">
+          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+            <p
+              ref={resultadoRef}
+              tabIndex={-1}
+              role="status"
+              aria-live="polite"
+              className="font-semibold focus:outline-none"
+            >
+              {locaisFiltrados.length ===
+              0
+                ? 'Nenhum local encontrado com esses filtros.'
+                : `${
+                    locaisFiltrados.length
+                  } ${
+                    locaisFiltrados.length ===
+                    1
+                      ? 'local encontrado'
+                      : 'locais encontrados'
+                  }.`}
+            </p>
+
+            {totalFiltrosAtivos > 0 && (
+              <ul
+                aria-label="Filtros aplicados"
+                className="mt-3 flex flex-wrap gap-2"
+              >
+                {filtros.busca.trim() && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        removerFiltro(
+                          'busca',
+                        )
+                      }
+                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                    >
+                      Busca:{' '}
+                      {filtros.busca}{' '}
+                      <span aria-hidden="true">
+                        ×
+                      </span>
+                      <span className="sr-only">
+                        {' '}
+                        remover filtro
+                      </span>
+                    </button>
+                  </li>
+                )}
+
+                {filtros.categoria && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        removerFiltro(
+                          'categoria',
+                        )
+                      }
+                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                    >
+                      {
+                        CATEGORIA_ROTULOS[
+                          filtros.categoria
+                        ]
+                      }{' '}
+                      <span aria-hidden="true">
+                        ×
+                      </span>
+                      <span className="sr-only">
+                        {' '}
+                        remover filtro
+                      </span>
+                    </button>
+                  </li>
+                )}
+
+                {filtros.recursos.map(
+                  (recurso) => (
+                    <li key={recurso}>
+                      <button
+                        type="button"
+                        onClick={() =>
+                          removerFiltro(
+                            'recurso',
+                            recurso,
+                          )
+                        }
+                        className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      >
+                        {
+                          RECURSO_ROTULOS[
+                            recurso
+                          ]
+                        }{' '}
+                        <span aria-hidden="true">
+                          ×
+                        </span>
+                        <span className="sr-only">
+                          {' '}
+                          remover filtro
+                        </span>
+                      </button>
+                    </li>
+                  ),
+                )}
+
+                {totalFiltrosAtivos > 1 && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={limparFiltros}
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
+                    >
+                      Limpar todos
+                    </button>
+                  </li>
+                )}
+              </ul>
+            )}
           </div>
-        )}
-      </section>
 
-      <div
-        className="mb-5"
-        aria-live="polite"
-        aria-atomic="true"
-      >
-        <p className="font-corpo text-corpo-16 text-texto">
-          <strong>{locaisFiltrados.length}</strong>{' '}
-          {locaisFiltrados.length === 1
-            ? 'local encontrado'
-            : 'locais encontrados'}
-        </p>
-      </div>
+          {locaisFiltrados.length ===
+          0 ? (
+            <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+              <h2 className="text-xl font-bold">
+                Nenhum resultado
+              </h2>
 
-      {locaisFiltrados.length === 0 ? (
-        <EmptyState
-          title="Nenhum local encontrado"
-          message="Não encontramos locais que correspondam aos filtros selecionados. Tente remover ou alterar algum filtro."
-        />
-      ) : (
-        <>
-          <section
-            aria-label="Lista de locais acessíveis"
-            className="grid gap-6 md:grid-cols-2"
-          >
-            {locaisPaginados.map((local) => (
-              <LocalCard
-                key={local.id}
-                local={local}
-                detalhesUrl={`/locais/${local.id}`}
-              />
-            ))}
-          </section>
+              <p className="mt-2 text-slate-600">
+                Tente remover algum filtro ou fazer uma busca diferente.
+              </p>
+
+              <button
+                type="button"
+                onClick={limparFiltros}
+                className={`mt-5 min-h-11 rounded-md bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 ${foco}`}
+              >
+                Limpar filtros
+              </button>
+            </div>
+          ) : (
+            <div className="mt-6 grid gap-5 md:grid-cols-2">
+              {locaisPaginados.map(
+                (local) => (
+                  <article
+                    key={local.id}
+                    className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                  >
+                    <h2 className="text-xl font-bold">
+                      {local.nome}
+                    </h2>
+
+                    <p className="mt-3 text-sm text-slate-700">
+                      <strong>
+                        Endereço:
+                      </strong>{' '}
+                      {local.endereco}
+                    </p>
+
+                    <p className="mt-1 text-sm text-slate-700">
+                      <strong>
+                        CEP:
+                      </strong>{' '}
+                      {local.cep}
+                    </p>
+
+                    <p className="mt-2 text-sm text-slate-700">
+                      <strong>
+                        Categoria:
+                      </strong>{' '}
+                      {
+                        CATEGORIA_ROTULOS[
+                          local.categoria
+                        ]
+                      }
+                    </p>
+
+                    <div className="mt-4">
+                      <h3 className="font-semibold">
+                        Recursos de acessibilidade
+                      </h3>
+
+                      <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
+                        {local.recursosAcessibilidade.map(
+                          (recurso) => (
+                            <li
+                              key={
+                                recurso
+                              }
+                            >
+                              {
+                                RECURSO_ROTULOS[
+                                  recurso
+                                ]
+                              }
+                            </li>
+                          ),
+                        )}
+                      </ul>
+                    </div>
+
+                    <Link
+                      to={`/locais/${local.id}`}
+                      className={`mt-5 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 ${foco}`}
+                    >
+                      Ver detalhes
+
+                      <span className="sr-only">
+                        {' '}
+                        de {local.nome}
+                      </span>
+                    </Link>
+                  </article>
+                ),
+              )}
+            </div>
+          )}
 
           {totalPaginas > 1 && (
             <nav
@@ -361,10 +587,13 @@ export default function Locais() {
             >
               <button
                 type="button"
-                onClick={() => mudarPagina(paginaAtual - 1)}
-                disabled={paginaAtual === 1}
-                aria-label="Ir para a página anterior"
-                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                onClick={() =>
+                  mudarPagina(
+                    paginaValida - 1,
+                  )
+                }
+                disabled={paginaValida === 1}
+                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Anterior
               </button>
@@ -375,26 +604,34 @@ export default function Locais() {
                 aria-label="Páginas"
               >
                 {Array.from(
-                  { length: totalPaginas },
+                  {
+                    length: totalPaginas,
+                  },
                   (_, index) => {
-                    const pagina = index + 1
-                    const ehPaginaAtual =
-                      pagina === paginaAtual
+                    const pagina =
+                      index + 1
 
                     return (
                       <button
                         key={pagina}
                         type="button"
-                        onClick={() => mudarPagina(pagina)}
-                        aria-current={
-                          ehPaginaAtual ? 'page' : undefined
+                        onClick={() =>
+                          mudarPagina(
+                            pagina,
+                          )
                         }
-                        aria-label={`Página ${pagina}`}
-                        className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
-                          ehPaginaAtual
-                            ? 'bg-blue-600 font-bold text-white'
-                            : 'border border-gray-300 text-texto hover:bg-gray-100'
-                        }`}
+                        aria-current={
+                          pagina ===
+                          paginaValida
+                            ? 'page'
+                            : undefined
+                        }
+                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${
+                          pagina ===
+                          paginaValida
+                            ? 'bg-blue-700 text-white'
+                            : 'border border-slate-300 hover:bg-slate-100'
+                        } ${foco}`}
                       >
                         {pagina}
                       </button>
@@ -405,17 +642,23 @@ export default function Locais() {
 
               <button
                 type="button"
-                onClick={() => mudarPagina(paginaAtual + 1)}
-                disabled={paginaAtual === totalPaginas}
-                aria-label="Ir para a próxima página"
-                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                onClick={() =>
+                  mudarPagina(
+                    paginaValida + 1,
+                  )
+                }
+                disabled={
+                  paginaValida ===
+                  totalPaginas
+                }
+                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Próxima
               </button>
             </nav>
           )}
-        </>
-      )}
+        </section>
+      </div>
     </main>
   )
 }

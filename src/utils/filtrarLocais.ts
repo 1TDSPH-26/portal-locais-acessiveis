@@ -7,7 +7,31 @@ import type {
 export type FiltrosLocais = {
   busca: string
   categoria: Categoria | ''
-  recurso: RecursoAcessibilidade | ''
+  recursos: RecursoAcessibilidade[]
+}
+
+export const FILTROS_VAZIOS: FiltrosLocais = {
+  busca: '',
+  categoria: '',
+  recursos: [],
+}
+
+export function contarFiltrosAtivos(
+  filtros: FiltrosLocais,
+): number {
+  let total = 0
+
+  if (filtros.busca.trim() !== '') {
+    total += 1
+  }
+
+  if (filtros.categoria !== '') {
+    total += 1
+  }
+
+  total += filtros.recursos.length
+
+  return total
 }
 
 export function filtrarLocais(
@@ -27,14 +51,16 @@ export function filtrarLocais(
       filtros.categoria === '' ||
       local.categoria === filtros.categoria
 
-    const correspondeRecurso =
-      filtros.recurso === '' ||
-      local.recursosAcessibilidade.includes(filtros.recurso)
+    const correspondeRecursos =
+      filtros.recursos.length === 0 ||
+      filtros.recursos.every((recurso) =>
+        local.recursosAcessibilidade.includes(recurso),
+      )
 
     return (
       correspondeBusca &&
       correspondeCategoria &&
-      correspondeRecurso
+      correspondeRecursos
     )
   })
 }
