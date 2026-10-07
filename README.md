@@ -3,7 +3,6 @@
 ## Documentação técnica — CP2
 
 - [Modelo de dados Local](docs/modelo-local.md): campos, tipos, categorias, recursos de acessibilidade, exemplo e uso na implementação atual.
-- [Validação da documentação do modelo](docs/validacao-modelo-local.md): verificações executadas e pendências de entrega.
 
 > As seções de CP1 abaixo preservam o histórico daquela entrega. Para o modelo `Local` e seu uso atual, consulte a documentação de CP2 acima.
 
