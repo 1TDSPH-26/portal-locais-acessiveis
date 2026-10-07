@@ -1,10 +1,15 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
 import { listaLocais } from '../../data/locais';
-import type { Categoria, RecursoAcessibilidade, Local } from '../../types/local';
+import type {
+  Categoria,
+  RecursoAcessibilidade,
+  Local,
+} from '../../types/local';
 import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
+import { useConsulta } from '../../hooks/useConsulta';
 import { filtrarLocais } from '../../utils/filtrarLocais';
 
 const classeLinkDetalhes = [
@@ -38,9 +43,9 @@ const recursos: RecursoAcessibilidade[] = [
 ];
 
 export default function Locais() {
-  const [locais, setLocais] = useState<Local[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
+  const { estado, tentarNovamente } = useConsulta<Local[]>(
+    async () => listaLocais
+  );
 
   const [categoriaSelecionada, setCategoriaSelecionada] =
     useState<Categoria | ''>('');
@@ -54,21 +59,7 @@ export default function Locais() {
 
   const tituloRef = useRef<HTMLHeadingElement>(null);
 
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setLocais(listaLocais);
-      } catch {
-        setError(true);
-      } finally {
-        setLoading(false);
-      }
-    }, 0);
-
-    return () => {
-      clearTimeout(timer);
-    };
-  }, []);
+  const locais = estado.status === 'sucesso' ? estado.dados : [];
 
   useEffect(() => {
     setPaginaAtual(1);
@@ -89,22 +80,50 @@ export default function Locais() {
     setRecursosSelecionados([]);
   }
 
-  if (loading) {
-    return <LoadingState message="Carregando locais..." />;
+  const titulo = (
+    <h1
+      ref={tituloRef}
+      tabIndex={-1}
+      className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+    >
+      Locais acessíveis
+    </h1>
+  );
+
+  if (estado.status === 'carregando') {
+    return (
+      <main className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+
+        <LoadingState message="Carregando locais..." />
+      </main>
+    );
   }
 
-  if (error) {
+  if (estado.status === 'erro') {
     return (
-      <ErrorMessage message="Não foi possível carregar os locais. Tente novamente." />
+      <main className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+
+        <ErrorMessage
+          title="Não foi possível carregar os locais"
+          message={estado.mensagem}
+          onRetry={tentarNovamente}
+        />
+      </main>
     );
   }
 
   if (locais.length === 0) {
     return (
-      <EmptyState
-        title="Nenhum local encontrado"
-        message="Não há locais cadastrados para exibir."
-      />
+      <main className="mx-auto w-full max-w-6xl p-6">
+        {titulo}
+
+        <EmptyState
+          title="Nenhum local encontrado"
+          message="Não há locais cadastrados para exibir."
+        />
+      </main>
     );
   }
 
@@ -129,21 +148,13 @@ export default function Locais() {
     if (novaPagina >= 1 && novaPagina <= totalPaginas) {
       setPaginaAtual(novaPagina);
 
-      if (tituloRef.current) {
-        tituloRef.current.focus();
-      }
+      tituloRef.current?.focus();
     }
   };
 
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
-      <h1
-        ref={tituloRef}
-        tabIndex={-1}
-        className="mb-6 font-display text-3xl font-bold text-texto focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
-      >
-        Locais acessíveis
-      </h1>
+      {titulo}
 
       <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-4">
@@ -184,7 +195,10 @@ export default function Locais() {
               const inputId = `recurso-${recurso}`;
 
               return (
-                <div key={recurso} className="flex items-center gap-2">
+                <div
+                  key={recurso}
+                  className="flex items-center gap-2"
+                >
                   <input
                     type="checkbox"
                     id={inputId}
@@ -261,7 +275,10 @@ export default function Locais() {
                   className={classeLinkDetalhes}
                 >
                   Ver detalhes
-                  <span className="sr-only"> de {local.nome}</span>
+                  <span className="sr-only">
+                    {' '}
+                    de {local.nome}
+                  </span>
                 </Link>
               </article>
             ))}
@@ -303,8 +320,8 @@ export default function Locais() {
                         }
                         aria-label={`Página ${pagina}`}
                         className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${ehPaginaAtual
-                          ? 'bg-blue-600 font-bold text-white'
-                          : 'border border-gray-300 text-texto hover:bg-gray-100'
+                            ? 'bg-blue-600 font-bold text-white'
+                            : 'border border-gray-300 text-texto hover:bg-gray-100'
                           }`}
                       >
                         {pagina}
