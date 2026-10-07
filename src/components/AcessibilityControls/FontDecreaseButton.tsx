@@ -9,6 +9,13 @@ export function TextMinusControl() {
     return currentSize === '1'
   })
 
+  const updateButtonState = () => {
+    const currentSize =
+      document.documentElement.getAttribute('data-font-size') || '1'
+
+    setIsMinimum(currentSize === '1')
+  }
+
   const handleDecrease = () => {
     const html = document.documentElement
     const currentSize = html.getAttribute('data-font-size') || '1'
@@ -21,7 +28,7 @@ export function TextMinusControl() {
           : '1'
 
     html.setAttribute('data-font-size', nextSize)
-    setIsMinimum(nextSize === '1')
+    updateButtonState()
   }
 
   useEffect(() => {
@@ -29,6 +36,19 @@ export function TextMinusControl() {
 
     if (!html.hasAttribute('data-font-size')) {
       html.setAttribute('data-font-size', '1')
+    }
+
+    const observer = new MutationObserver(() => {
+      updateButtonState()
+    })
+
+    observer.observe(html, {
+      attributes: true,
+      attributeFilter: ['data-font-size'],
+    })
+
+    return () => {
+      observer.disconnect()
     }
   }, [])
 

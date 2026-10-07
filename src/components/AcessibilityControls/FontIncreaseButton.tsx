@@ -9,6 +9,13 @@ export function TextPlusControl() {
     return currentSize === '3'
   })
 
+  const updateButtonState = () => {
+    const currentSize =
+      document.documentElement.getAttribute('data-font-size') || '1'
+
+    setIsMaximum(currentSize === '3')
+  }
+
   const handleIncrease = () => {
     const html = document.documentElement
     const currentSize = html.getAttribute('data-font-size') || '1'
@@ -21,7 +28,7 @@ export function TextPlusControl() {
           : '3'
 
     html.setAttribute('data-font-size', nextSize)
-    setIsMaximum(nextSize === '3')
+    updateButtonState()
   }
 
   useEffect(() => {
@@ -29,6 +36,19 @@ export function TextPlusControl() {
 
     if (!html.hasAttribute('data-font-size')) {
       html.setAttribute('data-font-size', '1')
+    }
+
+    const observer = new MutationObserver(() => {
+      updateButtonState()
+    })
+
+    observer.observe(html, {
+      attributes: true,
+      attributeFilter: ['data-font-size'],
+    })
+
+    return () => {
+      observer.disconnect()
     }
   }, [])
 
