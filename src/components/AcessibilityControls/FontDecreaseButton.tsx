@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react'
 
-export function TextMinusControl() {
+export default function FontDecreaseButton() {
   const [isMinimum, setIsMinimum] = useState(() => {
     const currentSize =
       document.documentElement.getAttribute('data-font-size') || '1'

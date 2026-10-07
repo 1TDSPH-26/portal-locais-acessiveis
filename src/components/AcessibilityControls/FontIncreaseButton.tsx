@@ -1,7 +1,7 @@
 
 import { useEffect, useState } from 'react'
 
-export function TextPlusControl() {
+export default function FontIncreaseButton() {
   const [isMaximum, setIsMaximum] = useState(() => {
     const currentSize =
       document.documentElement.getAttribute('data-font-size') || '1'

@@ -1,7 +1,7 @@
 
 import { useState } from 'react'
 
-export function ContrastControl() {
+export default function ContrastButton() {
   const [highContrast, setHighContrast] = useState(false)
 
   const handleToggleContrast = () => {
