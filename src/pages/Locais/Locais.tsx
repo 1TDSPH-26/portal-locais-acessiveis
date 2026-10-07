@@ -3,7 +3,7 @@ import { Link } from 'react-router'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LoadingState from '../../components/Feedback/LoadingState'
-import { listaLocais } from '../../data/locais'
+import { listarLocais } from '../../services/locaisService'
 import type { Local } from '../../types/local'
 
 const classeLinkDetalhes = [
@@ -26,19 +26,18 @@ export default function Locais() {
   const tituloRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
-    const timer = setTimeout(() => {
+    const carregarLocais = async () => {
       try {
-        setLocais(listaLocais)
+        const dados = await listarLocais()
+        setLocais(dados)
       } catch {
         setError(true)
       } finally {
         setLoading(false)
       }
-    }, 0)
-
-    return () => {
-      clearTimeout(timer)
     }
+
+    void carregarLocais()
   }, [])
 
   const totalPaginas = Math.ceil(locais.length / itensPorPagina)
