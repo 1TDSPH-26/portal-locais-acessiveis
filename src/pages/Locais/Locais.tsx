@@ -1,14 +1,19 @@
 import { useEffect, useRef, useState } from 'react';
 import { Link } from 'react-router';
+import usePageTitle from '../../hooks/usePageTitle';
+
 import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
+
 import { listarLocais } from '../../services/locaisService';
+
 import type {
   Categoria,
   RecursoAcessibilidade,
   Local,
 } from '../../types/local';
+
 import { useConsulta } from '../../hooks/useConsulta';
 import { filtrarLocais } from '../../utils/filtrarLocais';
 
@@ -43,6 +48,8 @@ const recursos: RecursoAcessibilidade[] = [
 ];
 
 export default function Locais() {
+  usePageTitle('Locais acessíveis');
+
   const { estado, tentarNovamente } = useConsulta<Local[]>(
     listarLocais
   );
@@ -71,7 +78,10 @@ export default function Locais() {
         recursosSelecionados.filter((r) => r !== recurso)
       );
     } else {
-      setRecursosSelecionados([...recursosSelecionados, recurso]);
+      setRecursosSelecionados([
+        ...recursosSelecionados,
+        recurso,
+      ]);
     }
   }
 
@@ -191,7 +201,7 @@ export default function Locais() {
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
             {recursos.map((recurso) => {
-              const inputId = `recurso-${recurso}`;
+              const inputId = `recurso - ${ recurso } `;
 
               return (
                 <div
@@ -270,10 +280,11 @@ export default function Locais() {
                 </div>
 
                 <Link
-                  to={`/locais/${local.id}`}
+                  to={`/ locais / ${ local.id } `}
                   className={classeLinkDetalhes}
                 >
                   Ver detalhes
+
                   <span className="sr-only">
                     {' '}
                     de {local.nome}
@@ -307,7 +318,8 @@ export default function Locais() {
                   { length: totalPaginas },
                   (_, index) => {
                     const pagina = index + 1;
-                    const ehPaginaAtual = pagina === paginaAtual;
+                    const ehPaginaAtual =
+                      pagina === paginaAtual;
 
                     return (
                       <button
@@ -317,11 +329,12 @@ export default function Locais() {
                         aria-current={
                           ehPaginaAtual ? 'page' : undefined
                         }
-                        aria-label={`Página ${pagina}`}
-                        className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${ehPaginaAtual
-                            ? 'bg-blue-600 font-bold text-white'
-                            : 'border border-gray-300 text-texto hover:bg-gray-100'
-                          }`}
+                        aria-label={`Página ${ pagina } `}
+                        className={`min - w - [40px] rounded - md px - 3 py - 2 font - corpo text - sm font - medium transition - colors focus: outline - none focus: ring - 2 focus: ring - blue - 600 focus: ring - offset - 2 ${
+  ehPaginaAtual
+    ? 'bg-blue-600 font-bold text-white'
+    : 'border border-gray-300 text-texto hover:bg-gray-100'
+} `}
                       >
                         {pagina}
                       </button>

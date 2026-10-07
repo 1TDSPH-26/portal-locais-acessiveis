@@ -1,3 +1,4 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import type { Categoria, Local, RecursoAcessibilidade } from '../../types/local'
 import { validarCep } from '../../utils/validacoes'
@@ -40,6 +41,8 @@ const dadosIniciais: DadosFormulario = {
 }
 
 export default function Cadastro() {
+  usePageTitle('Cadastro de local')
+
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
   const [erros, setErros] = useState<ErrosFormulario>({})
   const [enviando, setEnviando] = useState(false)
