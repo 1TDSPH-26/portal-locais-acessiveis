@@ -117,20 +117,23 @@ export default function Cadastro() {
   function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
-    if (enviando) {
-      return
-    }
-
+    const novosErros = validarFormulario()
+    setErros(novosErros)
     setStatusEnvio(null)
 
-    if (!dados.nome || !dados.categoria || !dados.endereco || !dados.cep) {
-      setStatusEnvio('erro')
+    const primeiroErro = Object.keys(novosErros)[0] as
+      | keyof DadosFormulario
+      | undefined
+
+    if (primeiroErro) {
+      focarCampo(primeiroErro)
       return
     }
 
     setEnviando(true)
 
-    window.setTimeout(() => {
+    // Simulação do envio enquanto a API não está implementada.
+    setTimeout(() => {
       setEnviando(false)
       setStatusEnvio('sucesso')
     }, 1500)
@@ -156,6 +159,36 @@ export default function Cadastro() {
       </p>
 
       <form onSubmit={enviarFormulario} className="mt-8 space-y-8">
+
+        {camposComErro.length > 0 && (
+          <div
+            role="alert"
+            aria-labelledby="titulo-erros"
+            className="rounded-md border border-erro p-4"
+          >
+            <h2
+              id="titulo-erros"
+              className="font-display text-h2 font-bold text-texto"
+            >
+              Corrija os seguintes campos:
+            </h2>
+
+            <ul className="mt-2 list-disc pl-5">
+              {camposComErro.map(([campo, mensagem]) => (
+                <li key={campo}>
+                  <button
+                    type="button"
+                    onClick={() => focarCampo(campo)}
+                    className="font-corpo text-corpo-14 text-erro underline"
+                  >
+                    {mensagem}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <fieldset className="rounded-lg border border-borda-decorativa p-4 sm:p-6">
           <legend className="px-1 font-display text-h2 font-bold text-texto">
             Identificação do local
@@ -348,7 +381,7 @@ export default function Cadastro() {
             Não foi possível enviar o cadastro. Verifique os campos e tente novamente.
           </p>
         )}
-
+        </button>
         <button
           type="submit"
           disabled={enviando}
