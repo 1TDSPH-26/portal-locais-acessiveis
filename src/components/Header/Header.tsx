@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { NavLink, Link } from 'react-router'
 
 type NavItem = {
@@ -16,6 +16,20 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [tamanhoFonte, setTamanhoFonte] = useState(100)
+
+  useEffect(() => {
+    document.documentElement.style.fontSize = `${tamanhoFonte}%`
+  }, [tamanhoFonte])
+  function diminuirFonte() {
+    setTamanhoFonte((tamanhoAtual) => Math.max(tamanhoAtual - 10, 80))
+  }
+  function aumentarFonte() {
+    setTamanhoFonte((tamanhoAtual) => Math.min(tamanhoAtual + 10, 120))
+  }
+  function restaurarFonte() {
+    setTamanhoFonte(100)
+  }
 
   return (
     <header className="w-full bg-fundo" role="banner">
@@ -24,22 +38,34 @@ export default function Header() {
         <div className="max-w-[1440px] h-16 mx-auto px-4 md:px-16 py-2 flex items-center justify-between">
           <a
             href="#conteudo-principal"
-            className="inline-flex items-center px-4 py-2 bg-fundo-suave text-primaria-700 font-display font-semibold text-label rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors focus:ring-2 focus:ring-primaria-600"
-          >
+            className="inline-flex items-center px-4 py-2 bg-fundo-suave text-primaria-700 font-display font-semibold text-label rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors focus:ring-2 focus:ring-primaria-600">
             Pular para o conteúdo principal
           </a>
 
           <div className="hidden sm:flex items-center gap-4 text-label text-secundaria">
-            <a href="#menu-principal" className="hover:text-texto transition-colors">
-              Menu [1]
-            </a>
-            <a href="#rodape" className="hover:text-texto transition-colors">
-              Rodapé [2]
-            </a>
+          <a href="#menu-principal" className="hover:text-texto transition-colors">
+             Menu [1]
+          </a>
+
+          <a href="#rodape" className="hover:text-texto transition-colors">
+            Rodapé [2]
+          </a>
+
+               <div className="flex items-center gap-2" role="group" aria-label="Controles de tamanho da fonte">
+                <button type="button" onClick={diminuirFonte} disabled={tamanhoFonte <= 80} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"  aria-label="Diminuir tamanho da fonte" title="Diminuir fonte">
+               A-
+           </button>
+
+                <button type="button" onClick={restaurarFonte} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer" aria-label="Restaurar tamanho padrão da fonte"  title="Restaurar fonte">
+               A
+            </button>
+                <button type="button" onClick={aumentarFonte} disabled={tamanhoFonte >= 120} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"  aria-label="Aumentar tamanho da fonte" title="Aumentar fonte">
+               A+
+            </button>
           </div>
         </div>
       </div>
-
+    </div>
       {/* Menu principal */}
       <div className="w-full bg-fundo border-b border-borda-decorativa">
         <div className="max-w-[1440px] h-[88px] mx-auto px-4 md:px-16 py-5 flex items-center justify-between">
