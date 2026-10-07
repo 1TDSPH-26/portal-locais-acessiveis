@@ -69,14 +69,14 @@ html[data-font-size="3"] {
    ========================================================= */
 
 html.high-contrast {
-  --color-fundo: #000000;
-  --color-fundo-suave: #000000;
-  --color-texto: #FFFFFF;
-  --color-secundaria: #FFFFFF;
-  --color-borda-decorativa: #FFFFFF;
-  --color-borda-funcional: #FFFFFF;
-  --color-primaria-600: #FFFFFF;
-  --color-primaria-700: #FFFFFF;
+  --color-fundo: #FFFFFF;
+  --color-fundo-suave: #EEF2FF;
+  --color-texto: #000000;
+  --color-secundaria: #1E293B;
+  --color-borda-decorativa: #475569;
+  --color-borda-funcional: #000000;
+  --color-primaria-600: #312E81;
+  --color-primaria-700: #1E1B4B;
 }
 
 
@@ -138,18 +138,18 @@ body {
    ========================================================= */
 
 html.high-contrast .accessibility-button {
-  border-color: #FFFFFF;
-  background-color: #000000;
-  color: #FFFFFF;
-}
-
-html.high-contrast .accessibility-button:hover {
+  border-color: #000000;
   background-color: #FFFFFF;
   color: #000000;
 }
 
+html.high-contrast .accessibility-button:hover {
+  background-color: #EEF2FF;
+  color: #000000;
+}
+
 html.high-contrast .accessibility-button:focus-visible {
-  outline-color: #FFFFFF;
+  outline-color: #312E81;
 }
 
 
@@ -158,9 +158,9 @@ html.high-contrast .accessibility-button:focus-visible {
    ========================================================= */
 
 html.high-contrast a {
-  color: #FFFFFF;
+  color: #4a43b3;
 }
 
 html.high-contrast a:hover {
-  color: #FFFFFF;
+  color: #1E1B4B;
 }
