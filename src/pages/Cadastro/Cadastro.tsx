@@ -16,18 +16,12 @@ const categorias: ReadonlyArray<{ valor: Categoria; rotulo: string }> = [
   { valor: 'servico_publico', rotulo: 'Serviço público' },
 ]
 
-const recursos: ReadonlyArray<{
-  valor: RecursoAcessibilidade
-  rotulo: string
-}> = [
+const recursos: ReadonlyArray<{ valor: RecursoAcessibilidade; rotulo: string }> = [
   { valor: 'rampa_acesso', rotulo: 'Rampa de acesso' },
   { valor: 'banheiro_adaptado', rotulo: 'Banheiro adaptado' },
   { valor: 'piso_tatil', rotulo: 'Piso tátil' },
   { valor: 'sinalizacao_visual', rotulo: 'Sinalização visual' },
-  {
-    valor: 'vagas_estacionamento',
-    rotulo: 'Vagas de estacionamento acessíveis',
-  },
+  { valor: 'vagas_estacionamento', rotulo: 'Vagas de estacionamento acessíveis' },
   { valor: 'braile', rotulo: 'Informações em braile' },
   { valor: 'libras', rotulo: 'Atendimento em Libras' },
   { valor: 'elevador', rotulo: 'Elevador acessível' },
@@ -48,6 +42,8 @@ const dadosIniciais: DadosFormulario = {
 export default function Cadastro() {
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
   const [erros, setErros] = useState<ErrosFormulario>({})
+  const [enviando, setEnviando] = useState(false)
+  const [statusEnvio, setStatusEnvio] = useState<'sucesso' | 'erro' | null>(null)
 
   const nomeRef = useRef<HTMLInputElement>(null)
   const categoriaRef = useRef<HTMLSelectElement>(null)
@@ -121,8 +117,13 @@ export default function Cadastro() {
   function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
 
+    if (enviando) {
+      return
+    }
+
     const novosErros = validarFormulario()
     setErros(novosErros)
+    setStatusEnvio(null)
 
     const primeiroErro = Object.keys(novosErros)[0] as
       | keyof DadosFormulario
@@ -133,7 +134,19 @@ export default function Cadastro() {
       return
     }
 
-    // O envio para API está fora do escopo da Issue #28.
+    setEnviando(true)
+
+    // Simulação do envio enquanto a API não está implementada.
+    window.setTimeout(() => {
+      setEnviando(false)
+
+      if (!navigator.onLine) {
+        setStatusEnvio('erro')
+        return
+      }
+
+      setStatusEnvio('sucesso')
+    }, 1500)
   }
 
   const classeCampo =
@@ -155,32 +168,27 @@ export default function Cadastro() {
         acessibilidade.
       </p>
 
-      <p className="mt-2 font-corpo text-corpo-14 text-secundaria">
-        Os campos identificados como <strong>obrigatório</strong> devem ser
-        preenchidos.
-      </p>
-
-      <form onSubmit={enviarFormulario} className="mt-8 space-y-8" noValidate>
+      <form onSubmit={enviarFormulario} className="mt-8 space-y-8">
         {camposComErro.length > 0 && (
           <div
             role="alert"
-            aria-labelledby="resumo-erros-titulo"
+            aria-labelledby="titulo-erros"
             className="rounded-md border border-erro p-4"
           >
             <h2
-              id="resumo-erros-titulo"
-              className="font-display text-h3 font-bold text-texto"
+              id="titulo-erros"
+              className="font-display text-h2 font-bold text-texto"
             >
               Corrija os seguintes campos:
             </h2>
 
-            <ul className="mt-3 list-disc space-y-2 pl-5">
+            <ul className="mt-2 list-disc pl-5">
               {camposComErro.map(([campo, mensagem]) => (
                 <li key={campo}>
                   <button
                     type="button"
                     onClick={() => focarCampo(campo)}
-                    className="font-corpo text-corpo-16 font-semibold text-erro underline"
+                    className="font-corpo text-corpo-14 text-erro underline"
                   >
                     {mensagem}
                   </button>
@@ -366,11 +374,29 @@ export default function Cadastro() {
           </div>
         </fieldset>
 
+        {statusEnvio === 'sucesso' && (
+          <p
+            role="status"
+            aria-live="polite"
+            className="font-corpo text-corpo-16"
+          >
+            Local cadastrado com sucesso.
+          </p>
+        )}
+
+        {statusEnvio === 'erro' && (
+          <p role="alert" className="font-corpo text-corpo-16">
+            Não foi possível enviar o cadastro. Seus dados foram mantidos para
+            uma nova tentativa.
+          </p>
+        )}
+
         <button
           type="submit"
-          className="w-full rounded-md bg-primaria-600 px-5 py-3 font-corpo text-botao font-bold text-white hover:bg-primaria-700 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 sm:w-auto"
+          disabled={enviando}
+          className="w-full rounded-md bg-primaria-600 px-5 py-3 font-corpo text-botao font-bold text-white hover:bg-primaria-700 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
         >
-          Cadastrar local
+          {enviando ? 'Enviando...' : 'Cadastrar local'}
         </button>
       </form>
     </section>
