@@ -1,36 +1,35 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from 'react'
 
 export function TextMinusControl() {
-  const [isMinimum, setIsMinimum] = useState(false);
+  const [isMinimum, setIsMinimum] = useState(() => {
+    const currentSize =
+      document.documentElement.getAttribute('data-font-size') || '1'
+
+    return currentSize === '1'
+  })
 
   const handleDecrease = () => {
-    const html = document.documentElement;
-    const currentSize = html.getAttribute("data-font-size") || "1";
+    const html = document.documentElement
+    const currentSize = html.getAttribute('data-font-size') || '1'
 
-    if (currentSize === "3") {
-      html.setAttribute("data-font-size", "2");
-    } else if (currentSize === "2") {
-      html.setAttribute("data-font-size", "1");
-    }
+    const nextSize =
+      currentSize === '3'
+        ? '2'
+        : currentSize === '2'
+          ? '1'
+          : '1'
 
-    if (currentSize === "2" || currentSize === "3") {
-      setIsMinimum(
-        currentSize === "2"
-      );
-    }
-  };
+    html.setAttribute('data-font-size', nextSize)
+    setIsMinimum(nextSize === '1')
+  }
 
   useEffect(() => {
-    const html = document.documentElement;
+    const html = document.documentElement
 
-    const checkSize = () => {
-      const currentSize = html.getAttribute("data-font-size") || "1";
-
-      setIsMinimum(currentSize === "1");
-    };
-
-    checkSize();
-  }, []);
+    if (!html.hasAttribute('data-font-size')) {
+      html.setAttribute('data-font-size', '1')
+    }
+  }, [])
 
   return (
     <button
@@ -43,5 +42,6 @@ export function TextMinusControl() {
     >
       A-
     </button>
-  );
+  )
 }
+

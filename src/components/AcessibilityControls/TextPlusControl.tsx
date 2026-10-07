@@ -1,32 +1,36 @@
-import { useEffect, useState } from "react";
+
+import { useEffect, useState } from 'react'
 
 export function TextPlusControl() {
-  const [isMaximum, setIsMaximum] = useState(false);
+  const [isMaximum, setIsMaximum] = useState(() => {
+    const currentSize =
+      document.documentElement.getAttribute('data-font-size') || '1'
+
+    return currentSize === '3'
+  })
 
   const handleIncrease = () => {
-    const html = document.documentElement;
-    const currentSize = html.getAttribute("data-font-size") || "1";
+    const html = document.documentElement
+    const currentSize = html.getAttribute('data-font-size') || '1'
 
-    if (currentSize === "1") {
-      html.setAttribute("data-font-size", "2");
-    } else if (currentSize === "2") {
-      html.setAttribute("data-font-size", "3");
-    }
+    const nextSize =
+      currentSize === '1'
+        ? '2'
+        : currentSize === '2'
+          ? '3'
+          : '3'
 
-    checkSize();
-  };
-
-  const checkSize = () => {
-    const html = document.documentElement;
-    const currentSize = html.getAttribute("data-font-size") || "1";
-
-    setIsMaximum(currentSize === "3");
-  };
+    html.setAttribute('data-font-size', nextSize)
+    setIsMaximum(nextSize === '3')
+  }
 
   useEffect(() => {
-    checkSize();
-  }, []);
+    const html = document.documentElement
 
+    if (!html.hasAttribute('data-font-size')) {
+      html.setAttribute('data-font-size', '1')
+    }
+  }, [])
 
   return (
     <button
@@ -39,5 +43,6 @@ export function TextPlusControl() {
     >
       A+
     </button>
-  );
+  )
 }
+

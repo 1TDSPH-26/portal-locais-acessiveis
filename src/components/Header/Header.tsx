@@ -1,4 +1,7 @@
 import { NavLink } from 'react-router'
+import { ContrastControl } from '../AcessibilityControls/ContrastControl'
+import { TextMinusControl } from '../AcessibilityControls/TextMinusControl'
+import { TextPlusControl } from '../AcessibilityControls/TextPlusControl'
 
 // Cada item daqui vira um link no menu
 // O "end" é usado quando queremos q a rota seja exata (ex: "/")
@@ -19,7 +22,18 @@ export default function Header() {
   return (
     <header>
       <h1>Portal de Locais Acessíveis</h1>
-
+      <div
+          aria-label="Controles de acessibilidade"
+          style={{
+            display: 'flex',
+            gap: '0.5rem',
+            flexWrap: 'wrap',
+          }}
+        >
+          <TextMinusControl />
+          <TextPlusControl />
+          <ContrastControl />
+      </div>
       <nav aria-label="Navegação principal">
         <ul
           style={{

@@ -1,18 +1,19 @@
-import { useEffect, useState } from "react";
+
+import { useState } from 'react'
 
 export function ContrastControl() {
-  const [highContrast, setHighContrast] = useState(false);
+  const [highContrast, setHighContrast] = useState(false)
 
-  useEffect(() => {
+  const handleToggleContrast = () => {
+    const nextContrast = !highContrast
+
+    setHighContrast(nextContrast)
+
     document.documentElement.classList.toggle(
-      "high-contrast",
-      highContrast,
-    );
-
-    return () => {
-      document.documentElement.classList.remove("high-contrast");
-    };
-  }, [highContrast]);
+      'high-contrast',
+      nextContrast,
+    )
+  }
 
   return (
     <button
@@ -21,13 +22,18 @@ export function ContrastControl() {
       aria-pressed={highContrast}
       aria-label={
         highContrast
-          ? "Desativar alto contraste"
-          : "Ativar alto contraste"
+          ? 'Desativar alto contraste'
+          : 'Ativar alto contraste'
       }
-      onClick={() => setHighContrast((current) => !current)}
+      title={
+        highContrast
+          ? 'Desativar alto contraste'
+          : 'Ativar alto contraste'
+      }
+      onClick={handleToggleContrast}
     >
       C
     </button>
-  );
+  )
 }
 
