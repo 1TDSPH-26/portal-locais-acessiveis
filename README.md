@@ -184,9 +184,9 @@ portal-locais-acessiveis/
 │   ├── services/           # Reservado para serviços e integrações
 │   ├── types/              # Tipos Local, Categoria e RecursoAcessibilidade
 │   ├── App.tsx             # Composição da aplicação
+│   ├── globals.css         # Estilos globais e Tailwind
 │   └── main.tsx            # Entrada React e BrowserRouter
 ├── .env.example            # Modelo de configuração futura
-├── globals.css             # Estilos globais e Tailwind
 ├── index.html              # Documento de entrada do Vite
 ├── package.json            # Dependências e scripts
 ├── package-lock.json       # Versões resolvidas das dependências
