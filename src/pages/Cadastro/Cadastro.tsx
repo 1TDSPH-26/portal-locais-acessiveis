@@ -38,6 +38,7 @@ const dadosIniciais: DadosFormulario = {
 
 export default function Cadastro() {
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
+  const [enviando, setEnviando] = useState(false)
 
   function atualizarTexto(campo: 'nome' | 'endereco' | 'cep') {
     return (evento: ChangeEvent<HTMLInputElement>) => {
@@ -65,6 +66,16 @@ export default function Cadastro() {
 
   function enviarFormulario(evento: FormEvent<HTMLFormElement>) {
     evento.preventDefault()
+
+    if (enviando) {
+      return
+    }
+
+    setEnviando(true)
+
+    window.setTimeout(() => {
+      setEnviando(false)
+    }, 1500)
   }
 
   const classeCampo = 'mt-1 block w-full rounded-md border border-borda-funcional bg-fundo px-3 py-2 text-texto shadow-sm outline-offset-2 focus:outline-3 focus:outline-primaria-600'
@@ -122,8 +133,12 @@ export default function Cadastro() {
           </div>
         </fieldset>
 
-        <button type="submit" className="w-full rounded-md bg-primaria-600 px-5 py-3 font-corpo text-botao font-bold text-white hover:bg-primaria-700 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 sm:w-auto">
-          Cadastrar local
+        <button
+          type="submit"
+          disabled={enviando}
+          className="w-full rounded-md bg-primaria-600 px-5 py-3 font-corpo text-botao font-bold text-white hover:bg-primaria-700 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+        >
+          {enviando ? 'Enviando...' : 'Cadastrar local'}
         </button>
       </form>
     </section>
