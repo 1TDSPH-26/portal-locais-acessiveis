@@ -255,7 +255,11 @@ export default function Locais() {
       {locaisFiltrados.length === 0 ? (
         <EmptyState
           title="Nenhum local encontrado"
-          message="Não encontramos locais para os filtros selecionados."
+          message={
+  termo
+    ? `Nenhum resultado para "${termoBusca.trim()}".`
+    : 'Não encontramos locais para os filtros selecionados.'
+}
         />
       ) : (
         <>
