@@ -1,9 +1,17 @@
 import { useEffect, useRef, useState } from 'react';
+import { Link } from 'react-router'
 import { listaLocais } from '../../data/locais';
 import type { Categoria, RecursoAcessibilidade, Local } from '../../types/local';
 import EmptyState from '../../components/Feedback/EmptyState';
 import ErrorMessage from '../../components/Feedback/ErrorMessage';
 import LoadingState from '../../components/Feedback/LoadingState';
+
+const classeLinkDetalhes = [
+  'mt-4 inline-flex min-h-12 items-center rounded-md border border-primaria-600',
+  'px-4 py-2 font-corpo text-botao font-semibold text-primaria-600',
+  'hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4',
+  'focus-visible:outline-primaria-600',
+].join(' ')
 
 const categorias: Categoria[] = [
   'restaurante',
@@ -203,6 +211,13 @@ export default function Locais() {
                     ))}
                   </ul>
                 </div>
+                <Link
+                  to={`/locais/${local.id}`}
+                  className={classeLinkDetalhes}
+                >
+                  Ver detalhes
+                  <span className="sr-only"> de {local.nome}</span>
+                </Link>
               </article>
             ))}
           </section>
