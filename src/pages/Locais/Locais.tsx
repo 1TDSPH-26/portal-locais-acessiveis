@@ -53,6 +53,8 @@ export default function Locais() {
   const [recursosSelecionados, setRecursosSelecionados] =
     useState<RecursoAcessibilidade[]>([]);
 
+  const [termoBusca, setTermoBusca] = useState('');
+
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   const itensPorPagina = 4;
@@ -63,7 +65,7 @@ export default function Locais() {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [categoriaSelecionada, recursosSelecionados]);
+  }, [categoriaSelecionada, recursosSelecionados, termoBusca]);
 
   function alternarRecurso(recurso: RecursoAcessibilidade) {
     if (recursosSelecionados.includes(recurso)) {
@@ -78,6 +80,7 @@ export default function Locais() {
   function limparFiltros() {
     setCategoriaSelecionada('');
     setRecursosSelecionados([]);
+    setTermoBusca('');
   }
 
   const titulo = (
@@ -126,9 +129,15 @@ export default function Locais() {
       </main>
     );
   }
-
+  const termo = termoBusca.trim().toLowerCase();
+  const locaisPorNome =
+  termo === ''
+    ? locais
+    : locais.filter((local) =>
+        local.nome.toLowerCase().includes(termo)
+      );
   const locaisFiltrados = filtrarLocais(
-    locais,
+    locaisPorNome,
     categoriaSelecionada,
     recursosSelecionados
   );
@@ -156,6 +165,23 @@ export default function Locais() {
       {titulo}
 
       <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+                <div className="mb-4">
+          <label
+            htmlFor="busca-locais"
+            className="mb-2 block font-bold"
+          >
+            Buscar por nome
+          </label>
+
+          <input
+            id="busca-locais"
+            type="search"
+            placeholder="Digite o nome do local"
+            value={termoBusca}
+            onChange={(e) => setTermoBusca(e.target.value)}
+            className="w-full max-w-xs rounded border border-gray-300 p-2"
+          />
+        </div> 
         <div className="mb-4">
           <label
             htmlFor="select-categoria"
