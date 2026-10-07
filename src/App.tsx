@@ -1,15 +1,17 @@
+import { useLocation } from 'react-router'
+import ErrorBoundary from './components/Feedback/ErrorBoundary'
 import MainLayout from './layouts/MainLayout/MainLayout'
 import AppRoutes from './routes/AppRoutes'
 
 export default function App() {
+  const { pathname } = useLocation()
+
   return (
-    <>
-      <div className="text-3xl font-bold text-blue-600 p-4">
-        Seja bem-vindo
-      </div>
-      <MainLayout>
+    <MainLayout>
+      {/* key reinicia o limite de erro ao trocar de rota pelo menu */}
+      <ErrorBoundary key={pathname}>
         <AppRoutes />
-      </MainLayout>
-    </>
+      </ErrorBoundary>
+    </MainLayout>
   )
 }
