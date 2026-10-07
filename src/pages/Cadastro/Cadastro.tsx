@@ -39,6 +39,7 @@ const dadosIniciais: DadosFormulario = {
 export default function Cadastro() {
   const [dados, setDados] = useState<DadosFormulario>(dadosIniciais)
   const [enviando, setEnviando] = useState(false)
+  const [statusEnvio, setStatusEnvio] = useState<'sucesso' | 'erro' | null>(null)
 
   function atualizarTexto(campo: 'nome' | 'endereco' | 'cep') {
     return (evento: ChangeEvent<HTMLInputElement>) => {
@@ -71,10 +72,18 @@ export default function Cadastro() {
       return
     }
 
+    setStatusEnvio(null)
+
+    if (!dados.nome || !dados.categoria || !dados.endereco || !dados.cep) {
+      setStatusEnvio('erro')
+      return
+    }
+
     setEnviando(true)
 
     window.setTimeout(() => {
       setEnviando(false)
+      setStatusEnvio('sucesso')
     }, 1500)
   }
 
@@ -132,6 +141,18 @@ export default function Cadastro() {
             ))}
           </div>
         </fieldset>
+
+        {statusEnvio === 'sucesso' && (
+          <p role="status" aria-live="polite" className="font-corpo text-corpo-16">
+            Local cadastrado com sucesso.
+          </p>
+        )}
+
+        {statusEnvio === 'erro' && (
+          <p role="alert" className="font-corpo text-corpo-16">
+            Não foi possível enviar o cadastro. Verifique os campos e tente novamente.
+          </p>
+        )}
 
         <button
           type="submit"
