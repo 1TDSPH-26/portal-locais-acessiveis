@@ -73,6 +73,18 @@ export default function Inicio() {
                   placeholder="Ex.: biblioteca, parque, restaurante..."
                   className="w-full h-12 pl-10 pr-4 rounded-lg bg-fundo text-texto text-corpo-16 border border-borda-funcional focus:outline-none focus:ring-2 focus:ring-primaria-600"
                 />
+                {termoBusca !== '' ? (
+                  <button
+                    type="button"
+                    onClick={handleLimparBusca}
+                    aria-label="Limpar campo de busca"
+                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-secundaria hover:text-texto focus:outline-none focus:ring-2 focus:ring-primaria-600 rounded-r-lg cursor-pointer"
+                  >
+                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                ) : null}
               </div>
               <button
                 type="submit"
