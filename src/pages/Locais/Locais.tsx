@@ -1,23 +1,24 @@
-import { useEffect, useRef, useState } from 'react';
-import { Link } from 'react-router';
-import EmptyState from '../../components/Feedback/EmptyState';
-import ErrorMessage from '../../components/Feedback/ErrorMessage';
-import LoadingState from '../../components/Feedback/LoadingState';
-import { listarLocais } from '../../services/locaisService';
+import { useEffect, useRef, useState } from 'react'
+import { Link } from 'react-router'
+import ContagemResultados from '../../components/Feedback/ContagemResultados'
+import EmptyState from '../../components/Feedback/EmptyState'
+import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import LoadingState from '../../components/Feedback/LoadingState'
+import { listarLocais } from '../../services/locaisService'
 import type {
   Categoria,
   RecursoAcessibilidade,
   Local,
-} from '../../types/local';
-import { useConsulta } from '../../hooks/useConsulta';
-import { filtrarLocais } from '../../utils/filtrarLocais';
+} from '../../types/local'
+import { useConsulta } from '../../hooks/useConsulta'
+import { filtrarLocais } from '../../utils/filtrarLocais'
 
 const classeLinkDetalhes = [
   'mt-4 inline-flex min-h-12 items-center rounded-md border border-primaria-600',
   'px-4 py-2 font-corpo text-botao font-semibold text-primaria-600',
   'hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4',
   'focus-visible:outline-primaria-600',
-].join(' ');
+].join(' ')
 
 const categorias: Categoria[] = [
   'restaurante',
@@ -25,7 +26,7 @@ const categorias: Categoria[] = [
   'educacao',
   'lazer',
   'servico_publico',
-];
+]
 
 const recursos: RecursoAcessibilidade[] = [
   'rampa_acesso',
@@ -40,44 +41,41 @@ const recursos: RecursoAcessibilidade[] = [
   'assentos_prioritarios',
   'espaco_tranquilo',
   'cao_guia',
-];
+]
 
 export default function Locais() {
-  const { estado, tentarNovamente } = useConsulta<Local[]>(
-    listarLocais
-  );
+  const { estado, tentarNovamente } = useConsulta<Local[]>(listarLocais)
 
   const [categoriaSelecionada, setCategoriaSelecionada] =
-    useState<Categoria | ''>('');
+    useState<Categoria | ''>('')
 
   const [recursosSelecionados, setRecursosSelecionados] =
-    useState<RecursoAcessibilidade[]>([]);
+    useState<RecursoAcessibilidade[]>([])
 
-  const [paginaAtual, setPaginaAtual] = useState(1);
+  const [paginaAtual, setPaginaAtual] = useState(1)
 
-  const itensPorPagina = 4;
+  const itensPorPagina = 4
+  const tituloRef = useRef<HTMLHeadingElement>(null)
 
-  const tituloRef = useRef<HTMLHeadingElement>(null);
-
-  const locais = estado.status === 'sucesso' ? estado.dados : [];
+  const locais = estado.status === 'sucesso' ? estado.dados : []
 
   useEffect(() => {
-    setPaginaAtual(1);
-  }, [categoriaSelecionada, recursosSelecionados]);
+    setPaginaAtual(1)
+  }, [categoriaSelecionada, recursosSelecionados])
 
   function alternarRecurso(recurso: RecursoAcessibilidade) {
     if (recursosSelecionados.includes(recurso)) {
       setRecursosSelecionados(
-        recursosSelecionados.filter((r) => r !== recurso)
-      );
+        recursosSelecionados.filter((r) => r !== recurso),
+      )
     } else {
-      setRecursosSelecionados([...recursosSelecionados, recurso]);
+      setRecursosSelecionados([...recursosSelecionados, recurso])
     }
   }
 
   function limparFiltros() {
-    setCategoriaSelecionada('');
-    setRecursosSelecionados([]);
+    setCategoriaSelecionada('')
+    setRecursosSelecionados([])
   }
 
   const titulo = (
@@ -88,22 +86,36 @@ export default function Locais() {
     >
       Locais acessíveis
     </h1>
-  );
+  )
+
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    categoriaSelecionada,
+    recursosSelecionados,
+  )
+
+  const contagem = (
+    <ContagemResultados
+      total={estado.status === 'sucesso' ? locaisFiltrados.length : null}
+    />
+  )
 
   if (estado.status === 'carregando') {
     return (
       <main className="mx-auto w-full max-w-6xl p-6">
         {titulo}
+        {contagem}
 
         <LoadingState message="Carregando locais..." />
       </main>
-    );
+    )
   }
 
   if (estado.status === 'erro') {
     return (
       <main className="mx-auto w-full max-w-6xl p-6">
         {titulo}
+        {contagem}
 
         <ErrorMessage
           title="Não foi possível carregar os locais"
@@ -111,49 +123,45 @@ export default function Locais() {
           onRetry={tentarNovamente}
         />
       </main>
-    );
+    )
   }
 
   if (locais.length === 0) {
     return (
       <main className="mx-auto w-full max-w-6xl p-6">
         {titulo}
+        {contagem}
 
         <EmptyState
           title="Nenhum local encontrado"
           message="Não há locais cadastrados para exibir."
         />
       </main>
-    );
+    )
   }
 
-  const locaisFiltrados = filtrarLocais(
-    locais,
-    categoriaSelecionada,
-    recursosSelecionados
-  );
-
   const totalPaginas = Math.ceil(
-    locaisFiltrados.length / itensPorPagina
-  );
+    locaisFiltrados.length / itensPorPagina,
+  )
 
-  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
+  const indiceInicial = (paginaAtual - 1) * itensPorPagina
 
   const locaisPaginados = locaisFiltrados.slice(
     indiceInicial,
-    indiceInicial + itensPorPagina
-  );
+    indiceInicial + itensPorPagina,
+  )
 
   const mudarPagina = (novaPagina: number) => {
     if (novaPagina >= 1 && novaPagina <= totalPaginas) {
-      setPaginaAtual(novaPagina);
-      tituloRef.current?.focus();
+      setPaginaAtual(novaPagina)
+      tituloRef.current?.focus()
     }
-  };
+  }
 
   return (
     <main className="mx-auto w-full max-w-6xl p-6">
       {titulo}
+      {contagem}
 
       <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
         <div className="mb-4">
@@ -169,7 +177,7 @@ export default function Locais() {
             value={categoriaSelecionada}
             onChange={(e) =>
               setCategoriaSelecionada(
-                e.target.value as Categoria | ''
+                e.target.value as Categoria | '',
               )
             }
             className="w-full max-w-xs rounded border border-gray-300 p-2"
@@ -191,7 +199,7 @@ export default function Locais() {
 
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
             {recursos.map((recurso) => {
-              const inputId = `recurso-${recurso}`;
+              const inputId = `recurso-${recurso}`
 
               return (
                 <div
@@ -212,7 +220,7 @@ export default function Locais() {
                     {recurso.replace('_', ' ')}
                   </label>
                 </div>
-              );
+              )
             })}
           </div>
         </fieldset>
@@ -275,8 +283,7 @@ export default function Locais() {
                 >
                   Ver detalhes
                   <span className="sr-only">
-                    {' '}
-                    de {local.nome}
+                    {' '}de {local.nome}
                   </span>
                 </Link>
               </article>
@@ -303,31 +310,27 @@ export default function Locais() {
                 role="group"
                 aria-label="Páginas"
               >
-                {Array.from(
-                  { length: totalPaginas },
-                  (_, index) => {
-                    const pagina = index + 1;
-                    const ehPaginaAtual = pagina === paginaAtual;
+                {Array.from({ length: totalPaginas }, (_, index) => {
+                  const pagina = index + 1
+                  const ehPaginaAtual = pagina === paginaAtual
 
-                    return (
-                      <button
-                        key={pagina}
-                        type="button"
-                        onClick={() => mudarPagina(pagina)}
-                        aria-current={
-                          ehPaginaAtual ? 'page' : undefined
-                        }
-                        aria-label={`Página ${pagina}`}
-                        className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${ehPaginaAtual
-                            ? 'bg-blue-600 font-bold text-white'
-                            : 'border border-gray-300 text-texto hover:bg-gray-100'
-                          }`}
-                      >
-                        {pagina}
-                      </button>
-                    );
-                  }
-                )}
+                  return (
+                    <button
+                      key={pagina}
+                      type="button"
+                      onClick={() => mudarPagina(pagina)}
+                      aria-current={ehPaginaAtual ? 'page' : undefined}
+                      aria-label={`Página ${pagina}`}
+                      className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                        ehPaginaAtual
+                          ? 'bg-blue-600 font-bold text-white'
+                          : 'border border-gray-300 text-texto hover:bg-gray-100'
+                      }`}
+                    >
+                      {pagina}
+                    </button>
+                  )
+                })}
               </div>
 
               <button
@@ -344,5 +347,5 @@ export default function Locais() {
         </>
       )}
     </main>
-  );
+  )
 }
