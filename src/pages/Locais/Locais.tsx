@@ -171,29 +171,49 @@ export default function Locais() {
   };
 
   return (
-    <main className="mx-auto w-full max-w-6xl p-6">
+    <main className="mx-auto w-full max-w-6xl px-4 py-6 sm:px-6 sm:py-8">
       {titulo}
 
-      <section className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-        <div className="mb-4">
-          <label
-            htmlFor="select-categoria"
-            className="mb-2 block font-bold"
+      <section
+        aria-labelledby="titulo-filtros"
+        className="mb-8 rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+      >
+        <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <h2
+            id="titulo-filtros"
+            className="font-display text-xl font-bold text-texto"
           >
-            Filtrar por Categoria
+            Filtrar locais
+          </h2>
+
+          <button
+            type="button"
+            onClick={limparFiltros}
+            className="min-h-12 rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-semibold text-texto hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600"
+          >
+            Limpar filtros
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <label
+            htmlFor="categoria"
+            className="mb-2 block font-corpo text-sm font-semibold text-texto"
+          >
+            Categoria
           </label>
 
           <select
-            id="select-categoria"
+            id="categoria"
             value={categoriaSelecionada}
-            onChange={(e) =>
+            onChange={(event) =>
               setCategoriaSelecionada(
-                e.target.value as Categoria | ''
+                event.target.value as Categoria | ''
               )
             }
-            className="w-full max-w-xs rounded border border-gray-300 p-2"
+            className="min-h-12 w-full rounded-md border border-gray-300 bg-white px-3 py-2 font-corpo text-texto focus:outline-2 focus:outline-offset-2 focus:outline-primaria-600 sm:max-w-md"
           >
-            <option value="">Todas</option>
+            <option value="">Todas as categorias</option>
 
             {categorias.map((categoria) => (
               <option
@@ -206,50 +226,37 @@ export default function Locais() {
           </select>
         </div>
 
-        <fieldset className="mb-4">
-          <legend className="mb-2 font-bold">
+        <fieldset>
+          <legend className="mb-3 font-corpo text-sm font-semibold text-texto">
             Recursos de acessibilidade
           </legend>
 
-          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
             {recursos.map((recurso) => {
-              const inputId = `recurso - ${ recurso } `;
+              const inputId = `recurso-${recurso}`;
 
               return (
-                <div
+                <label
                   key={recurso}
-                  className="flex items-center gap-2"
+                  htmlFor={inputId}
+                  className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-gray-200 p-3 hover:bg-fundo-suave"
                 >
                   <input
-                    type="checkbox"
                     id={inputId}
-                    checked={recursosSelecionados.includes(
-                      recurso
-                    )}
-                    onChange={() =>
-                      alternarRecurso(recurso)
-                    }
+                    type="checkbox"
+                    checked={recursosSelecionados.includes(recurso)}
+                    onChange={() => alternarRecurso(recurso)}
+                    className="h-5 w-5"
                   />
 
-                  <label
-                    htmlFor={inputId}
-                    className="capitalize text-sm"
-                  >
+                  <span className="font-corpo text-sm capitalize text-texto">
                     {recurso.replace('_', ' ')}
-                  </label>
-                </div>
+                  </span>
+                </label>
               );
             })}
           </div>
         </fieldset>
-
-        <button
-          type="button"
-          onClick={limparFiltros}
-          className="rounded bg-gray-200 px-4 py-2 text-sm font-medium hover:bg-gray-300"
-        >
-          Limpar filtros
-        </button>
       </section>
 
       <div className="mb-6 flex flex-col gap-2 sm:max-w-xs">
@@ -295,24 +302,20 @@ export default function Locais() {
           <section
             id="resultados-locais"
             aria-label="Locais encontrados"
-            className="grid gap-6 md:grid-cols-2"
+            className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2"
           >
             {locaisPaginados.map((local) => (
               <article
                 key={local.id}
-                className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm"
+                className="min-w-0 rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-5"
               >
-                <h2 className="mb-2 font-display text-xl font-bold text-texto">
+                <h2 className="font-display text-xl font-bold text-texto">
                   {local.nome}
                 </h2>
 
-                <p className="font-corpo text-corpo-16 text-texto">
+                <p className="mt-2 font-corpo text-corpo-16 text-texto">
                   <strong>Endereço:</strong>{' '}
                   {local.endereco}
-                </p>
-
-                <p className="font-corpo text-corpo-16 text-texto">
-                  <strong>CEP:</strong> {local.cep}
                 </p>
 
                 <p className="mt-2 font-corpo text-corpo-16 text-texto">
@@ -340,7 +343,7 @@ export default function Locais() {
                 </div>
 
                 <Link
-                  to={`/ locais / ${ local.id } `}
+                  to={`/locais/${local.id}`}
                   className={classeLinkDetalhes}
                 >
                   Ver detalhes
@@ -355,8 +358,8 @@ export default function Locais() {
 
           {totalPaginas > 1 && (
             <nav
-              aria-label="Navegação por páginas de locais"
-              className="mt-8 flex flex-wrap items-center justify-center gap-2"
+              aria-label="Paginação dos locais"
+              className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4"
             >
               <button
                 type="button"
@@ -364,16 +367,14 @@ export default function Locais() {
                   mudarPagina(paginaAtual - 1)
                 }
                 disabled={paginaAtual === 1}
-                aria-label="Ir para a página anterior"
-                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="min-h-12 rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-semibold text-texto hover:bg-fundo-suave disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600"
               >
                 Anterior
               </button>
 
               <div
-                className="flex gap-1"
-                role="group"
                 aria-label="Páginas"
+                className="flex flex-wrap items-center justify-center gap-2"
               >
                 {Array.from(
                   { length: totalPaginas },
@@ -394,12 +395,11 @@ export default function Locais() {
                             ? 'page'
                             : undefined
                         }
-                        aria-label={`Página ${ pagina } `}
-                        className={`min - w - [40px] rounded - md px - 3 py - 2 font - corpo text - sm font - medium transition - colors focus: outline - none focus: ring - 2 focus: ring - blue - 600 focus: ring - offset - 2 ${
-  ehPaginaAtual
-    ? 'bg-blue-600 font-bold text-white'
-    : 'border border-gray-300 text-texto hover:bg-gray-100'
-} `}
+                        aria-label={`Página ${pagina}`}
+                        className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${ehPaginaAtual
+                            ? 'bg-blue-600 font-bold text-white'
+                            : 'border border-gray-300 text-texto hover:bg-gray-100'
+                          }`}
                       >
                         {pagina}
                       </button>
@@ -417,7 +417,7 @@ export default function Locais() {
                   paginaAtual === totalPaginas
                 }
                 aria-label="Ir para a próxima página"
-                className="rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-medium text-texto transition-colors hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2"
+                className="min-h-12 rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-semibold text-texto hover:bg-fundo-suave disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600"
               >
                 Próxima
               </button>
