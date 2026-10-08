@@ -1,0 +1,166 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Atkinson+Hyperlegible+Next:wght@400;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  /* Cores */
+  --color-primaria-600: #4F46E5;
+  --color-primaria-700: #4338CA;
+  --color-fundo: #FFFFFF;
+  --color-fundo-branco: #FFFFFF;
+  --color-fundo-suave: #EEF2FF;
+  --color-fundo-escuro: #312E81;
+  --color-texto: #0F172A;
+  --color-texto-principal: #0F172A;
+  --color-secundaria: #475569;
+  --color-borda-decorativa: #E2E8F0;
+  --color-borda-funcional: #64748B;
+  --color-sucesso: #15803D;
+  --color-aviso: #A16207;
+  --color-erro: #DC2626;
+
+  /* Tipografia - famílias */
+  --font-display: "Atkinson Hyperlegible Next", sans-serif;
+  --font-corpo: "Inter", sans-serif;
+
+  /* Tipografia - tamanhos (hierarquia do Figma) */
+  --text-display: 3rem;      /* 48px */
+  --text-h1: 2rem;           /* 32px */
+  --text-h2: 1.5rem;         /* 24px */
+  --text-h3: 1.25rem;        /* 20px */
+  --text-botao: 1rem;        /* 16px */
+  --text-label: 0.875rem;    /* 14px */
+  --text-corpo-18: 1.125rem; /* 18px */
+  --text-corpo-16: 1rem;     /* 16px */
+  --text-corpo-14: 0.875rem; /* 14px */
+  --text-legenda: 0.75rem;   /* 12px */
+}
+
+:root {
+  --Fundo-Escuro: #312E81;
+  --Fundo-Branco: #FFFFFF;
+  --Fundo-Suave: #EEF2FF;
+  --Texto-Principal: #0F172A;
+  --Borda-Decorativa: #E2E8F0;
+  --Borda-Funcional: #64748B;
+}
+
+/* =========================================================
+   ACESSIBILIDADE — TAMANHO DA FONTE
+   ========================================================= */
+
+/* Tamanho padrão */
+html[data-font-size="1"] {
+  font-size: 100%;
+}
+
+/* Fonte aumentada */
+html[data-font-size="2"] {
+  font-size: 112.5%;
+}
+
+/* Fonte ainda maior */
+html[data-font-size="3"] {
+  font-size: 125%;
+}
+
+
+/* =========================================================
+   ACESSIBILIDADE — ALTO CONTRASTE
+   ========================================================= */
+
+html.high-contrast {
+  --color-fundo: #FFFFFF;
+  --color-fundo-suave: #EEF2FF;
+  --color-texto: #000000;
+  --color-secundaria: #1E293B;
+  --color-borda-decorativa: #475569;
+  --color-borda-funcional: #000000;
+  --color-primaria-600: #312E81;
+  --color-primaria-700: #1E1B4B;
+}
+
+
+/* =========================================================
+   ESTILOS GERAIS
+   ========================================================= */
+
+html {
+  font-family: var(--font-corpo);
+  color: var(--color-texto);
+  background-color: var(--color-fundo);
+}
+
+body {
+  margin: 0;
+  background-color: var(--color-fundo);
+  color: var(--color-texto);
+}
+
+
+/* =========================================================
+   CONTROLES DE ACESSIBILIDADE
+   ========================================================= */
+
+.accessibility-button {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0.5rem 0.75rem;
+
+  border: 2px solid var(--color-borda-funcional);
+  border-radius: 0.375rem;
+
+  background-color: var(--color-fundo);
+  color: var(--color-texto);
+
+  font-family: var(--font-corpo);
+  font-weight: 700;
+
+  cursor: pointer;
+}
+
+.accessibility-button:hover {
+  background-color: var(--color-fundo-suave);
+}
+
+.accessibility-button:focus-visible {
+  outline: 3px solid var(--color-primaria-600);
+  outline-offset: 2px;
+}
+
+.accessibility-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+
+/* =========================================================
+   ALTO CONTRASTE — CONTROLES
+   ========================================================= */
+
+html.high-contrast .accessibility-button {
+  border-color: #000000;
+  background-color: #FFFFFF;
+  color: #000000;
+}
+
+html.high-contrast .accessibility-button:hover {
+  background-color: #EEF2FF;
+  color: #000000;
+}
+
+html.high-contrast .accessibility-button:focus-visible {
+  outline-color: #312E81;
+}
+
+
+/* =========================================================
+   ALTO CONTRASTE — LINKS
+   ========================================================= */
+
+html.high-contrast a {
+  color: #4a43b3;
+}
+
+html.high-contrast a:hover {
+  color: #1E1B4B;
+}
