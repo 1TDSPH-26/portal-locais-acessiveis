@@ -29,20 +29,44 @@ const nomesRecurso: Record<RecursoAcessibilidade, string> = {
   cao_guia: 'Entrada permitida com cão-guia',
 }
 
-const classeLinkVoltar = [
+const classeLinkBreadcrumb = [
   'inline-flex min-h-12 items-center font-corpo text-corpo-16 font-semibold',
   'text-primaria-700 underline underline-offset-4',
   'focus-visible:outline-2 focus-visible:outline-offset-4',
   'focus-visible:outline-primaria-600',
 ].join(' ')
 
-function LinkVoltar() {
+function BreadcrumbDetalhe({ paginaAtual }: { paginaAtual: string }) {
   return (
     <nav aria-label="Caminho de navegação">
-      <Link to="/locais" className={classeLinkVoltar}>
-        <span aria-hidden="true">&larr;&nbsp;</span>
-        Voltar para a listagem
-      </Link>
+      <ol className="flex flex-wrap items-center gap-x-2 gap-y-1 font-corpo text-corpo-16 text-texto">
+        <li>
+          <Link to="/" className={classeLinkBreadcrumb}>
+            Início
+          </Link>
+        </li>
+
+        <li className="flex items-center gap-2">
+          <span aria-hidden="true" className="shrink-0">
+            /
+          </span>
+          <Link to="/locais" className={classeLinkBreadcrumb}>
+            Locais
+          </Link>
+        </li>
+
+        <li
+          aria-current="page"
+          className="flex min-w-0 max-w-full items-baseline gap-2"
+        >
+          <span aria-hidden="true" className="shrink-0">
+            /
+          </span>
+          <span className="min-w-0 wrap-anywhere">
+            {paginaAtual}
+          </span>
+        </li>
+      </ol>
     </nav>
   )
 }
@@ -55,7 +79,7 @@ export default function DetalhesLocal() {
   if (estado.status === 'carregando') {
     return (
       <section aria-label="Detalhes do local" className="mx-auto w-full max-w-3xl p-6">
-        <LinkVoltar />
+        <BreadcrumbDetalhe paginaAtual="Detalhes do local" />
         <LoadingState message="Carregando detalhes do local..." />
       </section>
     )
@@ -67,7 +91,7 @@ export default function DetalhesLocal() {
         aria-labelledby="detalhe-erro"
         className="mx-auto w-full max-w-3xl p-6"
       >
-        <LinkVoltar />
+        <BreadcrumbDetalhe paginaAtual="Detalhes do local" />
         <h1
           id="detalhe-erro"
           className="mt-4 mb-4 font-display text-h1 font-bold text-texto"
@@ -91,7 +115,7 @@ export default function DetalhesLocal() {
         aria-labelledby="detalhe-nao-encontrado"
         className="mx-auto w-full max-w-3xl p-6"
       >
-        <LinkVoltar />
+        <BreadcrumbDetalhe paginaAtual="Local não encontrado" />
         <h1
           id="detalhe-nao-encontrado"
           className="mt-4 font-display text-h1 font-bold text-texto"
@@ -111,7 +135,7 @@ export default function DetalhesLocal() {
       aria-labelledby="detalhe-titulo"
       className="mx-auto w-full max-w-3xl p-6"
     >
-      <LinkVoltar />
+      <BreadcrumbDetalhe paginaAtual={local.nome} />
 
       <h1
         id="detalhe-titulo"
