@@ -1,4 +1,5 @@
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
+import { cadastrarLocal } from '../../services/locais-service'
 import type { Categoria, Local, RecursoAcessibilidade } from '../../types/local'
 import { validarCep } from '../../utils/validacoes'
 
@@ -164,7 +165,7 @@ export default function Cadastro() {
     return novosErros
   }
 
-  function enviarFormulario(
+  async function enviarFormulario(
     evento: FormEvent<HTMLFormElement>,
   ) {
     evento.preventDefault()
@@ -194,16 +195,20 @@ export default function Cadastro() {
       return
     }
 
+    if (!dados.categoria) {
+      return
+    }
+
     setEnviando(true)
 
-    // Simulação do envio enquanto a API não está implementada.
-    window.setTimeout(() => {
-      setEnviando(false)
-
-      if (!navigator.onLine) {
-        setStatusEnvio('erro')
-        return
-      }
+    try {
+      await cadastrarLocal({
+        nome: dados.nome,
+        endereco: dados.endereco,
+        cep: dados.cep,
+        categoria: dados.categoria,
+        recursosAcessibilidade: dados.recursosAcessibilidade,
+      })
 
       setUltimoLocalCadastrado(dados.nome.trim())
       setStatusEnvio('sucesso')
@@ -213,7 +218,11 @@ export default function Cadastro() {
       setTimeout(() => {
         sucessoRef.current?.focus()
       }, 50)
-    }, 1500)
+    } catch {
+      setStatusEnvio('erro')
+    } finally {
+      setEnviando(false)
+    }
   }
 
   function reiniciarFormulario() {
@@ -374,6 +383,7 @@ export default function Cadastro() {
         onSubmit={enviarFormulario}
         noValidate
         className="mt-6 sm:mt-8 space-y-6 sm:space-y-8"
+        aria-busy={enviando}
       >
         <fieldset className="w-full min-w-0 rounded-lg border border-borda-decorativa p-4 sm:p-6 shadow-xs">
           <legend className="px-1.5 font-display text-xl sm:text-h2 font-bold text-texto leading-tight max-w-full">
