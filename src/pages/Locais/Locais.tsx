@@ -11,6 +11,10 @@ import type {
 } from '../../types/local';
 import { useConsulta } from '../../hooks/useConsulta';
 import { filtrarLocais } from '../../utils/filtrarLocais';
+import {
+  ordenarLocais,
+  type OrdenacaoLocais,
+} from '../../types/ordenarLocais';
 
 const classeLinkDetalhes = [
   'mt-4 inline-flex min-h-12 items-center rounded-md border border-primaria-600',
@@ -53,6 +57,9 @@ export default function Locais() {
   const [recursosSelecionados, setRecursosSelecionados] =
     useState<RecursoAcessibilidade[]>([]);
 
+  const [ordenacao, setOrdenacao] =
+    useState<OrdenacaoLocais>('original');
+
   const [paginaAtual, setPaginaAtual] = useState(1);
 
   const itensPorPagina = 4;
@@ -63,7 +70,7 @@ export default function Locais() {
 
   useEffect(() => {
     setPaginaAtual(1);
-  }, [categoriaSelecionada, recursosSelecionados]);
+  }, [categoriaSelecionada, recursosSelecionados, ordenacao]);
 
   function alternarRecurso(recurso: RecursoAcessibilidade) {
     if (recursosSelecionados.includes(recurso)) {
@@ -136,19 +143,28 @@ export default function Locais() {
     recursosSelecionados
   );
 
-  const totalPaginas = Math.ceil(
-    locaisFiltrados.length / itensPorPagina
+  const locaisOrdenados = ordenarLocais(
+    locaisFiltrados,
+    ordenacao
   );
 
-  const indiceInicial = (paginaAtual - 1) * itensPorPagina;
+  const totalPaginas = Math.ceil(
+    locaisOrdenados.length / itensPorPagina
+  );
 
-  const locaisPaginados = locaisFiltrados.slice(
+  const indiceInicial =
+    (paginaAtual - 1) * itensPorPagina;
+
+  const locaisPaginados = locaisOrdenados.slice(
     indiceInicial,
     indiceInicial + itensPorPagina
   );
 
   const mudarPagina = (novaPagina: number) => {
-    if (novaPagina >= 1 && novaPagina <= totalPaginas) {
+    if (
+      novaPagina >= 1 &&
+      novaPagina <= totalPaginas
+    ) {
       setPaginaAtual(novaPagina);
       tituloRef.current?.focus();
     }
@@ -200,7 +216,10 @@ export default function Locais() {
             <option value="">Todas as categorias</option>
 
             {categorias.map((categoria) => (
-              <option key={categoria} value={categoria}>
+              <option
+                key={categoria}
+                value={categoria}
+              >
                 {categoria}
               </option>
             ))}
@@ -213,28 +232,67 @@ export default function Locais() {
           </legend>
 
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {recursos.map((recurso) => (
-              <label
-                key={recurso}
-                className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-gray-200 p-3 hover:bg-fundo-suave"
-              >
-                <input
-                  type="checkbox"
-                  checked={recursosSelecionados.includes(recurso)}
-                  onChange={() => alternarRecurso(recurso)}
-                  className="h-5 w-5"
-                />
+            {recursos.map((recurso) => {
+              const inputId = `recurso-${recurso}`;
 
-                <span className="font-corpo text-sm text-texto">
-                  {recurso}
-                </span>
-              </label>
-            ))}
+              return (
+                <label
+                  key={recurso}
+                  htmlFor={inputId}
+                  className="flex min-h-12 cursor-pointer items-center gap-3 rounded-md border border-gray-200 p-3 hover:bg-fundo-suave"
+                >
+                  <input
+                    id={inputId}
+                    type="checkbox"
+                    checked={recursosSelecionados.includes(recurso)}
+                    onChange={() => alternarRecurso(recurso)}
+                    className="h-5 w-5"
+                  />
+
+                  <span className="font-corpo text-sm capitalize text-texto">
+                    {recurso.replace('_', ' ')}
+                  </span>
+                </label>
+              );
+            })}
           </div>
         </fieldset>
       </section>
 
-      {locaisFiltrados.length === 0 ? (
+      <div className="mb-6 flex flex-col gap-2 sm:max-w-xs">
+        <label
+          htmlFor="ordenacao-locais"
+          className="font-corpo font-semibold text-texto"
+        >
+          Ordenar por
+        </label>
+
+        <select
+          id="ordenacao-locais"
+          value={ordenacao}
+          onChange={(event) =>
+            setOrdenacao(
+              event.target.value as OrdenacaoLocais
+            )
+          }
+          aria-controls="resultados-locais"
+          className="min-h-11 w-full rounded-lg border border-borda-funcional bg-white px-3 py-2 font-corpo text-texto focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600"
+        >
+          <option value="original">
+            Ordem original
+          </option>
+
+          <option value="nome-asc">
+            Nome: A–Z
+          </option>
+
+          <option value="nome-desc">
+            Nome: Z–A
+          </option>
+        </select>
+      </div>
+
+      {locaisOrdenados.length === 0 ? (
         <EmptyState
           title="Nenhum local encontrado"
           message="Não encontramos locais para os filtros selecionados."
@@ -242,7 +300,8 @@ export default function Locais() {
       ) : (
         <>
           <section
-            aria-label="Lista de locais"
+            id="resultados-locais"
+            aria-label="Locais encontrados"
             className="grid grid-cols-1 gap-4 sm:gap-6 md:grid-cols-2"
           >
             {locaisPaginados.map((local) => (
@@ -254,16 +313,37 @@ export default function Locais() {
                   {local.nome}
                 </h2>
 
-                <p className="mt-2 font-corpo text-sm text-texto">
-                  Categoria: {local.categoria}
-                </p>
-
-                <p className="mt-2 font-corpo text-sm text-texto">
+                <p className="mt-2 font-corpo text-corpo-16 text-texto">
+                  <strong>Endereço:</strong>{' '}
                   {local.endereco}
                 </p>
 
+                <p className="mt-2 font-corpo text-corpo-16 text-texto">
+                  <strong>Categoria:</strong>{' '}
+                  {local.categoria}
+                </p>
+
+                <div className="mt-4">
+                  <h3 className="mb-2 font-display text-corpo-16 font-bold text-texto">
+                    Recursos de acessibilidade
+                  </h3>
+
+                  <ul className="list-disc pl-5 font-corpo text-corpo-16 text-texto">
+                    {local.recursosAcessibilidade.map(
+                      (recurso) => (
+                        <li
+                          key={recurso}
+                          className="capitalize"
+                        >
+                          {recurso.replace('_', ' ')}
+                        </li>
+                      )
+                    )}
+                  </ul>
+                </div>
+
                 <Link
-                  to={`/ locais / ${ local.id } `}
+                  to={`/locais/${local.id}`}
                   className={classeLinkDetalhes}
                 >
                   Ver detalhes
@@ -279,28 +359,64 @@ export default function Locais() {
           {totalPaginas > 1 && (
             <nav
               aria-label="Paginação dos locais"
-              className="mt-8 flex items-center justify-center gap-4"
+              className="mt-8 flex flex-wrap items-center justify-center gap-2 sm:gap-4"
             >
               <button
                 type="button"
-                onClick={() => mudarPagina(paginaAtual - 1)}
+                onClick={() =>
+                  mudarPagina(paginaAtual - 1)
+                }
                 disabled={paginaAtual === 1}
                 className="min-h-12 rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-semibold text-texto hover:bg-fundo-suave disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600"
               >
                 Anterior
               </button>
 
-              <span
-                aria-live="polite"
-                className="font-corpo text-sm text-texto"
+              <div
+                aria-label="Páginas"
+                className="flex flex-wrap items-center justify-center gap-2"
               >
-                Página {paginaAtual} de {totalPaginas}
-              </span>
+                {Array.from(
+                  { length: totalPaginas },
+                  (_, index) => {
+                    const pagina = index + 1;
+                    const ehPaginaAtual =
+                      pagina === paginaAtual;
+
+                    return (
+                      <button
+                        key={pagina}
+                        type="button"
+                        onClick={() =>
+                          mudarPagina(pagina)
+                        }
+                        aria-current={
+                          ehPaginaAtual
+                            ? 'page'
+                            : undefined
+                        }
+                        aria-label={`Página ${pagina}`}
+                        className={`min-w-[40px] rounded-md px-3 py-2 font-corpo text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${ehPaginaAtual
+                            ? 'bg-blue-600 font-bold text-white'
+                            : 'border border-gray-300 text-texto hover:bg-gray-100'
+                          }`}
+                      >
+                        {pagina}
+                      </button>
+                    );
+                  }
+                )}
+              </div>
 
               <button
                 type="button"
-                onClick={() => mudarPagina(paginaAtual + 1)}
-                disabled={paginaAtual === totalPaginas}
+                onClick={() =>
+                  mudarPagina(paginaAtual + 1)
+                }
+                disabled={
+                  paginaAtual === totalPaginas
+                }
+                aria-label="Ir para a próxima página"
                 className="min-h-12 rounded-md border border-gray-300 px-4 py-2 font-corpo text-sm font-semibold text-texto hover:bg-fundo-suave disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600"
               >
                 Próxima
