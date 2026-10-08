@@ -1,6 +1,8 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
+import ContagemResultados from '../../components/Feedback/ContagemResultados'
+
 import { listaLocais } from '../../data/locais'
 import {
   CATEGORIAS,
@@ -36,7 +38,7 @@ const ITENS_POR_PAGINA = 4
 const foco =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
 
-const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
+const campo = `h - 11 w - full rounded - md border border - slate - 300 bg - white px - 3 text - slate - 900 ${ foco } `
 
 const classeLinkDetalhes = [
   'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700',
@@ -128,8 +130,8 @@ export default function Locais() {
     const recursos =
       filtros.recursos.includes(recurso)
         ? filtros.recursos.filter(
-          (item) => item !== recurso,
-        )
+            (item) => item !== recurso,
+          )
         : [...filtros.recursos, recurso]
 
     atualizarFiltros({ recursos })
@@ -179,18 +181,17 @@ export default function Locais() {
     contarFiltrosAtivos(filtros)
 
   /*
-   * Calcula a quantidade de páginas
-   * com base nos resultados ordenados.
+   * Calcula a quantidade de páginas.
    */
   const totalPaginas = Math.ceil(
     locaisOrdenados.length /
-    ITENS_POR_PAGINA,
+      ITENS_POR_PAGINA,
   )
 
   /*
-   * Garante que a página utilizada
-   * seja válida mesmo quando a quantidade
-   * de resultados muda.
+   * Garante que a página atual
+   * continue válida após alterações
+   * nos filtros.
    */
   const paginaValida = Math.min(
     paginaAtual,
@@ -202,14 +203,13 @@ export default function Locais() {
     ITENS_POR_PAGINA
 
   /*
-   * Seleciona os locais que aparecem
-   * na página atual.
+   * Locais exibidos na página atual.
    */
   const locaisPaginados =
     locaisOrdenados.slice(
       indiceInicial,
       indiceInicial +
-      ITENS_POR_PAGINA,
+        ITENS_POR_PAGINA,
     )
 
   /*
@@ -272,8 +272,21 @@ export default function Locais() {
    */
   if (loading) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-16">
-        <p role="status">
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <h1
+          ref={tituloRef}
+          tabIndex={-1}
+          className="text-3xl font-bold tracking-tight focus:outline-none"
+        >
+          Locais acessíveis
+        </h1>
+
+        <ContagemResultados total={null} />
+
+        <p
+          role="status"
+          className="mt-4"
+        >
           Carregando locais...
         </p>
       </main>
@@ -285,8 +298,21 @@ export default function Locais() {
    */
   if (erro) {
     return (
-      <main className="mx-auto max-w-6xl px-4 py-16">
-        <p role="alert">
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <h1
+          ref={tituloRef}
+          tabIndex={-1}
+          className="text-3xl font-bold tracking-tight focus:outline-none"
+        >
+          Locais acessíveis
+        </h1>
+
+        <ContagemResultados total={null} />
+
+        <p
+          role="alert"
+          className="mt-4"
+        >
           Não foi possível carregar os
           locais. Tente novamente.
         </p>
@@ -310,9 +336,13 @@ export default function Locais() {
         necessidades.
       </p>
 
+      <ContagemResultados
+        total={locaisFiltrados.length}
+      />
+
       <button
         type="button"
-        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 lg:hidden ${foco}`}
+        className={`mt - 6 inline - flex min - h - 11 items - center rounded - md border - 2 border - blue - 700 px - 4 font - semibold text - blue - 800 lg:hidden ${ foco } `}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
         onClick={() =>
@@ -323,19 +353,21 @@ export default function Locais() {
       >
         {filtrosAbertos
           ? 'Ocultar filtros'
-          : `Mostrar filtros${totalFiltrosAtivos
-            ? ` (${totalFiltrosAtivos})`
-            : ''
-          }`}
+          : `Mostrar filtros${
+  totalFiltrosAtivos
+    ? ` (${totalFiltrosAtivos})`
+    : ''
+} `}
       </button>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[18rem_1fr]">
         <section
           id="painel-filtros"
-          className={`${filtrosAbertos
-              ? 'block'
-              : 'hidden'
-            } lg:block`}
+          className={`${
+  filtrosAbertos
+    ? 'block'
+    : 'hidden'
+} lg: block`}
           aria-label="Filtros de locais"
         >
           <form
@@ -385,8 +417,8 @@ export default function Locais() {
                     categoria:
                       event.target
                         .value as
-                      | Categoria
-                      | '',
+                        | Categoria
+                        | '',
                   })
                 }
                 className={campo}
@@ -403,7 +435,7 @@ export default function Locais() {
                     >
                       {
                         CATEGORIA_ROTULOS[
-                        categoria
+                          categoria
                         ]
                       }
                     </option>
@@ -443,7 +475,7 @@ export default function Locais() {
                       <span className="text-sm">
                         {
                           RECURSO_ROTULOS[
-                          recurso
+                            recurso
                           ]
                         }
                       </span>
@@ -459,7 +491,7 @@ export default function Locais() {
               disabled={
                 totalFiltrosAtivos === 0
               }
-              className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
+              className={`mt - 5 min - h - 11 w - full rounded - md border - 2 border - blue - 700 px - 4 font - semibold text - blue - 800 hover: bg - blue - 50 disabled: cursor - not - allowed disabled: border - slate - 300 disabled: text - slate - 400 ${ foco } `}
             >
               Limpar filtros
             </button>
@@ -476,14 +508,14 @@ export default function Locais() {
               className="font-semibold focus:outline-none"
             >
               {locaisFiltrados.length ===
-                0
+              0
                 ? 'Nenhum local encontrado com esses filtros.'
-                : `${locaisFiltrados.length
-                } ${locaisFiltrados.length ===
-                  1
-                  ? 'local encontrado'
-                  : 'locais encontrados'
-                }.`}
+                : `${ locaisFiltrados.length } ${
+  locaisFiltrados.length ===
+    1
+    ? 'local encontrado'
+    : 'locais encontrados'
+}.`}
             </p>
 
             {totalFiltrosAtivos > 0 && (
@@ -500,7 +532,7 @@ export default function Locais() {
                           'busca',
                         )
                       }
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded - full bg - blue - 50 px - 3 py - 1.5 text - sm font - semibold text - blue - 800 ${ foco } `}
                     >
                       Busca:{' '}
                       {filtros.busca}{' '}
@@ -525,11 +557,11 @@ export default function Locais() {
                           'categoria',
                         )
                       }
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded - full bg - blue - 50 px - 3 py - 1.5 text - sm font - semibold text - blue - 800 ${ foco } `}
                     >
                       {
                         CATEGORIA_ROTULOS[
-                        filtros.categoria
+                          filtros.categoria
                         ]
                       }{' '}
                       <span aria-hidden="true">
@@ -555,11 +587,11 @@ export default function Locais() {
                             recurso,
                           )
                         }
-                        className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                        className={`rounded - full bg - blue - 50 px - 3 py - 1.5 text - sm font - semibold text - blue - 800 ${ foco } `}
                       >
                         {
                           RECURSO_ROTULOS[
-                          recurso
+                            recurso
                           ]
                         }{' '}
                         <span aria-hidden="true">
@@ -582,7 +614,7 @@ export default function Locais() {
                       onClick={
                         limparFiltros
                       }
-                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
+                      className={`rounded - full px - 3 py - 1.5 text - sm font - semibold text - blue - 800 underline ${ foco } `}
                     >
                       Limpar todos
                     </button>
@@ -593,7 +625,7 @@ export default function Locais() {
           </div>
 
           {locaisFiltrados.length ===
-            0 ? (
+          0 ? (
             <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
               <h2 className="text-xl font-bold">
                 Nenhum resultado
@@ -610,7 +642,7 @@ export default function Locais() {
                 onClick={
                   limparFiltros
                 }
-                className={`mt-5 min-h-11 rounded-md bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 ${foco}`}
+                className={`mt - 5 min - h - 11 rounded - md bg - blue - 700 px - 5 font - semibold text - white hover: bg - blue - 800 ${ foco } `}
               >
                 Limpar filtros
               </button>
@@ -686,7 +718,7 @@ export default function Locais() {
                         </strong>{' '}
                         {
                           CATEGORIA_ROTULOS[
-                          local.categoria
+                            local.categoria
                           ]
                         }
                       </p>
@@ -709,7 +741,7 @@ export default function Locais() {
                               >
                                 {
                                   RECURSO_ROTULOS[
-                                  recurso
+                                    recurso
                                   ]
                                 }
                               </li>
@@ -719,7 +751,7 @@ export default function Locais() {
                       </div>
 
                       <Link
-                        to={`/locais/${local.id}`}
+                        to={`/ locais / ${ local.id } `}
                         className={
                           classeLinkDetalhes
                         }
@@ -755,7 +787,7 @@ export default function Locais() {
                   paginaValida === 1
                 }
                 aria-label="Ir para a página anterior"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min - h - 11 rounded - md border border - slate - 300 px - 4 font - semibold disabled: cursor - not - allowed disabled: opacity - 50 ${ foco } `}
               >
                 Anterior
               </button>
@@ -783,16 +815,17 @@ export default function Locais() {
                         }
                         aria-current={
                           pagina ===
-                            paginaValida
+                          paginaValida
                             ? 'page'
                             : undefined
                         }
-                        aria-label={`Página ${pagina}`}
-                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina ===
-                            paginaValida
-                            ? 'bg-blue-700 text-white'
-                            : 'border border-slate-300 hover:bg-slate-100'
-                          } ${foco}`}
+                        aria-label={`Página ${ pagina } `}
+                        className={`min - h - 11 min - w - 11 rounded - md px - 3 font - semibold ${
+  pagina ===
+    paginaValida
+    ? 'bg-blue-700 text-white'
+    : 'border border-slate-300 hover:bg-slate-100'
+} ${ foco } `}
                       >
                         {pagina}
                       </button>
@@ -813,7 +846,7 @@ export default function Locais() {
                   totalPaginas
                 }
                 aria-label="Ir para a próxima página"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min - h - 11 rounded - md border border - slate - 300 px - 4 font - semibold disabled: cursor - not - allowed disabled: opacity - 50 ${ foco } `}
               >
                 Próxima
               </button>
