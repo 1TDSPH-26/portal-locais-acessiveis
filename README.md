@@ -10,7 +10,7 @@ O Portal de Locais e Serviços Acessíveis é uma aplicação web que tem como o
 
 Este documento reúne as instruções de execução e as informações disponíveis para a entrega do CP1. Foi preparado na branch `feature/issue-48-README`, referente à issue 48, sem alterações no código da aplicação.
 
-> **Situação da entrega:** integrantes, papéis, squads, Figma e GitHub Projects registrados conforme informações da equipe. Na versão inspecionada, as páginas de listagem e cadastro contêm apenas títulos; essas funcionalidades ainda não podem ser consideradas demonstráveis. Este arquivo não substitui a evidência de validação do QA.
+> **Situação da entrega:** integrantes, papéis, squads, Figma e GitHub Projects registrados conforme informações da equipe. As funcionalidades podem evoluir conforme as issues são implementadas e validadas. Este arquivo não substitui a evidência de validação do QA.
 
 ## Recursos oficiais
 
@@ -19,7 +19,6 @@ Este documento reúne as instruções de execução e as informações disponív
 | Repositório | [1TDSPH-26/portal-locais-acessiveis](https://github.com/1TDSPH-26/portal-locais-acessiveis) |
 | Board do GitHub Projects | [Project 2 — 1TDSPH-26](https://github.com/orgs/1TDSPH-26/projects/2) |
 | Figma | [Lugares Acessíveis — Guia de Estilos](https://www.figma.com/design/wFjJ9JQOaaqRK2gH9ql329/Lugares-Acess%C3%ADveis-%E2%80%94-Guia-de-Estilos-%7C-Squad-1-A--Copy-?node-id=0-1) |
-
 
 ## Stack tecnológica
 
@@ -50,7 +49,7 @@ Confira as ferramentas:
 git --version
 node --version
 npm --version
-```
+<!-- CI: validação da entrega da Issue #88 — filtros combinados de locais. -->
 
 ### 2. Clonar e entrar na pasta
 
@@ -202,5 +201,4 @@ portal-locais-acessiveis/
 ├── README.md               # Documento preexistente, preservado
 └── CP1ATUALIZADO.md         # Este documento
 ```
-
 
