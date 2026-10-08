@@ -1,5 +1,6 @@
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
+
 import { listaLocais } from '../../data/locais'
 import {
   CATEGORIAS,
@@ -7,20 +8,24 @@ import {
   RECURSOS,
   RECURSO_ROTULOS,
 } from '../../data/rotulos'
+
 import type {
   Categoria,
   RecursoAcessibilidade,
 } from '../../types/local'
+
 import {
   FILTROS_VAZIOS,
   contarFiltrosAtivos,
   filtrarLocais,
   type FiltrosLocais,
 } from '../../utils/filtrarLocais'
+
 import {
   filtrosParaUrl,
   lerFiltrosDaUrl,
 } from '../../utils/filtrosUrl'
+
 import {
   ordenarLocais,
   type OrdenacaoLocais,
@@ -749,6 +754,7 @@ export default function Locais() {
                 disabled={
                   paginaValida === 1
                 }
+                aria-label="Ir para a página anterior"
                 className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Anterior
@@ -781,6 +787,7 @@ export default function Locais() {
                             ? 'page'
                             : undefined
                         }
+                        aria-label={`Página ${pagina}`}
                         className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina ===
                             paginaValida
                             ? 'bg-blue-700 text-white'
