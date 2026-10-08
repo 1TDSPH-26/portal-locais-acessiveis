@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Link } from 'react-router'
-
-
+import FontDecreaseButton from '../AcessibilityControls/FontDecreaseButton'
+import FontIncreaseButton from '../AcessibilityControls/FontIncreaseButton'
+import ContrastButton from '../AcessibilityControls/ContrastButton'
 // Cada item daqui vira um link no menu
 // O "end" é usado quando queremos q a rota seja exata (ex: "/")
 
@@ -20,27 +21,6 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
-  const [tamanhoFonte, setTamanhoFonte] = useState(100)
-  const [altoContraste, setAltoContraste] = useState(false)
-
-  useEffect(() => {
-    document.documentElement.style.fontSize = `${tamanhoFonte}%`
-  }, [tamanhoFonte])
-  useEffect(() => {
-    document.documentElement.classList.toggle('alto-contraste', altoContraste)
-  }, [altoContraste])
-  function diminuirFonte() {
-    setTamanhoFonte((tamanhoAtual) => Math.max(tamanhoAtual - 10, 80))
-  }
-  function aumentarFonte() {
-    setTamanhoFonte((tamanhoAtual) => Math.min(tamanhoAtual + 10, 120))
-  }
-  function restaurarFonte() {
-    setTamanhoFonte(100)
-  }
-  function alternarContraste() {
-    setAltoContraste((contrasteAtual) => !contrasteAtual)
-  }
   
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
 
@@ -93,20 +73,10 @@ export default function Header() {
             Rodapé [2]
           </a>
 
-               <div className="flex items-center gap-2" role="group" aria-label="Controles de tamanho da fonte">
-                <button type="button" onClick={diminuirFonte} disabled={tamanhoFonte <= 80} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"  aria-label="Diminuir tamanho da fonte" title="Diminuir fonte">
-               A-
-           </button>
-
-                <button type="button" onClick={restaurarFonte} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer" aria-label="Restaurar tamanho padrão da fonte"  title="Restaurar fonte">
-               A
-            </button>
-                <button type="button" onClick={aumentarFonte} disabled={tamanhoFonte >= 120} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"  aria-label="Aumentar tamanho da fonte" title="Aumentar fonte">
-               A+
-            </button>
-                <button type="button" onClick={alternarContraste} aria-pressed={altoContraste} className="px-3 py-2 rounded-lg border border-borda-decorativa bg-fundo text-texto font-bold hover:bg-fundo-suave focus:outline-none focus:ring-2 focus:ring-primaria-600 cursor-pointer"  aria-label={altoContraste ? 'Desativar alto contraste' : 'Ativar alto contraste'} title={altoContraste ? 'Desativar alto contraste' : 'Ativar alto contraste'} >
-                  Contraste
-            </button>
+          <div className="flex items-center gap-2" role="group" aria-label="Controles de acessibilidade">
+               <FontDecreaseButton />
+              <FontIncreaseButton />
+            <ContrastButton />
           </div>
         </div>
       </div>
