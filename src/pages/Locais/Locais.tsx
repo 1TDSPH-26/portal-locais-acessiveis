@@ -46,12 +46,21 @@ export default function Locais() {
 
   const filtros = lerFiltrosDaUrl(searchParams)
 
-  const [locais, setLocais] = useState<typeof listaLocais>([])
-  const [loading, setLoading] = useState(true)
-  const [erro, setErro] = useState(false)
+  const [locais, setLocais] =
+    useState<typeof listaLocais>([])
+
+  const [loading, setLoading] =
+    useState(true)
+
+  const [erro, setErro] =
+    useState(false)
+
   const [filtrosAbertos, setFiltrosAbertos] =
     useState(false)
-  const [paginaAtual, setPaginaAtual] = useState(1)
+
+  const [paginaAtual, setPaginaAtual] =
+    useState(1)
+
   const [ordenacao, setOrdenacao] =
     useState<OrdenacaoLocais>('original')
 
