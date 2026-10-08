@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react'
 import { NavLink, Link } from 'react-router'
-
-
+import FontDecreaseButton from '../AcessibilityControls/FontDecreaseButton'
+import FontIncreaseButton from '../AcessibilityControls/FontIncreaseButton'
+import ContrastButton from '../AcessibilityControls/ContrastButton'
 // Cada item daqui vira um link no menu
 // O "end" é usado quando queremos q a rota seja exata (ex: "/")
 
@@ -20,6 +21,7 @@ const navItems: NavItem[] = [
 
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
+  
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
 
   useEffect(() => {
@@ -63,12 +65,22 @@ export default function Header() {
             Pular para o conteúdo principal
           </a>
           <div className="hidden sm:flex items-center gap-4 text-label text-secundaria">
-            <a href="#menu-principal" className="hover:text-texto transition-colors"> Menu [1] </a>
-            <a href="#rodape" className="hover:text-texto transition-colors"> Rodapé [2] </a>
+          <a href="#menu-principal" className="hover:text-texto transition-colors">
+             Menu [1]
+          </a>
+
+          <a href="#rodape" className="hover:text-texto transition-colors">
+            Rodapé [2]
+          </a>
+
+          <div className="flex items-center gap-2" role="group" aria-label="Controles de acessibilidade">
+               <FontDecreaseButton />
+              <FontIncreaseButton />
+            <ContrastButton />
           </div>
         </div>
       </div>
-
+    </div>
       {/* Menu principal */}
       <div className="w-full bg-fundo border-b border-borda-decorativa">
         <div className="max-w-[1440px] h-[88px] mx-auto px-4 md:px-16 py-5 flex items-center justify-between">
