@@ -5,6 +5,7 @@ import LoadingState from '../../components/Feedback/LoadingState'
 import { useConsulta } from '../../hooks/useConsulta'
 import { buscarLocalPorId } from '../../services/locais-consulta'
 import type { Categoria, RecursoAcessibilidade } from '../../types/local'
+import usePageTitle from '../../hooks/usePageTitle'
 
 const nomesCategoria: Record<Categoria, string> = {
   restaurante: 'Restaurante',
@@ -48,6 +49,7 @@ function LinkVoltar() {
 }
 
 export default function DetalhesLocal() {
+  usePageTitle('Detalhes do Local');
   const { id = '' } = useParams()
   const consultarLocal = useCallback(() => buscarLocalPorId(id), [id])
   const { estado, tentarNovamente } = useConsulta(consultarLocal)

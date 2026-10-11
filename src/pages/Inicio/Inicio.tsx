@@ -2,8 +2,10 @@ import { useId, useState } from 'react'
 import { Link } from 'react-router'
 import LocalCard from '../../components/LocalCard/LocalCard'
 import { listaLocais } from '../../data/locais'
+import usePageTitle from '../../hooks/usePageTitle'
 
 export default function Inicio() {
+  usePageTitle('Página inicial')
   const [termoBusca, setTermoBusca] = useState('')
   const [buscaAtiva, setBuscaAtiva] = useState('')
   const searchInputId = useId()
