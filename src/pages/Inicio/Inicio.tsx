@@ -3,10 +3,6 @@ import { Link } from 'react-router'
 import LocalCard from '../../components/LocalCard/LocalCard'
 import { listaLocais } from '../../data/locais'
 import usePageTitle from '../../hooks/usePageTitle'
-import { useId, useState } from "react";
-import { Link } from "react-router";
-import LocalCard from "../../components/LocalCard/LocalCard";
-import { listaLocais } from "../../data/locais";
 
 export default function Inicio() {
   usePageTitle('Página inicial')
