@@ -38,7 +38,7 @@ const ITENS_POR_PAGINA = 4
 const foco =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
 
-const campo = `h - 11 w - full rounded - md border border - slate - 300 bg - white px - 3 text - slate - 900 ${ foco } `
+const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
 
 const classeLinkDetalhes = [
   'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700',
@@ -342,7 +342,7 @@ export default function Locais() {
 
       <button
         type="button"
-        className={`mt - 6 inline - flex min - h - 11 items - center rounded - md border - 2 border - blue - 700 px - 4 font - semibold text - blue - 800 lg:hidden ${ foco } `}
+        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 lg:hidden ${foco}`}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
         onClick={() =>
@@ -367,7 +367,7 @@ export default function Locais() {
   filtrosAbertos
     ? 'block'
     : 'hidden'
-} lg: block`}
+} lg:block`}
           aria-label="Filtros de locais"
         >
           <form
@@ -491,7 +491,7 @@ export default function Locais() {
               disabled={
                 totalFiltrosAtivos === 0
               }
-              className={`mt - 5 min - h - 11 w - full rounded - md border - 2 border - blue - 700 px - 4 font - semibold text - blue - 800 hover: bg - blue - 50 disabled: cursor - not - allowed disabled: border - slate - 300 disabled: text - slate - 400 ${ foco } `}
+              className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
             >
               Limpar filtros
             </button>
@@ -532,7 +532,7 @@ export default function Locais() {
                           'busca',
                         )
                       }
-                      className={`rounded - full bg - blue - 50 px - 3 py - 1.5 text - sm font - semibold text - blue - 800 ${ foco } `}
+                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
                     >
                       Busca:{' '}
                       {filtros.busca}{' '}
@@ -557,7 +557,7 @@ export default function Locais() {
                           'categoria',
                         )
                       }
-                      className={`rounded - full bg - blue - 50 px - 3 py - 1.5 text - sm font - semibold text - blue - 800 ${ foco } `}
+                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
                     >
                       {
                         CATEGORIA_ROTULOS[
@@ -587,7 +587,7 @@ export default function Locais() {
                             recurso,
                           )
                         }
-                        className={`rounded - full bg - blue - 50 px - 3 py - 1.5 text - sm font - semibold text - blue - 800 ${ foco } `}
+                        className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
                       >
                         {
                           RECURSO_ROTULOS[
@@ -614,7 +614,7 @@ export default function Locais() {
                       onClick={
                         limparFiltros
                       }
-                      className={`rounded - full px - 3 py - 1.5 text - sm font - semibold text - blue - 800 underline ${ foco } `}
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
                     >
                       Limpar todos
                     </button>
@@ -642,7 +642,7 @@ export default function Locais() {
                 onClick={
                   limparFiltros
                 }
-                className={`mt - 5 min - h - 11 rounded - md bg - blue - 700 px - 5 font - semibold text - white hover: bg - blue - 800 ${ foco } `}
+                className={`mt-5 min-h-11 rounded-md bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 ${foco}`}
               >
                 Limpar filtros
               </button>
@@ -787,7 +787,7 @@ export default function Locais() {
                   paginaValida === 1
                 }
                 aria-label="Ir para a página anterior"
-                className={`min - h - 11 rounded - md border border - slate - 300 px - 4 font - semibold disabled: cursor - not - allowed disabled: opacity - 50 ${ foco } `}
+                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Anterior
               </button>
@@ -820,7 +820,7 @@ export default function Locais() {
                             : undefined
                         }
                         aria-label={`Página ${ pagina } `}
-                        className={`min - h - 11 min - w - 11 rounded - md px - 3 font - semibold ${
+                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${
   pagina ===
     paginaValida
     ? 'bg-blue-700 text-white'
@@ -846,7 +846,7 @@ export default function Locais() {
                   totalPaginas
                 }
                 aria-label="Ir para a próxima página"
-                className={`min - h - 11 rounded - md border border - slate - 300 px - 4 font - semibold disabled: cursor - not - allowed disabled: opacity - 50 ${ foco } `}
+                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Próxima
               </button>
