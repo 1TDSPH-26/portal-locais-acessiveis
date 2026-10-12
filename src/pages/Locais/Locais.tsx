@@ -223,7 +223,7 @@ export default function Locais() {
       pagina <= totalPaginas
     ) {
       setPaginaAtual(pagina)
-      tituloRef.current?.focus()
+      tituloRef.current?.focus({ preventScroll: true })
     }
   }
 
