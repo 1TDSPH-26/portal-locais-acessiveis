@@ -751,13 +751,10 @@ export default function Locais() {
                       </div>
 
                       <Link
-                        to={`/ locais / ${ local.id } `}
-                        className={
-                          classeLinkDetalhes
-                        }
-                      >
+                        to={`/locais/${local.id}`}
+                        className={classeLinkDetalhes}
+                        >
                         Ver detalhes
-
                         <span className="sr-only">
                           {' '}
                           de{' '}
