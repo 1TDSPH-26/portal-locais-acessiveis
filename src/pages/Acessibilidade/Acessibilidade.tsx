@@ -1,3 +1,4 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import { Link } from 'react-router'
 
 const criterios = [
@@ -97,6 +98,8 @@ const limitacoes = [
 ]
 
 export default function Acessibilidade() {
+  usePageTitle('Acessibilidade')
+
   return (
     <div className="bg-fundo font-corpo text-texto">
       <section className="bg-primaria-700 text-fundo">

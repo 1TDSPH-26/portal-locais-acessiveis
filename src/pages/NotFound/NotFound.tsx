@@ -1,6 +1,9 @@
+import usePageTitle from '../../hooks/usePageTitle'
 import { Link } from "react-router";
 
 export default function NotFound() {
+  usePageTitle('Página não encontrada')
+
     return (
         <main>
             <h1>Erro 404</h1>

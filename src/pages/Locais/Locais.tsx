@@ -32,6 +32,7 @@ import {
   ordenarLocais,
   type OrdenacaoLocais,
 } from '../../types/ordenarLocais'
+import usePageTitle from '../../hooks/usePageTitle'
 
 const ITENS_POR_PAGINA = 4
 
@@ -48,6 +49,8 @@ const classeLinkDetalhes = [
 ].join(' ')
 
 export default function Locais() {
+  usePageTitle('Locais acessíveis')
+  
   const [searchParams, setSearchParams] =
     useSearchParams()
 
