@@ -1,0 +1,166 @@
+name: Issue reminder & auto-unassign
+
+on:
+  schedule:
+    # Executa todo dia às 14:00 UTC
+    - cron: '0 14 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+  projects: read
+
+jobs:
+  remind-and-unassign:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_STATUS_READY: 'Pronta para iniciar'
+      PROJECT_STATUS_IN_DEV: 'Em desenvolvimento'
+      MARKER: '<!-- issue-reminder-bot -->'
+    steps:
+      - name: Run reminder script (checks classic Projects columns)
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const READY = (process.env.PROJECT_STATUS_READY || 'Pronta para iniciar').trim();
+            const INDEV = (process.env.PROJECT_STATUS_IN_DEV || 'Em desenvolvimento').trim();
+            const marker = process.env.MARKER || '<!-- issue-reminder-bot -->';
+            const now = new Date();
+            const ONE_DAY = 24 * 60 * 60 * 1000;
+            const TWO_DAYS = 2 * ONE_DAY;
+
+            core.info(`Procurando colunas '${READY}' e '${INDEV}' em Projects clássicos do repo ${owner}/${repo}`);
+
+            // Lista projetos do repositório (classic Projects)
+            const projectsResp = await github.rest.projects.listForRepo({
+              owner, repo, per_page: 100
+            });
+            const projects = projectsResp.data || [];
+
+            // Coleta colunas cujo nome casa com READY ou INDEV
+            const readyColumnIds = [];
+            const inDevColumnIds = [];
+
+            for (const p of projects) {
+              const colsResp = await github.rest.projects.listColumns({
+                project_id: p.id,
+                per_page: 100
+              });
+              const cols = colsResp.data || [];
+              for (const c of cols) {
+                if ((c.name || '').trim().toLowerCase() === READY.toLowerCase()) readyColumnIds.push(c.id);
+                if ((c.name || '').trim().toLowerCase() === INDEV.toLowerCase()) inDevColumnIds.push(c.id);
+              }
+            }
+
+            core.info(`Found ${readyColumnIds.length} '${READY}' columns and ${inDevColumnIds.length} '${INDEV}' columns.`);
+
+            // Mapeia issue_number -> status por meio dos cards (remoção de duplicatas: IN_DEV tem prioridade)
+            const issueStatus = {}; // issue_number => 'Pronta para iniciar' | 'Em desenvolvimento'
+
+            async function processColumnCards(columnId, statusName) {
+              for await (const page of github.paginate.iterator(github.rest.projects.listCards, { column_id: columnId, per_page: 100 })) {
+                for (const card of page.data || []) {
+                  if (!card.content_url) continue;
+                  // content_url exemplo: https://api.github.com/repos/owner/repo/issues/123
+                  if (card.content_url.includes('/issues/')) {
+                    const parts = card.content_url.split('/issues/');
+                    const num = parseInt(parts[1], 10);
+                    if (!isNaN(num)) {
+                      // Se já estiver marcado como INDEV, mantém INDEV (prioridade)
+                      if (issueStatus[num] === INDEV) continue;
+                      issueStatus[num] = statusName;
+                    }
+                  }
+                }
+              }
+            }
+
+            for (const colId of inDevColumnIds) await processColumnCards(colId, INDEV);
+            for (const colId of readyColumnIds) await processColumnCards(colId, READY);
+
+            core.info(`Mapped statuses for ${Object.keys(issueStatus).length} issues from project cards.`);
+
+            // Busca issues abertas no repo
+            const issues = await github.paginate(github.rest.issues.listForRepo, {
+              owner, repo, state: 'open', per_page: 100
+            });
+
+            for (const issue of issues) {
+              if (issue.pull_request) continue;
+              const num = issue.number;
+
+              // Só processa se o issue estiver em 'Pronta para iniciar' no Project e não em 'Em desenvolvimento'
+              if (issueStatus[num] !== READY) {
+                core.info(`#${num}: não está em '${READY}' (status: ${issueStatus[num] || 'nenhum'}), pulando.`);
+                continue;
+              }
+
+              const assignees = (issue.assignees || []).map(a => a.login);
+
+              // Busca comentários do issue para verificar histórico do bot
+              const commentsResp = await github.rest.issues.listComments({
+                owner, repo, issue_number: num, per_page: 200
+              });
+              const comments = commentsResp.data || [];
+              const botComments = comments.filter(c => c.body && c.body.includes(marker));
+              const lastBotComment = botComments.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+              let assigneeCommentedAfter = false;
+              if (assignees.length > 0) {
+                const afterTime = lastBotComment ? new Date(lastBotComment.created_at) : null;
+                for (const c of comments) {
+                  if (afterTime && new Date(c.created_at) <= afterTime) continue;
+                  if (assignees.includes(c.user.login)) {
+                    assigneeCommentedAfter = true;
+                    break;
+                  }
+                }
+              }
+
+              if (!lastBotComment) {
+                const body = `${marker}\nOlá ${assignees.length ? `@${assignees[0]}` : '@assignee'}, esta issue está no status **${READY}** no Project — por favor, coloque-a em **${INDEV}** (mova-a para a coluna "${INDEV}", crie a branch/PR ou comente que começou) em até 24 horas. Vou lembrar novamente amanhã se nada mudar.`;
+                await github.rest.issues.createComment({ owner, repo, issue_number: num, body });
+                core.info(`Primeiro lembrete postado em #${num}`);
+                continue;
+              }
+
+              const lastBotDate = new Date(lastBotComment.created_at);
+              const diff = now - lastBotDate;
+
+              if (diff < ONE_DAY) {
+                core.info(`#${num}: lembrete recente (<24h), nada a fazer.`);
+                continue;
+              }
+
+              if (diff >= ONE_DAY && diff < TWO_DAYS) {
+                if (assigneeCommentedAfter) {
+                  core.info(`#${num}: assignee já respondeu depois do lembrete, não enviar 2ª chamada.`);
+                  continue;
+                }
+                const body = `${marker}\nSegunda chamada para ${assignees.length ? `@${assignees[0]}` : '@assignee'}: esta issue ainda está no Project em **${READY}** e não foi movida para **${INDEV}**. Por favor, mova-a ou confirme que começou em até 24 horas, caso contrário os assignments serão removidos.`;
+                await github.rest.issues.createComment({ owner, repo, issue_number: num, body });
+                core.info(`Segunda chamada postada em #${num}`);
+                continue;
+              }
+
+              if (diff >= TWO_DAYS) {
+                if (assignees.length === 0) {
+                  core.info(`#${num}: sem assignees, nada a fazer.`);
+                  continue;
+                }
+                if (assigneeCommentedAfter) {
+                  core.info(`#${num}: assignee interagiu após o último lembrete, não remover.`);
+                  continue;
+                }
+                await github.rest.issues.removeAssignees({
+                  owner, repo, issue_number: num,
+                  assignees
+                });
+                const body = `${marker}\nComo não houve progresso em 48 horas, o(s) assignee(s) ${assignees.map(a=>`@${a}`).join(', ')} foi/foram removido(s). Se quiser assumir novamente, reatribua-se quando começar.`;
+                await github.rest.issues.createComment({ owner, repo, issue_number: num, body });
+                core.info(`Assignees removidos de #${num}`);
+              }
+            }
