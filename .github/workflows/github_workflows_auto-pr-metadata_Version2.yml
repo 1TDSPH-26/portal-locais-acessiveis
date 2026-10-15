@@ -1,0 +1,176 @@
+name: Auto PR metadata
+
+on:
+  pull_request:
+    types: [opened, edited, reopened, ready_for_review]
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write
+  metadata: read
+  checks: read
+
+jobs:
+  set-pr-metadata:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_TITLE: "CP Continuado 2026"
+      MILESTONE_TITLE: "CP3"
+      # tenta extrair número da issue da branch (ex.: feature/123-minha-coisa)
+      BRANCH_ISSUE_REGEX: "(?:issue|feature|bug|fix)[/_-]?(\\d+)|^(\\d+)"
+    steps:
+      - name: Set up Node (needed by github-script)
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18
+
+      - name: Update PR body, copy issue metadata, set milestone and add to project
+        uses: actions/github-script@v6
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const owner = context.repo.owner;
+            const repo = context.repo.repo;
+            const pr = context.payload.pull_request;
+            if (!pr) {
+              core.info('No pull request in context.');
+              return;
+            }
+
+            const prNumber = pr.number;
+            const prNodeId = pr.node_id; // for Projects v2
+            const authorLogin = pr.user.login;
+            let body = pr.body || '';
+
+            // 1) Try to get issue number from branch, then from title/body
+            const branch = pr.head.ref || '';
+            let issueNum = null;
+            const branchRegex = new RegExp(process.env.BRANCH_ISSUE_REGEX, 'i');
+            const bm = branch.match(branchRegex);
+            if (bm) {
+              for (let i = 1; i < bm.length; i++) {
+                if (bm[i]) { issueNum = bm[i]; break; }
+              }
+            }
+            if (!issueNum) {
+              const titleMatch = pr.title && pr.title.match(/#(\d+)/);
+              if (titleMatch) issueNum = titleMatch[1];
+            }
+            if (!issueNum) {
+              const bodyMatch = pr.body && pr.body.match(/#(\d+)/);
+              if (bodyMatch) issueNum = bodyMatch[1];
+            }
+
+            // 2) Prepend "Closes #<n>" if found and not present
+            if (issueNum) {
+              const closesPattern = new RegExp(`closes\\s+#${issueNum}`, 'i');
+              if (!closesPattern.test(body)) {
+                body = `Closes #${issueNum}\n\n` + body;
+              }
+            } else {
+              core.info('No issue number found; skipping Closes insertion.');
+            }
+
+            // 3) Ensure 'Responsável principal: @username' is present/updated
+            const respRegex = /^Responsável principal:\s*@[A-Za-z0-9-_]+/im;
+            const respLine = `Responsável principal: @${authorLogin}`;
+            if (respRegex.test(body)) {
+              body = body.replace(respRegex, respLine);
+            } else {
+              // insert after top paragraph (after Closes if present)
+              if (body.startsWith('Closes')) {
+                const parts = body.split('\n');
+                let insertIdx = 0;
+                for (let i = 0; i < parts.length; i++) {
+                  if (parts[i].trim() === '') { insertIdx = i + 1; break; }
+                }
+                parts.splice(insertIdx, 0, respLine);
+                body = parts.join('\n');
+              } else {
+                body = respLine + '\n\n' + body;
+              }
+            }
+
+            // 4) If repository already has a PR template/content, we append a marker to avoid accidental multiple-formatting
+            const marker = '<!-- auto-pr-template: v1 -->';
+            if (!body.includes(marker)) {
+              body = body + '\n\n' + marker;
+            }
+
+            // 5) Update PR body if changed
+            if (body !== pr.body) {
+              await github.rest.pulls.update({ owner, repo, pull_number: prNumber, body });
+              core.info('PR body updated (Closes / Responsável principal).');
+            } else {
+              core.info('PR body unchanged.');
+            }
+
+            // 6) If we have an issue number, copy labels and assignees from that issue
+            if (issueNum) {
+              try {
+                const issueResp = await github.rest.issues.get({ owner, repo, issue_number: Number(issueNum) });
+                const issue = issueResp.data;
+
+                const labels = (issue.labels || []).map(l => typeof l === 'string' ? l : l.name).filter(Boolean);
+                if (labels.length) {
+                  await github.rest.issues.addLabels({ owner, repo, issue_number: prNumber, labels });
+                  core.info(`Added labels from issue #${issueNum} to PR: ${labels.join(', ')}`);
+                }
+
+                const assignees = (issue.assignees || []).map(a => a.login).filter(Boolean);
+                if (assignees.length) {
+                  await github.rest.issues.update({ owner, repo, issue_number: prNumber, assignees });
+                  core.info(`Set assignees on PR to: ${assignees.join(', ')}`);
+                }
+              } catch (err) {
+                core.warning(`Failed to copy issue metadata: ${err.message}`);
+              }
+            }
+
+            // 7) Set milestone by title (CP3)
+            const milestoneTitle = process.env.MILESTONE_TITLE;
+            if (milestoneTitle) {
+              try {
+                const ms = await github.rest.issues.listMilestones({ owner, repo, state: 'all', per_page: 100 });
+                const milestone = ms.data.find(m => m.title === milestoneTitle);
+                if (milestone) {
+                  await github.rest.issues.update({ owner, repo, issue_number: prNumber, milestone: milestone.number });
+                  core.info(`Milestone '${milestoneTitle}' set on PR.`);
+                } else {
+                  core.info(`Milestone '${milestoneTitle}' not found; skipping.`);
+                }
+              } catch (err) {
+                core.warning(`Failed to set milestone: ${err.message}`);
+              }
+            }
+
+            // 8) Add to Projects v2 by title (CP Continuado 2026)
+            const projectTitle = process.env.PROJECT_TITLE;
+            if (projectTitle) {
+              try {
+                const query = `query($owner: String!, $repo: String!) {
+                  repository(owner: $owner, name: $repo) {
+                    projectsV2(first: 100) { nodes { id title } }
+                  }
+                }`;
+                const qRes = await github.graphql(query, { owner, repo });
+                const projects = (qRes.repository && qRes.repository.projectsV2 && qRes.repository.projectsV2.nodes) || [];
+                const project = projects.find(p => p.title === projectTitle);
+                if (project) {
+                  const addMutation = `mutation($projectId: ID!, $contentId: ID!) {
+                    addProjectV2ItemById(input:{projectId: $projectId, contentId: $contentId}) { item { id } }
+                  }`;
+                  try {
+                    await github.graphql(addMutation, { projectId: project.id, contentId: prNodeId });
+                    core.info(`PR added to project '${projectTitle}'.`);
+                  } catch (err) {
+                    core.warning(`Failed to add PR to project: ${err.message}`);
+                  }
+                } else {
+                  core.info(`Project '${projectTitle}' not found; skipping.`);
+                }
+              } catch (err) {
+                core.warning(`Failed to query Projects v2: ${err.message}`);
+              }
+            }
