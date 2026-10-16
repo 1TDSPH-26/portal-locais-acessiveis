@@ -8,7 +8,6 @@ on:
 
 permissions:
   issues: write
-  projects: read
 
 jobs:
   remind-and-unassign:
@@ -17,6 +16,8 @@ jobs:
       PROJECT_STATUS_READY: 'Pronta para iniciar'
       PROJECT_STATUS_IN_DEV: 'Em desenvolvimento'
       MARKER: '<!-- issue-reminder-bot -->'
+      # Secret (crie um Personal Access Token e adicione como secret PROJECTS_TOKEN)
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
     steps:
       - name: Run reminder script (checks classic Projects columns)
         uses: actions/github-script@v6
@@ -31,22 +32,40 @@ jobs:
             const ONE_DAY = 24 * 60 * 60 * 1000;
             const TWO_DAYS = 2 * ONE_DAY;
 
+            // 'github' já está autenticado com GITHUB_TOKEN (para issues/comments/removeAssignees)
+            let projectOctokit = null;
+            if (process.env.PROJECTS_TOKEN) {
+              projectOctokit = github.getOctokit(process.env.PROJECTS_TOKEN);
+            } else {
+              core.warning('PROJECTS_TOKEN não definido — o workflow não conseguirá acessar Projects clássicos via API.');
+            }
+
             core.info(`Procurando colunas '${READY}' e '${INDEV}' em Projects clássicos do repo ${owner}/${repo}`);
 
-            // Lista projetos do repositório (classic Projects)
-            const projectsResp = await github.rest.projects.listForRepo({
-              owner, repo, per_page: 100
-            });
-            const projects = projectsResp.data || [];
+            // Lista projetos do repositório (classic Projects) usando projectOctokit
+            const projects = [];
+            if (projectOctokit) {
+              const projectsResp = await projectOctokit.rest.projects.listForRepo({
+                owner, repo, per_page: 100
+              }).catch(err => {
+                core.warning(`Erro ao listar projects do repo: ${err.message}`);
+                return { data: [] };
+              });
+              projects.push(...(projectsResp.data || []));
+            }
 
             // Coleta colunas cujo nome casa com READY ou INDEV
             const readyColumnIds = [];
             const inDevColumnIds = [];
 
-            for (const p of projects) {
-              const colsResp = await github.rest.projects.listColumns({
+            async function addColumnsFromProject(p) {
+              if (!projectOctokit) return;
+              const colsResp = await projectOctokit.rest.projects.listColumns({
                 project_id: p.id,
                 per_page: 100
+              }).catch(err => {
+                core.warning(`Erro ao listar colunas do project ${p.id}: ${err.message}`);
+                return { data: [] };
               });
               const cols = colsResp.data || [];
               for (const c of cols) {
@@ -55,21 +74,24 @@ jobs:
               }
             }
 
+            for (const p of projects) {
+              await addColumnsFromProject(p);
+            }
+
             core.info(`Found ${readyColumnIds.length} '${READY}' columns and ${inDevColumnIds.length} '${INDEV}' columns.`);
 
-            // Mapeia issue_number -> status por meio dos cards (remoção de duplicatas: IN_DEV tem prioridade)
+            // Mapeia issue_number -> status por meio dos cards (IN_DEV tem prioridade)
             const issueStatus = {}; // issue_number => 'Pronta para iniciar' | 'Em desenvolvimento'
 
-            async function processColumnCards(columnId, statusName) {
-              for await (const page of github.paginate.iterator(github.rest.projects.listCards, { column_id: columnId, per_page: 100 })) {
+            async function processColumnCardsWithProjectOctokit(columnId, statusName) {
+              if (!projectOctokit) return;
+              for await (const page of projectOctokit.paginate.iterator(projectOctokit.rest.projects.listCards, { column_id: columnId, per_page: 100 })) {
                 for (const card of page.data || []) {
                   if (!card.content_url) continue;
-                  // content_url exemplo: https://api.github.com/repos/owner/repo/issues/123
                   if (card.content_url.includes('/issues/')) {
                     const parts = card.content_url.split('/issues/');
                     const num = parseInt(parts[1], 10);
                     if (!isNaN(num)) {
-                      // Se já estiver marcado como INDEV, mantém INDEV (prioridade)
                       if (issueStatus[num] === INDEV) continue;
                       issueStatus[num] = statusName;
                     }
@@ -78,12 +100,12 @@ jobs:
               }
             }
 
-            for (const colId of inDevColumnIds) await processColumnCards(colId, INDEV);
-            for (const colId of readyColumnIds) await processColumnCards(colId, READY);
+            for (const colId of inDevColumnIds) await processColumnCardsWithProjectOctokit(colId, INDEV);
+            for (const colId of readyColumnIds) await processColumnCardsWithProjectOctokit(colId, READY);
 
             core.info(`Mapped statuses for ${Object.keys(issueStatus).length} issues from project cards.`);
 
-            // Busca issues abertas no repo
+            // Busca issues abertas no repo (usa GITHUB_TOKEN via 'github')
             const issues = await github.paginate(github.rest.issues.listForRepo, {
               owner, repo, state: 'open', per_page: 100
             });
