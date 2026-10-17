@@ -613,31 +613,27 @@ export default function Cadastro() {
            className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2"
             aria-describedby="ajuda-recursos"
           >
-            {recursos.map(({ valor, rotulo }) => (
-              <div
-                key={valor}
-                className="group relative flex min-h-11 w-full min-w-0 items-start gap-3 rounded-md border border-borda-decorativa/80 p-3 transition-colors hover:border-borda-funcional hover:bg-fundo-suave/40 focus-within:ring-2 focus-within:ring-primaria-600 focus-within:ring-offset-1"
-              >
-                <input
-                  id={valor}
-                  name="recursosAcessibilidade"
-                  type="checkbox"
-                  value={valor}
-                  checked={dados.recursosAcessibilidade.includes(
-                    valor,
-                  )}
-                  onChange={alternarRecurso}
-                  className="mt-0.5 size-5 shrink-0 rounded border-borda-funcional text-primaria-600 accent-primaria-600 cursor-pointer"
-                />
+          {recursos.map(({ valor, rotulo }) => (
+            <label
+             key={valor}
+             htmlFor={valor}
+             className="group relative flex min-h-11 w-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-borda-decorativa/80 p-3 transition-colors hover:border-borda-funcional hover:bg-fundo-suave/40 focus-within:ring-2 focus-within:ring-primaria-600 focus-within:ring-offset-1"
+           >
+            <input
+               id={valor}
+               name="recursosAcessibilidade"
+               type="checkbox"
+               value={valor}
+               checked={dados.recursosAcessibilidade.includes(valor)}
+               onChange={alternarRecurso}
+               className="mt-0.5 size-5 shrink-0 rounded border-borda-funcional text-primaria-600 accent-primaria-600 cursor-pointer"
+           />
 
-                <label
-                  htmlFor={valor}
-                  className="min-w-0 flex-1 font-corpo text-corpo-14 sm:text-corpo-16 text-texto select-none cursor-pointer leading-normal break-words"
-                >
-                  {rotulo}
-                </label>
-              </div>
-            ))}
+           <span className="min-w-0 flex-1 font-corpo text-corpo-14 sm:text-corpo-16 text-texto select-none leading-normal break-words">
+            {rotulo}
+         </span>
+      </label>
+    ))}
           </div>
         </fieldset>
 
