@@ -380,11 +380,10 @@ export default function Locais() {
                 ? 'Nenhum local cadastrado no momento.'
                 : locaisFiltrados.length === 0
                   ? 'Nenhum local encontrado com esses filtros.'
-                  : `${locaisFiltrados.length} ${
-                      locaisFiltrados.length === 1
-                        ? 'local encontrado'
-                        : 'locais encontrados'
-                    }.`}
+                  : `${locaisFiltrados.length} ${locaisFiltrados.length === 1
+                    ? 'local encontrado'
+                    : 'locais encontrados'
+                  }.`}
             </p>
 
             {totalFiltrosAtivos > 0 && (
@@ -545,80 +544,19 @@ export default function Locais() {
                         ))}
                       </ul>
                     </div>
-
                     <Link
                       to={`/locais/${local.id}`}
                       className={classeLinkDetalhes}
                     >
-                      <h2 className="text-xl font-bold">
+                      Ver detalhes
+                      <span className="sr-only">
+                        {' '}
+                        de{' '}
                         {local.nome}
-                      </h2>
-
-                      <p className="mt-3 text-sm text-slate-700">
-                        <strong>
-                          Endereço:
-                        </strong>{' '}
-                        {local.endereco}
-                      </p>
-
-                      <p className="mt-1 text-sm text-slate-700">
-                        <strong>
-                          CEP:
-                        </strong>{' '}
-                        {local.cep}
-                      </p>
-
-                      <p className="mt-2 text-sm text-slate-700">
-                        <strong>
-                          Categoria:
-                        </strong>{' '}
-                        {
-                          CATEGORIA_ROTULOS[
-                            local.categoria
-                          ]
-                        }
-                      </p>
-
-                      <div className="mt-4">
-                        <h3 className="font-semibold">
-                          Recursos de
-                          acessibilidade
-                        </h3>
-
-                        <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-                          {local.recursosAcessibilidade.map(
-                            (
-                              recurso,
-                            ) => (
-                              <li
-                                key={
-                                  recurso
-                                }
-                              >
-                                {
-                                  RECURSO_ROTULOS[
-                                    recurso
-                                  ]
-                                }
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      </div>
-
-                      <Link
-                        to={`/locais/${local.id}`}
-                        className={classeLinkDetalhes}
-                        >
-                        Ver detalhes
-                        <span className="sr-only">
-                          {' '}
-                          de{' '}
-                          {local.nome}
-                        </span>
-                      </Link>
-                    </article>
-                  ),
+                      </span>
+                    </Link>
+                  </article>
+                ),
                 )}
               </section>
             </>
@@ -657,11 +595,10 @@ export default function Locais() {
                           pagina === paginaValida ? 'page' : undefined
                         }
                         aria-label={`Página ${pagina}`}
-                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${
-                          pagina === paginaValida
+                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
                             ? 'bg-blue-700 text-white'
                             : 'border border-slate-300 hover:bg-slate-100'
-                        } ${foco}`}
+                          } ${foco}`}
                       >
                         {pagina}
                       </button>
