@@ -52,8 +52,10 @@ export default function Favoritos() {
       >
         Meus favoritos
       </h1>
-      <p className="mt-2 max-w-2xl text-slate-600">
-        Locais que você salvou para encontrar com facilidade.
+      <p role="status" aria-live="polite" aria-atomic="true" className="mt-2 max-w-2xl text-slate-600">
+        {locaisFavoritos.length === 0
+          ? 'Você não tem locais favoritos salvos.'
+          : `${locaisFavoritos.length} ${locaisFavoritos.length === 1 ? 'local favorito salvo' : 'locais favoritos salvos'}.`}
       </p>
 
       {locaisFavoritos.length === 0 ? (
