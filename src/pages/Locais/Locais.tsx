@@ -169,7 +169,7 @@ export default function Locais() {
   const mudarPagina = (pagina: number) => {
     if (pagina >= 1 && pagina <= totalPaginas) {
       setPaginaAtual(pagina)
-      tituloRef.current?.focus()
+      tituloRef.current?.focus({ preventScroll: true })
     }
   }
 
@@ -550,11 +550,76 @@ export default function Locais() {
                       to={`/locais/${local.id}`}
                       className={classeLinkDetalhes}
                     >
-                      Ver detalhes
-                      <span className="sr-only"> de {local.nome}</span>
-                    </Link>
-                  </article>
-                ))}
+                      <h2 className="text-xl font-bold">
+                        {local.nome}
+                      </h2>
+
+                      <p className="mt-3 text-sm text-slate-700">
+                        <strong>
+                          Endereço:
+                        </strong>{' '}
+                        {local.endereco}
+                      </p>
+
+                      <p className="mt-1 text-sm text-slate-700">
+                        <strong>
+                          CEP:
+                        </strong>{' '}
+                        {local.cep}
+                      </p>
+
+                      <p className="mt-2 text-sm text-slate-700">
+                        <strong>
+                          Categoria:
+                        </strong>{' '}
+                        {
+                          CATEGORIA_ROTULOS[
+                            local.categoria
+                          ]
+                        }
+                      </p>
+
+                      <div className="mt-4">
+                        <h3 className="font-semibold">
+                          Recursos de
+                          acessibilidade
+                        </h3>
+
+                        <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
+                          {local.recursosAcessibilidade.map(
+                            (
+                              recurso,
+                            ) => (
+                              <li
+                                key={
+                                  recurso
+                                }
+                              >
+                                {
+                                  RECURSO_ROTULOS[
+                                    recurso
+                                  ]
+                                }
+                              </li>
+                            ),
+                          )}
+                        </ul>
+                      </div>
+
+                      <Link
+                        to={`/locais/${local.id}`}
+                        className={classeLinkDetalhes}
+                        >
+                        Ver detalhes
+                        <span className="sr-only">
+                          {' '}
+                          de{' '}
+                          {local.nome}
+                        </span>
+                      </Link>
+                    </article>
+                  ),
+                )}
               </section>
             </>
           )}

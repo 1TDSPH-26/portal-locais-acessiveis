@@ -1,0 +1,185 @@
+name: Issue reminder & auto-unassign
+
+on:
+  schedule:
+    - cron: '0 14 * * *'
+  workflow_dispatch: {}
+
+permissions:
+  issues: write
+
+jobs:
+  remind-and-unassign:
+    runs-on: ubuntu-latest
+    env:
+      PROJECT_STATUS_READY: 'Pronta para iniciar'
+      PROJECT_STATUS_IN_DEV: 'Em desenvolvimento'
+      MARKER: '<!-- issue-reminder-bot -->'
+      PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+    steps:
+      - name: Use Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+
+      - name: Install dependencies
+        run: |
+          npm init -y
+          npm install @octokit/rest
+
+      - name: Run reminder script
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PROJECTS_TOKEN: ${{ secrets.PROJECTS_TOKEN }}
+          PROJECT_STATUS_READY: ${{ env.PROJECT_STATUS_READY }}
+          PROJECT_STATUS_IN_DEV: ${{ env.PROJECT_STATUS_IN_DEV }}
+          MARKER: ${{ env.MARKER }}
+        run: |
+          cat > reminder.js <<'JS'
+          const { Octokit } = require("@octokit/rest");
+
+          (async () => {
+            try {
+              const repoFull = process.env.GITHUB_REPOSITORY;
+              if (!repoFull) throw new Error("GITHUB_REPOSITORY not set");
+              const [owner, repo] = repoFull.split("/");
+
+              const READY = (process.env.PROJECT_STATUS_READY || 'Pronta para iniciar').trim();
+              const INDEV = (process.env.PROJECT_STATUS_IN_DEV || 'Em desenvolvimento').trim();
+              const marker = process.env.MARKER || '<!-- issue-reminder-bot -->';
+              const now = new Date();
+              const ONE_DAY = 24 * 60 * 60 * 1000;
+              const TWO_DAYS = 2 * ONE_DAY;
+
+              // Octokit para issues (usa GITHUB_TOKEN)
+              const issuesOctokit = new Octokit({ auth: process.env.GITHUB_TOKEN });
+
+              // Octokit para Projects (usa PROJECTS_TOKEN se definido)
+              let projectsOctokit = null;
+              if (process.env.PROJECTS_TOKEN) {
+                projectsOctokit = new Octokit({ auth: process.env.PROJECTS_TOKEN });
+                console.log("PROJECTS_TOKEN definido — usando API de Projects clássicos.");
+              } else {
+                console.warn("PROJECTS_TOKEN não definido — fazendo fallback por labels.");
+              }
+
+              // Mapeia issue_number => status
+              const issueStatus = {};
+
+              if (projectsOctokit) {
+                // Lista projects do repo (classic projects)
+                const projects = await projectsOctokit.paginate(projectsOctokit.rest.projects.listForRepo, { owner, repo, per_page: 100 });
+                console.log(`Projects encontrados: ${projects.length}`);
+                const readyColumnIds = [];
+                const inDevColumnIds = [];
+
+                for (const p of projects) {
+                  const cols = await projectsOctokit.paginate(projectsOctokit.rest.projects.listColumns, { project_id: p.id, per_page: 100 });
+                  for (const c of cols) {
+                    if ((c.name || '').trim().toLowerCase() === READY.toLowerCase()) readyColumnIds.push(c.id);
+                    if ((c.name || '').trim().toLowerCase() === INDEV.toLowerCase()) inDevColumnIds.push(c.id);
+                  }
+                }
+
+                console.log(`Colunas '${READY}': ${readyColumnIds.length}, '${INDEV}': ${inDevColumnIds.length}`);
+
+                async function processCards(columnId, statusName) {
+                  const cards = await projectsOctokit.paginate(projectsOctokit.rest.projects.listCards, { column_id: columnId, per_page: 100 });
+                  for (const card of cards) {
+                    if (!card.content_url) continue;
+                    if (card.content_url.includes('/issues/')) {
+                      const num = parseInt(card.content_url.split('/issues/')[1], 10);
+                      if (!isNaN(num)) {
+                        if (issueStatus[num] === INDEV) continue; // INDEV tem prioridade
+                        issueStatus[num] = statusName;
+                      }
+                    }
+                  }
+                }
+
+                for (const id of inDevColumnIds) await processCards(id, INDEV);
+                for (const id of readyColumnIds) await processCards(id, READY);
+
+                console.log(`Mapped ${Object.keys(issueStatus).length} issues from Projects columns.`);
+              }
+
+              // Fallback por labels se não obteve issues via Projects
+              if (Object.keys(issueStatus).length === 0) {
+                console.log("Nenhum mapping via Projects — usando labels como fallback.");
+                const allIssues = await issuesOctokit.paginate(issuesOctokit.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
+                let count = 0;
+                for (const issue of allIssues) {
+                  if (issue.pull_request) continue;
+                  const labels = (issue.labels || []).map(l => (l.name || '').trim().toLowerCase());
+                  if (labels.includes(READY.toLowerCase())) { issueStatus[issue.number] = READY; count++; }
+                  if (labels.includes(INDEV.toLowerCase())) { issueStatus[issue.number] = INDEV; }
+                }
+                console.log(`Fallback labels mapped ${count} issues.`);
+              }
+
+              // Processa issues abertas com base no issueStatus
+              const issues = await issuesOctokit.paginate(issuesOctokit.rest.issues.listForRepo, { owner, repo, state: 'open', per_page: 100 });
+              for (const issue of issues) {
+                if (issue.pull_request) continue;
+                const num = issue.number;
+                if (issueStatus[num] !== READY) {
+                  console.log(`#${num}: status não é '${READY}' (é: ${issueStatus[num] || 'nenhum'}) — pulando.`);
+                  continue;
+                }
+
+                const assignees = (issue.assignees || []).map(a => a.login);
+
+                const commentsResp = await issuesOctokit.rest.issues.listComments({ owner, repo, issue_number: num, per_page: 200 });
+                const comments = commentsResp.data || [];
+                const botComments = comments.filter(c => c.body && c.body.includes(marker));
+                const lastBotComment = botComments.sort((a,b) => new Date(b.created_at) - new Date(a.created_at))[0];
+
+                let assigneeCommentedAfter = false;
+                if (assignees.length > 0) {
+                  const afterTime = lastBotComment ? new Date(lastBotComment.created_at) : null;
+                  for (const c of comments) {
+                    if (afterTime && new Date(c.created_at) <= afterTime) continue;
+                    if (assignees.includes(c.user.login)) {
+                      assigneeCommentedAfter = true;
+                      break;
+                    }
+                  }
+                }
+
+                if (!lastBotComment) {
+                  const body = `${marker}\nOlá ${assignees.length ? `@${assignees[0]}` : '@assignee'}, esta issue está no status **${READY}** — por favor, coloque-a em **${INDEV}** em até 24 horas. Vou lembrar novamente amanhã se nada mudar.`;
+                  await issuesOctokit.rest.issues.createComment({ owner, repo, issue_number: num, body });
+                  console.log(`Primeiro lembrete postado em #${num}`);
+                  continue;
+                }
+
+                const lastBotDate = new Date(lastBotComment.created_at);
+                const diff = now - lastBotDate;
+
+                if (diff < ONE_DAY) { console.log(`#${num}: lembrete recente (<24h)`); continue; }
+
+                if (diff >= ONE_DAY && diff < TWO_DAYS) {
+                  if (assigneeCommentedAfter) { console.log(`#${num}: assignee respondeu depois do lembrete`); continue; }
+                  const body = `${marker}\nSegunda chamada para ${assignees.length ? `@${assignees[0]}` : '@assignee'}: esta issue ainda não foi movida para **${INDEV}**. Por favor, confirme que começou em até 24 horas, caso contrário os assignments serão removidos.`;
+                  await issuesOctokit.rest.issues.createComment({ owner, repo, issue_number: num, body });
+                  console.log(`Segunda chamada postada em #${num}`);
+                  continue;
+                }
+
+                if (diff >= TWO_DAYS) {
+                  if (assignees.length === 0) { console.log(`#${num}: sem assignees`); continue; }
+                  if (assigneeCommentedAfter) { console.log(`#${num}: assignee interagiu`); continue; }
+                  await issuesOctokit.rest.issues.removeAssignees({ owner, repo, issue_number: num, assignees });
+                  const body = `${marker}\nComo não houve progresso em 48 horas, removi ${assignees.map(a=>`@${a}`).join(', ')}. Reatribua-se se quiser assumir novamente.`;
+                  await issuesOctokit.rest.issues.createComment({ owner, repo, issue_number: num, body });
+                  console.log(`Assignees removidos de #${num}`);
+                }
+              }
+            } catch (err) {
+              console.error("Erro no script:", err);
+              process.exit(1);
+            }
+          })();
+          JS
+
+          node reminder.js
