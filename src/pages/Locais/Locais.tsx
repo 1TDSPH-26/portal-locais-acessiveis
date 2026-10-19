@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
+import EmptyState from '../../components/Feedback/EmptyState'
 
 import { listaLocais } from '../../data/locais'
 import {
@@ -142,12 +143,22 @@ export default function Locais() {
 
   /*
    * Limpa todos os filtros.
+   * Com focarBusca, abre o painel no
+   * mobile para levar o foco à busca.
    */
-  const limparFiltros = () => {
+  const limparFiltros = (
+    { focarBusca = false } = {},
+  ) => {
     atualizarFiltros(FILTROS_VAZIOS)
 
     if (buscaRef.current?.offsetParent) {
       buscaRef.current.focus()
+    } else if (focarBusca) {
+      setFiltrosAbertos(true)
+
+      window.setTimeout(() => {
+        buscaRef.current?.focus()
+      }, 0)
     } else {
       resultadoRef.current?.focus()
     }
@@ -490,7 +501,7 @@ export default function Locais() {
 
             <button
               type="button"
-              onClick={limparFiltros}
+              onClick={() => limparFiltros()}
               disabled={
                 totalFiltrosAtivos === 0
               }
@@ -614,8 +625,8 @@ export default function Locais() {
                   <li>
                     <button
                       type="button"
-                      onClick={
-                        limparFiltros
+                      onClick={() =>
+                        limparFiltros()
                       }
                       className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
                     >
@@ -629,26 +640,59 @@ export default function Locais() {
 
           {locaisFiltrados.length ===
           0 ? (
-            <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
-              <h2 className="text-xl font-bold">
-                Nenhum resultado
-              </h2>
-
-              <p className="mt-2 text-slate-600">
-                Tente remover algum filtro
-                ou fazer uma busca
-                diferente.
-              </p>
-
-              <button
-                type="button"
-                onClick={
-                  limparFiltros
+            <div className="mt-6">
+              <EmptyState
+                title="Nenhum local encontrado com esses filtros"
+                message="Tente desmarcar alguns recursos de acessibilidade, selecionar outra categoria ou buscar por termos mais genéricos."
+                actionLabel="Limpar todos os filtros"
+                onAction={() =>
+                  limparFiltros({
+                    focarBusca: true,
+                  })
                 }
-                className={`mt-5 min-h-11 rounded-md bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 ${foco}`}
               >
-                Limpar filtros
-              </button>
+                {totalFiltrosAtivos > 0 && (
+                  <div className="w-full max-w-xl text-left">
+                    <p className="font-semibold text-texto">
+                      Filtros que estão
+                      restringindo a busca:
+                    </p>
+
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-texto">
+                      {filtros.busca.trim() && (
+                        <li>
+                          Busca por “
+                          {filtros.busca.trim()}”
+                        </li>
+                      )}
+
+                      {filtros.categoria && (
+                        <li>
+                          Categoria:{' '}
+                          {
+                            CATEGORIA_ROTULOS[
+                              filtros.categoria
+                            ]
+                          }
+                        </li>
+                      )}
+
+                      {filtros.recursos.map(
+                        (recurso) => (
+                          <li key={recurso}>
+                            Recurso:{' '}
+                            {
+                              RECURSO_ROTULOS[
+                                recurso
+                              ]
+                            }
+                          </li>
+                        ),
+                      )}
+                    </ul>
+                  </div>
+                )}
+              </EmptyState>
             </div>
           ) : (
             <>
