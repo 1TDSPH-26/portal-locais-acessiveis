@@ -111,18 +111,34 @@ export default function Locais() {
    * e retorna para a primeira página.
    */
   const atualizarFiltros = (
-    novos: Partial<FiltrosLocais>,
+  novos: Partial<FiltrosLocais>,
   ) => {
-    setSearchParams(
-      filtrosParaUrl({
-        ...filtros,
-        ...novos,
-      }),
-      { replace: true },
-    )
-
-    setPaginaAtual(1)
+    const filtrosAtualizados: FiltrosLocais = {
+      ...filtros,
+      ...novos,
   }
+
+  const parametrosAtualizados =
+    new URLSearchParams(searchParams)
+
+  // Remove apenas os parâmetros controlados pelos filtros.
+  parametrosAtualizados.delete('busca')
+  parametrosAtualizados.delete('categoria')
+  parametrosAtualizados.delete('recursos')
+
+  // Adiciona novamente apenas os filtros ativos.
+  filtrosParaUrl(filtrosAtualizados).forEach(
+    (valor, chave) => {
+      parametrosAtualizados.set(chave, valor)
+    },
+  )
+
+  setSearchParams(parametrosAtualizados, {
+    replace: true,
+  })
+
+  setPaginaAtual(1)
+}
 
   /*
    * Alterna um recurso de acessibilidade.
