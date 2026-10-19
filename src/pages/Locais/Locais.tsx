@@ -33,6 +33,7 @@ import {
   type OrdenacaoLocais,
 } from '../../types/ordenarLocais'
 import usePageTitle from '../../hooks/usePageTitle'
+import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
 
 const ITENS_POR_PAGINA = 4
 
@@ -324,7 +325,7 @@ export default function Locais() {
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-6xl px-4 pb-24 pt-8 sm:px-6">
       <h1
         ref={tituloRef}
         tabIndex={-1}
@@ -854,6 +855,7 @@ export default function Locais() {
           )}
         </section>
       </div>
+      <BotaoVoltarAoTopo /> 
     </main>
   )
 }
