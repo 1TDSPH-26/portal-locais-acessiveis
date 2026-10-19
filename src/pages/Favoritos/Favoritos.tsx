@@ -25,12 +25,22 @@ export default function Favoritos() {
   const tituloRef = useRef<HTMLHeadingElement>(null)
 
   useEffect(() => {
+    tituloRef.current?.focus()
+  }, [])
+
+  useEffect(() => {
     const atualizarFavoritos = () => setIdsFavoritos(lerIdsFavoritos())
     window.addEventListener('storage', atualizarFavoritos)
     return () => window.removeEventListener('storage', atualizarFavoritos)
   }, [])
 
   const locaisFavoritos = listaLocais.filter((local) => idsFavoritos.includes(local.id))
+
+  useEffect(() => {
+    if (locaisFavoritos.length === 0) {
+      tituloRef.current?.focus()
+    }
+  }, [locaisFavoritos.length])
 
   function removerFavorito(id: number) {
     const novosIds = idsFavoritos.filter((favoritoId) => favoritoId !== id)
