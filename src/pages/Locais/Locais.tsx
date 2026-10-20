@@ -2,8 +2,10 @@ import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
+import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import { useConsulta } from '../../hooks/useConsulta'
+import { listarLocais } from '../../services/locais-consulta'
 
-import { listaLocais } from '../../data/locais'
 import {
   CATEGORIAS,
   CATEGORIA_ROTULOS,
@@ -13,6 +15,7 @@ import {
 
 import type {
   Categoria,
+  Local,
   RecursoAcessibilidade,
 } from '../../types/local'
 
@@ -56,14 +59,9 @@ export default function Locais() {
 
   const filtros = lerFiltrosDaUrl(searchParams)
 
-  const [locais, setLocais] =
-    useState<typeof listaLocais>([])
+  const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const [loading, setLoading] =
-    useState(true)
-
-  const [erro, setErro] =
-    useState(false)
+  const locais: Local[] = estado.status === 'sucesso' ? estado.dados : []
 
   const [filtrosAbertos, setFiltrosAbertos] =
     useState(false)
@@ -87,25 +85,24 @@ export default function Locais() {
   const categoriaId = useId()
   const recursosId = useId()
 
+  const houveRetentativa = useRef(false)
+
   /*
-   * Carrega os locais.
+   * Devolve o foco para a contagem de
+   * resultados quando uma nova tentativa
+   * carrega os locais com sucesso.
    */
+  const reexecutarConsulta = () => {
+    houveRetentativa.current = true
+    tentarNovamente()
+  }
+
   useEffect(() => {
-    const timer = setTimeout(() => {
-      try {
-        setLocais(listaLocais)
-      } catch {
-        setErro(true)
-      } finally {
-        setLoading(false)
-      }
-    }, 0)
-
-    return () => {
-      clearTimeout(timer)
+    if (estado.status === 'sucesso' && houveRetentativa.current) {
+      houveRetentativa.current = false
+      resultadoRef.current?.focus()
     }
-  }, [])
-
+  }, [estado])
   /*
    * Atualiza os filtros na URL
    * e retorna para a primeira página.
@@ -273,7 +270,7 @@ export default function Locais() {
   /*
    * Estado de carregamento.
    */
-  if (loading) {
+  if (estado.status === 'carregando') {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <h1
@@ -299,7 +296,7 @@ export default function Locais() {
   /*
    * Estado de erro.
    */
-  if (erro) {
+  if (estado.status === 'erro') {  
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <h1
@@ -312,13 +309,12 @@ export default function Locais() {
 
         <ContagemResultados total={null} />
 
-        <p
-          role="alert"
-          className="mt-4"
-        >
-          Não foi possível carregar os
-          locais. Tente novamente.
-        </p>
+        <ErrorMessage
+          title="Não foi possível carregar os locais"
+          message={estado.mensagem}
+          onRetry={reexecutarConsulta}
+          retrying={retentando}
+        />
       </main>
     )
   }
