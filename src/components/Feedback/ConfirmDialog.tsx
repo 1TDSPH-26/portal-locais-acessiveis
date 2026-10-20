@@ -26,19 +26,32 @@ export default function ConfirmDialog({
 }: ConfirmDialogProps) {
   const dialogRef = useRef<HTMLDialogElement>(null)
   const cancelButtonRef = useRef<HTMLButtonElement>(null)
+  const triggerRef = useRef<HTMLElement | null>(null)
+  
+useEffect(() => {
+  const dialog = dialogRef.current
 
-  useEffect(() => {
-    const dialog = dialogRef.current
+  if (!dialog) return
 
-    if (!dialog) return
+  if (isOpen && !dialog.open) {
+    const activeElement = document.activeElement
 
-    if (isOpen && !dialog.open) {
-      dialog.showModal()
-      cancelButtonRef.current?.focus()
-    } else if (!isOpen && dialog.open) {
-      dialog.close()
+    triggerRef.current =
+      activeElement instanceof HTMLElement ? activeElement : null
+
+    dialog.showModal()
+    cancelButtonRef.current?.focus()
+  } else if (!isOpen && dialog.open) {
+    dialog.close()
+
+    if (triggerRef.current?.isConnected) {
+      triggerRef.current.focus()
     }
-  }, [isOpen])
+
+    triggerRef.current = null
+  }
+}, [isOpen])
+
 
   function handleCancel(event: React.SyntheticEvent<HTMLDialogElement>) {
     event.preventDefault()
@@ -62,6 +75,46 @@ export default function ConfirmDialog({
       ? 'bg-erro hover:opacity-90 focus-visible:outline-erro'
       : 'bg-primaria-600 hover:bg-primaria-700 focus-visible:outline-primaria-600'
 
+
+  const handleKeyDown = (event: React.KeyboardEvent<HTMLDialogElement>) => {
+    if (event.key !== "Tab") return
+
+    const dialog = dialogRef.current
+
+    if (!dialog) return
+
+    const focusableElements = Array.from(
+      dialog.querySelectorAll<HTMLElement>(
+        'button:not([disabled]), a[href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])',
+      ),
+    ).filter(
+      (element) =>
+        !element.hasAttribute("hidden") &&
+        element.getAttribute("aria-hidden") !== "true" &&
+        element.getClientRects().length > 0,
+    )
+
+    if (focusableElements.length === 0) {
+      event.preventDefault()
+      return
+    }
+
+    const firstElement = focusableElements[0]
+    const lastElement = focusableElements[focusableElements.length - 1]
+
+    if (event.shiftKey && document.activeElement === firstElement) {
+      event.preventDefault()
+      lastElement.focus()
+    } else if (
+      !event.shiftKey &&
+      document.activeElement === lastElement
+    ) {
+      event.preventDefault()
+      firstElement.focus()
+    }
+  }
+
+
   return (
     <dialog
       ref={dialogRef}
@@ -71,6 +124,7 @@ export default function ConfirmDialog({
       aria-describedby="confirm-dialog-description"
       onCancel={handleCancel}
       onClick={handleBackdropClick}
+      onKeyDown={handleKeyDown}
       className="fixed inset-0 m-auto w-[calc(100%-2rem)] max-w-lg rounded-xl border border-borda-decorativa bg-fundo p-0 text-texto shadow-2xl backdrop:bg-black/60"
     >
       <div className="flex flex-col gap-5 p-6 sm:p-8">
