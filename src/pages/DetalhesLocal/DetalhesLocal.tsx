@@ -58,9 +58,9 @@ function BreadcrumbDetalhe({ paginaAtual }: { paginaAtual: string }) {
 
         <li
           aria-current="page"
-          className="flex min-w-0 max-w-full items-baseline gap-2"
+          className="flex min-w-0 max-w-full w-full items-baseline gap-2 sm:w-auto"
         >
-          <span aria-hidden="true" className="shrink-0">
+          <span aria-hidden="true" className="hidden shrink-0 sm:inline">
             /
           </span>
           <span className="min-w-0 wrap-anywhere">
@@ -80,7 +80,7 @@ export default function DetalhesLocal() {
 
   if (estado.status === 'carregando') {
     return (
-      <section aria-label="Detalhes do local" className="mx-auto w-full max-w-3xl p-6">
+      <section aria-label="Detalhes do local" className="mx-auto w-full max-w-3xl px-4 py-6 sm:p-6">
         <BreadcrumbDetalhe paginaAtual="Detalhes do local" />
         <LoadingState message="Carregando detalhes do local..." />
       </section>
@@ -91,7 +91,7 @@ export default function DetalhesLocal() {
     return (
       <section
         aria-labelledby="detalhe-erro"
-        className="mx-auto w-full max-w-3xl p-6"
+        className="mx-auto w-full max-w-3xl px-4 py-6 sm:p-6"
       >
         <BreadcrumbDetalhe paginaAtual="Detalhes do local" />
         <h1
@@ -115,7 +115,7 @@ export default function DetalhesLocal() {
     return (
       <section
         aria-labelledby="detalhe-nao-encontrado"
-        className="mx-auto w-full max-w-3xl p-6"
+        className="mx-auto w-full max-w-3xl px-4 py-6 sm:p-6"
       >
         <BreadcrumbDetalhe paginaAtual="Local não encontrado" />
         <h1
@@ -135,13 +135,13 @@ export default function DetalhesLocal() {
   return (
     <article
       aria-labelledby="detalhe-titulo"
-      className="mx-auto w-full max-w-3xl p-6"
+      className="mx-auto w-full max-w-3xl px-4 py-6 sm:p-6"
     >
       <BreadcrumbDetalhe paginaAtual={local.nome} />
 
       <h1
         id="detalhe-titulo"
-        className="mt-4 font-display text-h1 font-bold text-texto"
+        className="mt-4 font-display text-h1 font-bold text-texto wrap-anywhere"
       >
         {local.nome}
       </h1>
@@ -149,7 +149,7 @@ export default function DetalhesLocal() {
       <dl className="mt-6 grid gap-4 rounded-lg border border-borda-decorativa p-5 sm:grid-cols-2">
         <div className="sm:col-span-2">
           <dt className="font-corpo text-legenda text-secundaria">Endereço</dt>
-          <dd className="mt-1 font-corpo text-corpo-16 text-texto">
+          <dd className="mt-1 font-corpo text-corpo-16 text-texto wrap-anywhere">
             {local.endereco}
           </dd>
         </div>
@@ -174,7 +174,7 @@ export default function DetalhesLocal() {
         >
           Recursos de acessibilidade
         </h2>
-        <ul className="mt-4 list-disc pl-6 font-corpo text-corpo-16 text-texto">
+        <ul className="mt-4 list-disc pl-6 font-corpo text-corpo-16 text-texto wrap-anywhere">
           {local.recursosAcessibilidade.map((recurso) => (
             <li key={recurso}>{nomesRecurso[recurso]}</li>
           ))}
