@@ -3,6 +3,7 @@ import { Link, useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import AvisoDadosReserva from '../../components/Feedback/AvisoDadosReserva'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
 
@@ -62,7 +63,11 @@ export default function Locais() {
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const locais: Local[] = estado.status === 'sucesso' ? estado.dados : []
+   const resultado = estado.status === 'sucesso' ? estado.dados : null
+
+  const locais: Local[] = resultado?.locais ?? []
+
+  const emModoReserva = resultado?.origem === 'reserva'
 
   const [filtrosAbertos, setFiltrosAbertos] =
     useState(false)
@@ -319,7 +324,7 @@ export default function Locais() {
       </main>
     )
   }
-
+      
   return (
     <main className="mx-auto w-full max-w-6xl px-4 pb-24 pt-8 sm:px-6">
       <h1
@@ -329,6 +334,12 @@ export default function Locais() {
       >
         Locais acessíveis
       </h1>
+
+      {emModoReserva && (
+        <AvisoDadosReserva
+          onDispensar={() => tituloRef.current?.focus()}
+        />
+      )}
 
       <p className="mt-2 max-w-2xl text-slate-600">
         Combine os filtros para encontrar
