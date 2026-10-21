@@ -76,8 +76,8 @@ export default function DetalhesLocal() {
   usePageTitle('Detalhes do Local');
   const { id = '' } = useParams()
   const consultarLocal = useCallback(() => buscarLocalPorId(id), [id])
-  const { estado, tentarNovamente } = useConsulta(consultarLocal)
-
+  const { estado, retentando, tentarNovamente } = useConsulta(consultarLocal)
+  
   if (estado.status === 'carregando') {
     return (
       <section aria-label="Detalhes do local" className="mx-auto w-full max-w-3xl p-6">
@@ -104,6 +104,7 @@ export default function DetalhesLocal() {
           title="Não foi possível carregar este local"
           message={estado.mensagem}
           onRetry={tentarNovamente}
+          retrying={retentando}
         />
       </section>
     )

@@ -240,7 +240,7 @@ export default function Cadastro() {
   }
 
   const classeCampoBase =
-    'mt-1 block w-full rounded-md bg-fundo px-3.5 py-2.5 font-corpo text-corpo-16 text-texto shadow-xs outline-offset-2 transition-colors placeholder:text-secundaria/60 focus:outline-3 min-h-[44px]'
+    'mt-1 block min-h-11 w-full min-w-0 rounded-md bg-fundo px-3.5 py-2.5 font-corpo text-corpo-16 text-texto shadow-xs outline-offset-2 transition-colors placeholder:text-secundaria/60 focus:outline-3'
 
   function classeCampo(comErro: boolean) {
     return `${classeCampoBase} border ${comErro
@@ -312,7 +312,7 @@ export default function Cadastro() {
                 <button
                   type="button"
                   onClick={reiniciarFormulario}
-                  className="inline-flex items-center justify-center rounded-md bg-sucesso px-4 py-2 font-corpo text-corpo-14 font-semibold text-white shadow-xs hover:bg-green-700 focus:outline-2 focus:outline-offset-2 focus:outline-sucesso min-h-[40px] cursor-pointer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-sucesso px-4 py-2 font-corpo text-corpo-14 font-semibold text-white shadow-xs hover:bg-green-700 focus:outline-2 focus:outline-offset-2 focus:outline-sucesso cursor-pointer"
                 >
                   Cadastrar outro local
                 </button>
@@ -393,7 +393,7 @@ export default function Cadastro() {
             Identificação do local
           </legend>
 
-          <div className="mt-4 grid grid-cols-1 md:grid-cols-3 gap-4 sm:gap-5">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:gap-5 md:grid-cols-3">
             <div className="md:col-span-2">
               <label
                 htmlFor="nome"
@@ -494,7 +494,7 @@ export default function Cadastro() {
             Localização
           </legend>
 
-          <div className="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-4 sm:gap-5">
+          <div className="mt-4 grid min-w-0 grid-cols-1 gap-4 sm:grid-cols-3 sm:gap-5">
             <div className="sm:col-span-2">
               <label
                 htmlFor="endereco"
@@ -610,34 +610,30 @@ export default function Cadastro() {
           </p>
 
           <div
-            className="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3"
+           className="mt-4 grid min-w-0 grid-cols-1 gap-3 sm:grid-cols-2"
             aria-describedby="ajuda-recursos"
           >
-            {recursos.map(({ valor, rotulo }) => (
-              <div
-                key={valor}
-                className="group relative flex items-start gap-3 rounded-md border border-borda-decorativa/80 p-3 transition-colors hover:border-borda-funcional hover:bg-fundo-suave/40 focus-within:ring-2 focus-within:ring-primaria-600 focus-within:ring-offset-1 cursor-pointer"
-              >
-                <input
-                  id={valor}
-                  name="recursosAcessibilidade"
-                  type="checkbox"
-                  value={valor}
-                  checked={dados.recursosAcessibilidade.includes(
-                    valor,
-                  )}
-                  onChange={alternarRecurso}
-                  className="mt-0.5 size-5 shrink-0 rounded border-borda-funcional text-primaria-600 accent-primaria-600 cursor-pointer"
-                />
+          {recursos.map(({ valor, rotulo }) => (
+            <label
+             key={valor}
+             htmlFor={valor}
+             className="group relative flex min-h-11 w-full min-w-0 cursor-pointer items-start gap-3 rounded-md border border-borda-decorativa/80 p-3 transition-colors hover:border-borda-funcional hover:bg-fundo-suave/40 focus-within:ring-2 focus-within:ring-primaria-600 focus-within:ring-offset-1"
+           >
+            <input
+               id={valor}
+               name="recursosAcessibilidade"
+               type="checkbox"
+               value={valor}
+               checked={dados.recursosAcessibilidade.includes(valor)}
+               onChange={alternarRecurso}
+               className="mt-0.5 size-5 shrink-0 rounded border-borda-funcional text-primaria-600 accent-primaria-600 cursor-pointer"
+           />
 
-                <label
-                  htmlFor={valor}
-                  className="flex-1 font-corpo text-corpo-14 sm:text-corpo-16 text-texto select-none cursor-pointer leading-normal break-words"
-                >
-                  {rotulo}
-                </label>
-              </div>
-            ))}
+           <span className="min-w-0 flex-1 font-corpo text-corpo-14 sm:text-corpo-16 text-texto select-none leading-normal break-words">
+            {rotulo}
+         </span>
+      </label>
+    ))}
           </div>
         </fieldset>
 

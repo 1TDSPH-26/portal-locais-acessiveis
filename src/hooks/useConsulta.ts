@@ -16,6 +16,7 @@ export function useConsulta<T>(consulta: () => Promise<T>) {
     status: 'carregando',
   })
   const [tentativa, setTentativa] = useState(0)
+  const [retentando, setRetentando] = useState(false)
 
   useEffect(() => {
     let ativo = true
@@ -29,6 +30,9 @@ export function useConsulta<T>(consulta: () => Promise<T>) {
           setEstado({ status: 'erro', mensagem: obterMensagemUsuario(erro) })
         }
       })
+      .finally(() => {
+        if (ativo) setRetentando(false)
+      })
 
     return () => {
       ativo = false
@@ -36,9 +40,9 @@ export function useConsulta<T>(consulta: () => Promise<T>) {
   }, [consulta, tentativa])
 
   const tentarNovamente = useCallback(() => {
-    setEstado({ status: 'carregando' })
+    setRetentando(true)
     setTentativa((valor) => valor + 1)
   }, [])
 
-  return { estado, tentarNovamente }
+  return { estado, retentando, tentarNovamente }
 }
