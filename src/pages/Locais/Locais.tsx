@@ -55,35 +55,20 @@ const classeLinkDetalhes = [
 export default function Locais() {
   usePageTitle('Locais acessíveis')
   
-  const [searchParams, setSearchParams] =
-    useSearchParams()
-
+  const [searchParams, setSearchParams] = useSearchParams()
   const filtros = lerFiltrosDaUrl(searchParams)
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
-
   const locais: Local[] = estado.status === 'sucesso' ? estado.dados : []
 
-  const [filtrosAbertos, setFiltrosAbertos] =
-    useState(false)
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
 
-  const [paginaAtual, setPaginaAtual] =
-    useState(1)
-
-  const [ordenacao, setOrdenacao] =
-    useState<OrdenacaoLocais>('original')
-
-  const buscaRef =
-    useRef<HTMLInputElement>(null)
-
-  const resultadoRef =
-    useRef<HTMLParagraphElement>(null)
-
-  const tituloRef =
-    useRef<HTMLHeadingElement>(null)
-
-  const listaFiltrosRef =
-    useRef<HTMLUListElement>(null)
+  const buscaRef = useRef<HTMLInputElement>(null)
+  const resultadoRef = useRef<HTMLParagraphElement>(null)
+  const tituloRef = useRef<HTMLHeadingElement>(null)
+  const listaFiltrosRef = useRef<HTMLUListElement>(null)
 
   const buscaId = useId()
   const categoriaId = useId()
@@ -103,9 +88,7 @@ export default function Locais() {
     }
   }, [estado])
 
-  const atualizarFiltros = (
-    novos: Partial<FiltrosLocais>,
-  ) => {
+  const atualizarFiltros = (novos: Partial<FiltrosLocais>) => {
     setSearchParams(
       filtrosParaUrl({
         ...filtros,
@@ -116,14 +99,10 @@ export default function Locais() {
     setPaginaAtual(1)
   }
 
-  const alternarRecurso = (
-    recurso: RecursoAcessibilidade,
-  ) => {
+  const alternarRecurso = (recurso: RecursoAcessibilidade) => {
     const recursos =
       filtros.recursos.includes(recurso)
-        ? filtros.recursos.filter(
-            (item) => item !== recurso,
-          )
+        ? filtros.recursos.filter((item) => item !== recurso)
         : [...filtros.recursos, recurso]
 
     atualizarFiltros({ recursos })
@@ -139,60 +118,31 @@ export default function Locais() {
     }
   }
 
-  const alterarOrdenacao = (
-    novaOrdenacao: OrdenacaoLocais,
-  ) => {
+  const alterarOrdenacao = (novaOrdenacao: OrdenacaoLocais) => {
     setOrdenacao(novaOrdenacao)
     setPaginaAtual(1)
   }
 
-  const locaisFiltrados = filtrarLocais(
-    locais,
-    filtros,
+  const locaisFiltrados = filtrarLocais(locais, filtros)
+  const locaisOrdenados = ordenarLocais(locaisFiltrados, ordenacao)
+  const totalFiltrosAtivos = contarFiltrosAtivos(filtros)
+  const totalPaginas = Math.ceil(locaisOrdenados.length / ITENS_POR_PAGINA)
+  const paginaValida = Math.min(paginaAtual, Math.max(totalPaginas, 1))
+  const indiceInicial = (paginaValida - 1) * ITENS_POR_PAGINA
+
+  const locaisPaginados = locaisOrdenados.slice(
+    indiceInicial,
+    indiceInicial + ITENS_POR_PAGINA,
   )
 
-  const locaisOrdenados = ordenarLocais(
-    locaisFiltrados,
-    ordenacao,
-  )
-
-  const totalFiltrosAtivos =
-    contarFiltrosAtivos(filtros)
-
-  const totalPaginas = Math.ceil(
-    locaisOrdenados.length /
-      ITENS_POR_PAGINA,
-  )
-
-  const paginaValida = Math.min(
-    paginaAtual,
-    Math.max(totalPaginas, 1),
-  )
-
-  const indiceInicial =
-    (paginaValida - 1) *
-    ITENS_POR_PAGINA
-
-  const locaisPaginados =
-    locaisOrdenados.slice(
-      indiceInicial,
-      indiceInicial +
-        ITENS_POR_PAGINA,
-    )
-
-  const mudarPagina = (
-    pagina: number,
-  ) => {
-    if (
-      pagina >= 1 &&
-      pagina <= totalPaginas
-    ) {
+  const mudarPagina = (pagina: number) => {
+    if (pagina >= 1 && pagina <= totalPaginas) {
       setPaginaAtual(pagina)
       tituloRef.current?.focus({ preventScroll: true })
     }
   }
 
- const removerFiltro = (
+  const removerFiltro = (
     tipo: 'busca' | 'categoria' | 'recurso',
     recurso?: RecursoAcessibilidade,
   ) => {
@@ -205,17 +155,51 @@ export default function Locais() {
     }
 
     window.setTimeout(() => {
-
       const botoesRestantes = listaFiltrosRef.current?.querySelectorAll('button')
       
       if (botoesRestantes && botoesRestantes.length > 0) {
-
         botoesRestantes[0].focus()
       } else {
-
         resultadoRef.current?.focus()
       }
     }, 0)
+  }
+
+  if (estado.status === 'carregando') {
+    return (
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <h1
+          ref={tituloRef}
+          tabIndex={-1}
+          className="text-3xl font-bold tracking-tight focus:outline-none"
+        >
+          Locais acessíveis
+        </h1>
+        <ContagemResultados total={null} />
+        <p role="status" className="mt-4">Carregando locais...</p>
+      </main>
+    )
+  }
+
+  if (estado.status === 'erro') {  
+    return (
+      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+        <h1
+          ref={tituloRef}
+          tabIndex={-1}
+          className="text-3xl font-bold tracking-tight focus:outline-none"
+        >
+          Locais acessíveis
+        </h1>
+        <ContagemResultados total={null} />
+        <ErrorMessage
+          title="Não foi possível carregar os locais"
+          message={estado.mensagem}
+          onRetry={reexecutarConsulta}
+          retrying={retentando}
+        />
+      </main>
+    )
   }
 
   return (
@@ -234,9 +218,7 @@ export default function Locais() {
         necessidades.
       </p>
 
-      <ContagemResultados
-        total={locaisFiltrados.length}
-      />
+      <ContagemResultados total={locaisFiltrados.length} />
 
       <button
         type="button"
@@ -262,34 +244,24 @@ export default function Locais() {
             className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
           >
             <div>
-              <label
-                htmlFor={buscaId}
-                className="mb-2 block font-semibold"
-              >
+              <label htmlFor={buscaId} className="mb-2 block font-semibold">
                 Buscar
               </label>
-
               <input
                 ref={buscaRef}
                 id={buscaId}
                 type="search"
                 value={filtros.busca}
-                onChange={(event) =>
-                  atualizarFiltros({ busca: event.target.value })
-                }
+                onChange={(event) => atualizarFiltros({ busca: event.target.value })}
                 placeholder="Nome, endereço ou CEP"
                 className={campo}
               />
             </div>
 
             <div className="mt-5">
-              <label
-                htmlFor={categoriaId}
-                className="mb-2 block font-semibold"
-              >
+              <label htmlFor={categoriaId} className="mb-2 block font-semibold">
                 Categoria
               </label>
-
               <select
                 id={categoriaId}
                 value={filtros.categoria}
@@ -313,7 +285,6 @@ export default function Locais() {
               <legend id={recursosId} className="font-semibold">
                 Recursos de acessibilidade
               </legend>
-
               <div className="mt-3 space-y-2">
                 {RECURSOS.map((recurso) => (
                   <label
