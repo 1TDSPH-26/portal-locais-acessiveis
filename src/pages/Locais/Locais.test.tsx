@@ -1,0 +1,231 @@
+import { render, screen, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
+import { MemoryRouter } from 'react-router'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
+import { useConsulta } from '../../hooks/useConsulta'
+import type { Local } from '../../types/local'
+import { CHAVE_HISTORICO } from '../../utils/historicoBusca'
+import Locais from './Locais'
+
+vi.mock('../../hooks/useConsulta', () => ({
+  useConsulta: vi.fn(),
+}))
+
+const locaisTeste: Local[] = [
+  {
+    id: 1,
+    nome: 'Biblioteca Central',
+    endereco: 'Rua dos Livros, 10',
+    cep: '01001-000',
+    categoria: 'educacao',
+    recursosAcessibilidade: ['rampa_acesso'],
+  },
+  {
+    id: 2,
+    nome: 'Parque Municipal',
+    endereco: 'Avenida das Árvores, 20',
+    cep: '01002-000',
+    categoria: 'lazer',
+    recursosAcessibilidade: ['piso_tatil'],
+  },
+  {
+    id: 3,
+    nome: 'Padaria Bom Dia',
+    endereco: 'Rua do Pão, 30',
+    cep: '01003-000',
+    categoria: 'restaurante',
+    recursosAcessibilidade: ['rampa_acesso'],
+  },
+]
+
+function salvarHistorico(termos: string[]) {
+  localStorage.setItem(CHAVE_HISTORICO, JSON.stringify(termos))
+}
+
+function lerHistorico() {
+  return JSON.parse(localStorage.getItem(CHAVE_HISTORICO) ?? '[]')
+}
+
+function renderizarLocais() {
+  render(
+    <MemoryRouter initialEntries={['/locais']}>
+      <Locais />
+    </MemoryRouter>,
+  )
+
+  return {
+    usuario: userEvent.setup(),
+    campo: screen.getByRole('combobox', { name: 'Buscar' }),
+  }
+}
+
+function nomesExibidos() {
+  return within(
+    screen.getByRole('region', { name: 'Locais encontrados' }),
+  )
+    .getAllByRole('heading', { level: 2 })
+    .map((titulo) => titulo.textContent)
+}
+
+function opcoes() {
+  return within(
+    screen.getByRole('listbox', { name: 'Buscas recentes' }),
+  )
+    .getAllByRole('option')
+    .map((opcao) => opcao.textContent)
+}
+
+beforeEach(() => {
+  vi.mocked(useConsulta).mockReturnValue({
+    estado: { status: 'sucesso', dados: locaisTeste },
+    retentando: false,
+    tentarNovamente: vi.fn(),
+  })
+})
+
+afterEach(() => {
+  vi.restoreAllMocks()
+})
+
+describe('Locais — histórico de buscas', () => {
+  it('exibe todas as buscas recentes ao focar o campo vazio', async () => {
+    salvarHistorico(['Parque', 'Padaria', 'Biblioteca'])
+    const { usuario, campo } = renderizarLocais()
+
+    expect(campo).toHaveAttribute('aria-expanded', 'false')
+    expect(campo).toHaveAttribute('aria-autocomplete', 'list')
+
+    await usuario.click(campo)
+
+    expect(campo).toHaveAttribute('aria-expanded', 'true')
+    expect(opcoes()).toEqual(['Parque', 'Padaria', 'Biblioteca'])
+    expect(
+      screen.getByText(/3 buscas recentes disponíveis/),
+    ).toBeInTheDocument()
+  })
+
+  it('não abre a lista quando não há histórico', async () => {
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.click(campo)
+
+    expect(campo).toHaveAttribute('aria-expanded', 'false')
+    expect(screen.queryByRole('listbox')).not.toBeInTheDocument()
+  })
+
+  it('filtra as sugestões pelo prefixo digitado', async () => {
+    salvarHistorico(['Parque', 'Padaria', 'Biblioteca'])
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.type(campo, 'pa')
+    expect(opcoes()).toEqual(['Parque', 'Padaria'])
+
+    await usuario.type(campo, 'd')
+    expect(opcoes()).toEqual(['Padaria'])
+
+    await usuario.type(campo, 'x')
+    expect(campo).toHaveAttribute('aria-expanded', 'false')
+  })
+
+  it('seleciona uma sugestão pelo clique e atualiza os resultados', async () => {
+    salvarHistorico(['Biblioteca', 'Parque'])
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.click(campo)
+    await usuario.click(screen.getByRole('option', { name: 'Parque' }))
+
+    expect(campo).toHaveValue('Parque')
+    expect(nomesExibidos()).toEqual(['Parque Municipal'])
+    expect(campo).toHaveFocus()
+    expect(campo).toHaveAttribute('aria-expanded', 'false')
+    expect(lerHistorico()).toEqual(['Parque', 'Biblioteca'])
+  })
+
+  it('navega pelas sugestões com as setas e seleciona com Enter', async () => {
+    salvarHistorico(['Parque', 'Padaria', 'Biblioteca'])
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.click(campo)
+    await usuario.keyboard('{ArrowDown}')
+
+    const primeira = screen.getByRole('option', { name: 'Parque' })
+    expect(primeira).toHaveAttribute('aria-selected', 'true')
+    expect(campo).toHaveAttribute('aria-activedescendant', primeira.id)
+
+    await usuario.keyboard('{ArrowDown}{ArrowDown}')
+    expect(
+      screen.getByRole('option', { name: 'Biblioteca' }),
+    ).toHaveAttribute('aria-selected', 'true')
+
+    // Volta ao início ao passar do último item.
+    await usuario.keyboard('{ArrowDown}')
+    expect(primeira).toHaveAttribute('aria-selected', 'true')
+
+    await usuario.keyboard('{ArrowUp}')
+    expect(
+      screen.getByRole('option', { name: 'Biblioteca' }),
+    ).toHaveAttribute('aria-selected', 'true')
+
+    await usuario.keyboard('{Enter}')
+
+    expect(campo).toHaveValue('Biblioteca')
+    expect(campo).toHaveFocus()
+    expect(campo).toHaveAttribute('aria-expanded', 'false')
+    expect(nomesExibidos()).toEqual(['Biblioteca Central'])
+    expect(lerHistorico()).toEqual(['Biblioteca', 'Parque', 'Padaria'])
+  })
+
+  it('fecha a lista com Escape sem perder o foco nem o texto', async () => {
+    salvarHistorico(['Parque', 'Padaria'])
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.type(campo, 'pa')
+    expect(campo).toHaveAttribute('aria-expanded', 'true')
+
+    await usuario.keyboard('{Escape}')
+
+    expect(campo).toHaveAttribute('aria-expanded', 'false')
+    expect(campo).toHaveFocus()
+    expect(campo).toHaveValue('pa')
+
+    // As setas reabrem a lista.
+    await usuario.keyboard('{ArrowDown}')
+    expect(campo).toHaveAttribute('aria-expanded', 'true')
+  })
+
+  it('salva o termo no localStorage ao pressionar Enter', async () => {
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.type(campo, '  Padaria  {Enter}')
+
+    expect(lerHistorico()).toEqual(['Padaria'])
+  })
+
+  it('salva o termo ao sair do campo e ignora termos curtos', async () => {
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.type(campo, 'p')
+    await usuario.tab()
+    expect(localStorage.getItem(CHAVE_HISTORICO)).toBeNull()
+
+    await usuario.type(campo, 'arque')
+    await usuario.tab()
+    expect(lerHistorico()).toEqual(['parque'])
+  })
+
+  it('continua buscando quando o localStorage falha', async () => {
+    vi.spyOn(Storage.prototype, 'getItem').mockImplementation(() => {
+      throw new DOMException('Acesso negado', 'SecurityError')
+    })
+    vi.spyOn(Storage.prototype, 'setItem').mockImplementation(() => {
+      throw new DOMException('Cota excedida', 'QuotaExceededError')
+    })
+
+    const { usuario, campo } = renderizarLocais()
+
+    await usuario.type(campo, 'Parque{Enter}')
+
+    expect(campo).toHaveValue('Parque')
+    expect(nomesExibidos()).toEqual(['Parque Municipal'])
+  })
+})
