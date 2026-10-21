@@ -1,9 +1,10 @@
 import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import LocalCard from '../../components/LocalCard/LocalCard'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
 
@@ -45,13 +46,6 @@ const foco =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
 
 const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
-
-const classeLinkDetalhes = [
-  'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700',
-  'px-4 font-semibold text-blue-800',
-  'hover:bg-blue-50',
-  foco,
-].join(' ')
 
 export default function Locais() {
   usePageTitle('Locais acessíveis')
@@ -732,82 +726,9 @@ export default function Locais() {
                 aria-label="Locais encontrados"
                 className="mt-6 grid gap-5 md:grid-cols-2"
               >
-                {locaisPaginados.map(
-                  (local) => (
-                    <article
-                      key={local.id}
-                      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-                    >
-                      <h2 className="text-xl font-bold">
-                        {local.nome}
-                      </h2>
-
-                      <p className="mt-3 text-sm text-slate-700">
-                        <strong>
-                          Endereço:
-                        </strong>{' '}
-                        {local.endereco}
-                      </p>
-
-                      <p className="mt-1 text-sm text-slate-700">
-                        <strong>
-                          CEP:
-                        </strong>{' '}
-                        {local.cep}
-                      </p>
-
-                      <p className="mt-2 text-sm text-slate-700">
-                        <strong>
-                          Categoria:
-                        </strong>{' '}
-                        {
-                          CATEGORIA_ROTULOS[
-                            local.categoria
-                          ]
-                        }
-                      </p>
-
-                      <div className="mt-4">
-                        <h3 className="font-semibold">
-                          Recursos de
-                          acessibilidade
-                        </h3>
-
-                        <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-                          {local.recursosAcessibilidade.map(
-                            (
-                              recurso,
-                            ) => (
-                              <li
-                                key={
-                                  recurso
-                                }
-                              >
-                                {
-                                  RECURSO_ROTULOS[
-                                    recurso
-                                  ]
-                                }
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      </div>
-
-                      <Link
-                        to={`/locais/${local.id}`}
-                        className={classeLinkDetalhes}
-                        >
-                        Ver detalhes
-                        <span className="sr-only">
-                          {' '}
-                          de{' '}
-                          {local.nome}
-                        </span>
-                      </Link>
-                    </article>
-                  ),
-                )}
+                {locaisPaginados.map((local) => (
+                   <LocalCard key={local.id} local={local} />
+                ))}
               </section>
             </>
           )}
