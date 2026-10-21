@@ -192,7 +192,7 @@ export default function Locais() {
     }
   }
 
-  const removerFiltro = (
+ const removerFiltro = (
     tipo: 'busca' | 'categoria' | 'recurso',
     recurso?: RecursoAcessibilidade,
   ) => {
@@ -205,45 +205,17 @@ export default function Locais() {
     }
 
     window.setTimeout(() => {
-      resultadoRef.current?.focus()
+
+      const botoesRestantes = listaFiltrosRef.current?.querySelectorAll('button')
+      
+      if (botoesRestantes && botoesRestantes.length > 0) {
+
+        botoesRestantes[0].focus()
+      } else {
+
+        resultadoRef.current?.focus()
+      }
     }, 0)
-  }
-
-  if (estado.status === 'carregando') {
-    return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-        <h1
-          ref={tituloRef}
-          tabIndex={-1}
-          className="text-3xl font-bold tracking-tight focus:outline-none"
-        >
-          Locais acessíveis
-        </h1>
-        <ContagemResultados total={null} />
-        <p role="status" className="mt-4">Carregando locais...</p>
-      </main>
-    )
-  }
-
-  if (estado.status === 'erro') {  
-    return (
-      <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
-        <h1
-          ref={tituloRef}
-          tabIndex={-1}
-          className="text-3xl font-bold tracking-tight focus:outline-none"
-        >
-          Locais acessíveis
-        </h1>
-        <ContagemResultados total={null} />
-        <ErrorMessage
-          title="Não foi possível carregar os locais"
-          message={estado.mensagem}
-          onRetry={reexecutarConsulta}
-          retrying={retentando}
-        />
-      </main>
-    )
   }
 
   return (
