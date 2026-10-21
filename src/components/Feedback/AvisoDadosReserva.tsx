@@ -3,8 +3,9 @@ import { useEffect, useState } from 'react'
 const MENSAGEM =
   'Você está visualizando dados de reserva. O serviço principal está temporariamente indisponível, mas os locais salvos ficam acessíveis.'
 
+const ATRASO_ANUNCIO_MS = 100
+
 interface AvisoDadosReservaProps {
-  
   onDispensar?: () => void
 }
 
@@ -15,7 +16,9 @@ export default function AvisoDadosReserva({
   const [mensagem, setMensagem] = useState('')
 
   useEffect(() => {
-    setMensagem(MENSAGEM)
+    const id = window.setTimeout(() => setMensagem(MENSAGEM), ATRASO_ANUNCIO_MS)
+
+    return () => window.clearTimeout(id)
   }, [])
 
   const dispensar = () => {
@@ -31,7 +34,7 @@ export default function AvisoDadosReserva({
     <div
       role="status"
       aria-live="polite"
-      className="mb-6 flex items-start gap-3 rounded-lg border-2 border-aviso bg-fundo p-4"
+      className="mt-4 mb-6 flex items-start gap-3 rounded-lg border-2 border-aviso bg-fundo p-4"
     >
       <span
         aria-hidden="true"
