@@ -13,7 +13,7 @@ export default function Footer() {
         <nav aria-label="Navegação do rodapé">
           <ul className="flex flex-wrap items-center justify-center gap-6 list-none m-0 p-0 text-corpo-14 text-fundo">
             <li>
-              <Link to="/sobre" className="hover:underline transition-all">
+              <Link to="/acessibilidade" className="inline-flex min-h-[44px] items-center hover:underline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-fundo transition-all">
                 Acessibilidade
               </Link>
             </li>
