@@ -15,6 +15,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { to: '/', label: 'Home', end: true },
   { to: '/locais', label: 'Locais' },
+  { to: '/favoritos', label: 'Favoritos' },
   { to: '/cadastrar', label: 'Cadastro' },
   { to: '/sobre', label: 'Sobre' },
 ]
