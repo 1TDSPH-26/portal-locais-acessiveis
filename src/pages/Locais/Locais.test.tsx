@@ -37,6 +37,7 @@ function renderizarLocais(
 ) {
   vi.mocked(useConsulta).mockReturnValue({
     estado,
+    retentando: false,
     tentarNovamente: vi.fn(),
   })
 

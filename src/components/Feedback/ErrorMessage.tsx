@@ -7,6 +7,8 @@ interface ErrorMessageProps {
   retryLabel?: string
   /** Move o foco para o aviso quando ele aparece (útil após uma ação do usuário). */
   focusOnMount?: boolean
+retrying?: boolean
+  retryingLabel?: string
 }
 
 export default function ErrorMessage({
@@ -15,6 +17,8 @@ export default function ErrorMessage({
   onRetry,
   retryLabel = 'Tentar novamente',
   focusOnMount = false,
+  retrying = false,
+  retryingLabel = 'Tentando novamente...',
 }: ErrorMessageProps) {
   const containerRef = useRef<HTMLDivElement>(null)
 
@@ -41,11 +45,19 @@ export default function ErrorMessage({
 
       {onRetry && (
         <button
-          type="button"
+         type="button"
           onClick={onRetry}
-          className="inline-flex min-h-12 w-full items-center justify-center self-start rounded-md bg-primaria-600 px-4 py-2 font-corpo text-botao font-semibold text-white hover:bg-primaria-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria-600 focus-visible:ring-offset-2 sm:w-auto"
+          disabled={retrying}
+          aria-busy={retrying || undefined}
+          className="inline-flex min-h-12 w-full items-center justify-center gap-2 self-start rounded-md bg-primaria-600 px-4 py-2 font-corpo text-botao font-semibold text-white hover:bg-primaria-700 focus:outline-none focus-visible:ring-2 focus-visible:ring-primaria-600 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:bg-primaria-700 sm:w-auto"
         >
-          {retryLabel}
+          {retrying && (
+            <span
+              aria-hidden="true"
+              className="size-4 shrink-0 animate-spin rounded-full border-2 border-white/40 border-t-white"
+            />
+          )}
+          {retrying ? retryingLabel : retryLabel}
         </button>
       )}
     </div>

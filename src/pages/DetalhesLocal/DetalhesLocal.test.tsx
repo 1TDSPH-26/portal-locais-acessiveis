@@ -35,8 +35,9 @@ function renderizarDetalhe(
   estado: EstadoConsultaLocal,
   caminho = '/locais/1',
 ) {
-  vi.mocked(useConsulta).mockReturnValue({
+   vi.mocked(useConsulta).mockReturnValue({
     estado,
+    retentando: false,
     tentarNovamente: vi.fn(),
   })
 

@@ -1,11 +1,11 @@
 
-import { useCallback, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
+import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LoadingState from '../../components/Feedback/LoadingState'
-import usePageTitle from '../../hooks/usePageTitle'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
 
@@ -18,6 +18,7 @@ import {
 
 import type {
   Categoria,
+  Local,
   RecursoAcessibilidade,
 } from '../../types/local'
 
@@ -37,6 +38,8 @@ import {
   ordenarLocais,
   type OrdenacaoLocais,
 } from '../../types/ordenarLocais'
+import usePageTitle from '../../hooks/usePageTitle'
+import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
 
 const ITENS_POR_PAGINA = 4
 
@@ -58,17 +61,10 @@ export default function Locais() {
   const [searchParams, setSearchParams] = useSearchParams()
   const filtros = lerFiltrosDaUrl(searchParams)
 
-  const consultarLocais = useCallback(
-    () => listarLocais(),
-    [],
-  )
+  const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const { estado, tentarNovamente } = useConsulta(consultarLocais)
-
-  const locais =
-    estado.status === 'sucesso'
-      ? estado.dados
-      : []
+  const locais: Local[] =
+    estado.status === 'sucesso' ? estado.dados : []
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
@@ -82,6 +78,25 @@ export default function Locais() {
   const buscaId = useId()
   const categoriaId = useId()
   const recursosId = useId()
+
+  const houveRetentativa = useRef(false)
+
+  /*
+   * Devolve o foco para a contagem de
+   * resultados quando uma nova tentativa
+   * carrega os locais com sucesso.
+   */
+  const reexecutarConsulta = () => {
+    houveRetentativa.current = true
+    tentarNovamente()
+  }
+
+  useEffect(() => {
+    if (estado.status === 'sucesso' && houveRetentativa.current) {
+      houveRetentativa.current = false
+      resultadoRef.current?.focus()
+    }
+  }, [estado])
 
   /*
    * Atualiza os filtros na URL
@@ -112,12 +127,22 @@ export default function Locais() {
 
   /*
    * Limpa todos os filtros.
+   * Com focarBusca, abre o painel no
+   * mobile para levar o foco à busca.
    */
-  const limparFiltros = () => {
+  const limparFiltros = (
+    { focarBusca = false } = {},
+  ) => {
     atualizarFiltros(FILTROS_VAZIOS)
 
     if (buscaRef.current?.offsetParent) {
       buscaRef.current.focus()
+    } else if (focarBusca) {
+      setFiltrosAbertos(true)
+
+      window.setTimeout(() => {
+        buscaRef.current?.focus()
+      }, 0)
     } else {
       resultadoRef.current?.focus()
     }
@@ -232,17 +257,20 @@ export default function Locais() {
           Locais acessíveis
         </h1>
 
+        <ContagemResultados total={null} />
+
         <ErrorMessage
           title="Não foi possível carregar os locais"
           message={estado.mensagem}
-          onRetry={tentarNovamente}
+          onRetry={reexecutarConsulta}
+          retrying={retentando}
         />
       </main>
     )
   }
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
+    <main className="mx-auto w-full max-w-6xl px-4 pb-24 pt-8 sm:px-6">
       <h1
         ref={tituloRef}
         tabIndex={-1}
@@ -358,7 +386,7 @@ export default function Locais() {
 
             <button
               type="button"
-              onClick={limparFiltros}
+              onClick={() => limparFiltros()}
               disabled={totalFiltrosAtivos === 0}
               className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
             >
@@ -437,7 +465,7 @@ export default function Locais() {
                   <li>
                     <button
                       type="button"
-                      onClick={limparFiltros}
+                      onClick={() => limparFiltros()}
                       className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
                     >
                       Limpar todos
@@ -460,22 +488,47 @@ export default function Locais() {
               </p>
             </div>
           ) : locaisFiltrados.length === 0 ? (
-            <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
-              <h2 className="text-xl font-bold">
-                Nenhum resultado
-              </h2>
-
-              <p className="mt-2 text-slate-600">
-                Tente remover algum filtro ou fazer uma busca diferente.
-              </p>
-
-              <button
-                type="button"
-                onClick={limparFiltros}
-                className={`mt-5 min-h-11 rounded-md bg-blue-700 px-5 font-semibold text-white hover:bg-blue-800 ${foco}`}
+            <div className="mt-6">
+              <EmptyState
+                title="Nenhum local encontrado com esses filtros"
+                message="Tente desmarcar alguns recursos de acessibilidade, selecionar outra categoria ou buscar por termos mais genéricos."
+                actionLabel="Limpar todos os filtros"
+                onAction={() =>
+                  limparFiltros({
+                    focarBusca: true,
+                  })
+                }
               >
-                Limpar filtros
-              </button>
+                {totalFiltrosAtivos > 0 && (
+                  <div className="w-full max-w-xl text-left">
+                    <p className="font-semibold text-texto">
+                      Filtros que estão
+                      restringindo a busca:
+                    </p>
+
+                    <ul className="mt-2 list-disc space-y-1 pl-5 text-texto">
+                      {filtros.busca.trim() && (
+                        <li>
+                          Busca por “{filtros.busca.trim()}”
+                        </li>
+                      )}
+
+                      {filtros.categoria && (
+                        <li>
+                          Categoria:{' '}
+                          {CATEGORIA_ROTULOS[filtros.categoria]}
+                        </li>
+                      )}
+
+                      {filtros.recursos.map((recurso) => (
+                        <li key={recurso}>
+                          Recurso: {RECURSO_ROTULOS[recurso]}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+              </EmptyState>
             </div>
           ) : (
             <>
@@ -596,8 +649,8 @@ export default function Locais() {
                         }
                         aria-label={`Página ${pagina}`}
                         className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
-                            ? 'bg-blue-700 text-white'
-                            : 'border border-slate-300 hover:bg-slate-100'
+                          ? 'bg-blue-700 text-white'
+                          : 'border border-slate-300 hover:bg-slate-100'
                           } ${foco}`}
                       >
                         {pagina}
@@ -620,6 +673,7 @@ export default function Locais() {
           )}
         </section>
       </div>
+      <BotaoVoltarAoTopo />
     </main>
   )
 }
