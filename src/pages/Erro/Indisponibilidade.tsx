@@ -7,7 +7,12 @@ export default function Indisponibilidade() {
   }
 
   return (
-    <main className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-12 text-center">
+  <main
+  className="flex min-h-[60vh] flex-col items-center justify-center px-4 py-12 text-center"
+  role="alert"
+  aria-live="assertive"
+  aria-atomic="true"
+  >
       {/* Ícone acessível */}
       <svg
         xmlns="http://www.w3.org/2000/svg"
