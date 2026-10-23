@@ -1,4 +1,3 @@
-
 import type {
   Categoria,
   RecursoAcessibilidade,
@@ -32,6 +31,10 @@ export function filtrosParaUrl(
       'recursos',
       filtros.recursos.join(','),
     )
+  }
+
+  if (filtros.somenteFavoritos) {
+    params.set('somenteFavoritos', 'true')
   }
 
   return params
@@ -73,5 +76,7 @@ export function lerFiltrosDaUrl(
     busca,
     categoria,
     recursos,
+    somenteFavoritos:
+      searchParams.get('somenteFavoritos') === 'true',
   }
 }
