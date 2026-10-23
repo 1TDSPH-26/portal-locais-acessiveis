@@ -364,6 +364,7 @@ export default function Locais() {
           message={estado.mensagem}
           onRetry={reexecutarConsulta}
           retrying={retentando}
+          focusOnMount
         />
       </main>
     )
