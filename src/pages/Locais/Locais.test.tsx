@@ -347,7 +347,8 @@ function titulosDosCards() {
   })
 
   return within(resultados)
-    .getAllByRole('heading', { level: 2 })
+    // Atualizado de level: 2 para level: 3 por causa do componente <LocalCard />
+    .getAllByRole('heading', { level: 3 })
     .map((titulo) => titulo.textContent)
 }
 
@@ -408,7 +409,8 @@ describe('Ordenação e contagem na página de locais', () => {
     const usuario = userEvent.setup()
     montarLocais()
 
-    const busca = screen.getByRole('searchbox', { name: 'Buscar' })
+    // Atualizado de 'searchbox' para 'combobox' devido ao autocompletar
+    const busca = screen.getByRole('combobox', { name: 'Buscar' })
 
     expect(contagemResultados()).toHaveTextContent('8 locais encontrados.')
 
