@@ -81,7 +81,8 @@ function nomesExibidos() {
   return within(
     screen.getByRole('region', { name: 'Locais encontrados' }),
   )
-    .getAllByRole('heading', { level: 2 })
+    // Atualizado de level: 2 para level: 3 por causa do componente <LocalCard />
+    .getAllByRole('heading', { level: 3 })
     .map((titulo) => titulo.textContent)
 }
 
