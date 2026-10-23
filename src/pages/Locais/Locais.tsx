@@ -33,6 +33,7 @@ import {
 import {
   filtrosParaUrl,
   lerFiltrosDaUrl,
+  lerOrdemDaUrl,
 } from '../../utils/filtrosUrl'
 
 import {
@@ -60,6 +61,7 @@ export default function Locais() {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const filtros = lerFiltrosDaUrl(searchParams)
+  const ordemInicial = lerOrdemDaUrl(searchParams)
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
@@ -75,7 +77,7 @@ export default function Locais() {
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
-  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>(ordemInicial)
 
   const buscaRef = useRef<HTMLInputElement>(null)
   const resultadoRef = useRef<HTMLParagraphElement>(null)
@@ -254,11 +256,21 @@ export default function Locais() {
   }
 
   /*
-   * Altera a ordenação e retorna para a primeira página.
+   * Altera a ordenação, atualiza a URL e retorna para a primeira página.
    */
   const alterarOrdenacao = (novaOrdenacao: OrdenacaoLocais) => {
     setOrdenacao(novaOrdenacao)
     setPaginaAtual(1)
+    
+    const parametrosAtualizados = new URLSearchParams(searchParams)
+    
+    if (novaOrdenacao === 'original') {
+      parametrosAtualizados.delete('ordem')
+    } else {
+      parametrosAtualizados.set('ordem', novaOrdenacao)
+    }
+
+    setSearchParams(parametrosAtualizados, { replace: true })
   }
 
   /*
