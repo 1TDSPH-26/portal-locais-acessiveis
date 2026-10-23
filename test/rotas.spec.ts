@@ -91,7 +91,8 @@ for (const id of ['999999', 'invalido']) {
     ).toBeVisible()
 
     await page
-      .getByRole('link', { name: 'Voltar para a listagem' })
+      .getByRole('navigation', { name: 'Caminho de navegação' })
+      .getByRole('link', { name: 'Locais', exact: true })
       .click()
 
     await expect(page).toHaveURL('/locais')
@@ -108,3 +109,76 @@ for (const id of ['999999', 'invalido']) {
     ).toBeVisible()
   })
 }
+test('detalhe /locais/1 carrega todas as seções e volta pelo breadcrumb', async ({
+  page,
+}) => {
+  await page.goto('/locais/1')
+
+  const breadcrumb = page.getByRole('navigation', {
+    name: 'Caminho de navegação',
+  })
+  await expect(breadcrumb.getByRole('listitem')).toHaveCount(3)
+  await expect(
+    breadcrumb.locator('[aria-current="page"]'),
+  ).toHaveText(/Restaurante Sabor & Inclusão/)
+
+  const artigo = page.getByRole('article', {
+    name: 'Restaurante Sabor & Inclusão',
+  })
+  await expect(artigo).toBeVisible()
+  await expect(
+    artigo.getByRole('heading', {
+      level: 1,
+      name: 'Restaurante Sabor & Inclusão',
+    }),
+  ).toBeVisible()
+
+  await expect(artigo.getByRole('term')).toHaveText([
+    'Endereço',
+    'CEP',
+    'Categoria',
+  ])
+  await expect(artigo.getByRole('definition')).toHaveText([
+    'Rua das Flores, 120 - Centro',
+    '01001-000',
+    'Restaurante',
+  ])
+
+  const recursos = artigo.getByRole('region', {
+    name: 'Recursos de acessibilidade',
+  })
+  await expect(
+    recursos.getByRole('heading', {
+      level: 2,
+      name: 'Recursos de acessibilidade',
+    }),
+  ).toBeVisible()
+  await expect(recursos.getByRole('listitem')).toHaveText([
+    'Rampa de acesso',
+    'Banheiro adaptado',
+    'Balcão acessível',
+    'Informações em braile',
+  ])
+
+  await breadcrumb.getByRole('link', { name: 'Locais', exact: true }).click()
+
+  await expect(page).toHaveURL('/locais')
+  await expect(
+    page.getByRole('heading', { level: 1, name: 'Locais acessíveis' }),
+  ).toBeVisible()
+})
+
+test('detalhe com falha simulada permite tentar novamente', async ({
+  page,
+}) => {
+  await page.goto('/locais/1?simularFalha=detalhe')
+
+  const alerta = page.getByRole('alert')
+  await expect(alerta).toContainText('Não foi possível carregar este local')
+  await expect(alerta).toContainText(
+    'O serviço de dados está indisponível no momento.',
+  )
+  await expect(
+    alerta.getByRole('button', { name: 'Tentar novamente' }),
+  ).toBeVisible()
+})
