@@ -135,6 +135,7 @@ export default function DetalhesLocal() {
           message={estado.mensagem}
           onRetry={tentarNovamente}
           retrying={retentando}
+          focusOnMount
         />
       </section>
     )

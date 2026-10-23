@@ -12,7 +12,11 @@ vi.mock('../../services/locais-consulta', () => ({
 }))
 
 const mensagemIndisponivel =
-  'O serviço de dados está indisponível no momento. Verifique sua conexão e tente novamente em instantes.'
+  'O serviço de dados está temporariamente fora do ar. Estamos trabalhando para restabelecê-lo.'
+const mensagemTempoEsgotado =
+  'O serviço demorou mais do que o esperado para responder. Verifique sua conexão e tente novamente.'
+const mensagemRespostaInvalida =
+  'Recebemos dados corrompidos ou incompletos do servidor. Tente novamente em instantes.'
 
 const locaisTeste: Local[] = [
   {
@@ -190,9 +194,7 @@ describe('Página de detalhes do local', () => {
 
       const alerta = await screen.findByRole('alert')
       expect(alerta).toHaveTextContent('Não foi possível carregar este local')
-      expect(alerta).toHaveTextContent(
-        'O serviço demorou mais do que o esperado para responder. Tente novamente em instantes.',
-      )
+      expect(alerta).toHaveTextContent(mensagemTempoEsgotado)
       expect(
         screen.getByRole('heading', { level: 1, name: 'Detalhes do local' }),
       ).toBeInTheDocument()
@@ -200,6 +202,25 @@ describe('Página de detalhes do local', () => {
         .toHaveAttribute('aria-labelledby', 'detalhe-erro')
       verificarBreadcrumb('Detalhes do local')
     })
+
+    it.each([
+      ['indisponivel', mensagemIndisponivel],
+      ['tempo_esgotado', mensagemTempoEsgotado],
+      ['resposta_invalida', mensagemRespostaInvalida],
+    ] as const)(
+      'exibe a mensagem específica e move o foco para o alerta (%s)',
+      async (tipo, mensagem) => {
+        vi.mocked(buscarLocalPorId).mockRejectedValue(
+          new FalhaServicoError(tipo),
+        )
+
+        renderizarDetalhe('/locais/1')
+
+        const alerta = await screen.findByRole('alert')
+        expect(alerta).toHaveTextContent(mensagem)
+        await waitFor(() => expect(alerta).toHaveFocus())
+      },
+    )
 
     it('converte falhas de rede em mensagem amigável, sem detalhe técnico', async () => {
       vi.mocked(buscarLocalPorId).mockRejectedValue(

@@ -38,6 +38,10 @@ async function consultarFonte<T>(recurso: string, obter: () => T): Promise<T> {
     throw new TypeError('Failed to fetch')
   }
 
+  if (falha === 'resposta_invalida') {
+    throw new FalhaServicoError('resposta_invalida')
+  }
+
   return obter()
 }
 
