@@ -105,3 +105,7 @@ export function filtrarHistorico(
     termo.toLowerCase().startsWith(prefixo),
   )
 }
+
+export function limparHistoricoBuscas(): void {
+  limparHistorico()
+}
