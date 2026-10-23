@@ -31,13 +31,37 @@ const RECURSO_LABELS: Record<RecursoAcessibilidade, string> = {
   cao_guia: 'Permite cão-guia',
 }
 
+function formatarDistancia(km: number): string {
+  if (km < 1) {
+    return `${Math.round(km * 1000)} m`
+  }
+  return `${km.toFixed(1).replace('.', ',')} km`
+}
+
+function descreverDistancia(km: number): string {
+  if (km < 1) {
+    return `${Math.round(km * 1000)} metros`
+  }
+
+  const kmInteiro = Math.floor(km)
+  const metros = Math.round((km - kmInteiro) * 1000)
+  const plural = kmInteiro > 1 ? 's' : ''
+
+  if (metros === 0) {
+    return `${kmInteiro} quilômetro${plural}`
+  }
+
+  return `${kmInteiro} quilômetro${plural} e ${metros} metros`
+}
+
 interface LocalCardProps {
   local: Local
   detalhesUrl?: string
   onRemoveFavorite?: () => void
+  distanciaEmKm?: number | null
 }
 
-export default function LocalCard({ local, detalhesUrl, onRemoveFavorite }: LocalCardProps) {
+export default function LocalCard({ local, detalhesUrl, onRemoveFavorite, distanciaEmKm }: LocalCardProps) {
   const [favoritado, setFavoritado] = useState(() =>
     lerFavoritos().includes(local.id),
   )
@@ -64,8 +88,17 @@ export default function LocalCard({ local, detalhesUrl, onRemoveFavorite }: Loca
       <div>
         <h3 className="text-h3 font-display text-texto">{local.nome}</h3>
         <p className="text-corpo-14 text-secundaria">{localizacao}</p>
-      </div>
-
+      
+       {distanciaEmKm != null && (
+         <p
+           className="mt-2 inline-flex w-fit max-w-full items-center rounded-full bg-fundo-suave px-2.5 py-1 text-corpo-14 font-semibold text-primaria-700"
+           aria-label={`Distância aproximada: ${descreverDistancia(distanciaEmKm)}`}
+         >
+           A {formatarDistancia(distanciaEmKm)} de você
+         </p>
+      )}
+    </div>
+    
       <button
         type="button"
         onClick={alternarFavorito}
