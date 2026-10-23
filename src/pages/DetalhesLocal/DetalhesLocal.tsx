@@ -2,6 +2,7 @@ import { useCallback } from 'react'
 import { Link, useParams } from 'react-router'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LoadingState from '../../components/Feedback/LoadingState'
+import DataAtualizacao from '../../components/Feedback/DataAtualizacao'
 import { useConsulta } from '../../hooks/useConsulta'
 import { buscarLocalPorId } from '../../services/locais-consulta'
 import type { Categoria, RecursoAcessibilidade } from '../../types/local'
@@ -180,6 +181,7 @@ export default function DetalhesLocal() {
             <li key={recurso}>{nomesRecurso[recurso]}</li>
           ))}
         </ul>
+        <DataAtualizacao tipo="conferencia" data={local.conferidoEm} />
       </section>
 
       <p className="mt-8 font-corpo text-corpo-14 text-secundaria">
