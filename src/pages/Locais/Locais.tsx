@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router'
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import AvisoDadosReserva from '../../components/Feedback/AvisoDadosReserva'
 import LoadingState from '../../components/Feedback/LoadingState'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
@@ -62,13 +63,19 @@ export default function Locais() {
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const locais: Local[] =
-    estado.status === 'sucesso' ? estado.dados : []
+  const resultado = estado.status === 'sucesso' ? estado.dados : null
+
+  // Garantimos compatibilidade: se for array (como no mock de testes), usamos direto.
+  // Se for o novo formato de objeto da branch, acessamos .locais
+  const locais: Local[] = Array.isArray(resultado)
+    ? resultado
+    : (resultado?.locais ?? [])
+
+  const emModoReserva = !Array.isArray(resultado) && resultado?.origem === 'reserva'
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
-  const [ordenacao, setOrdenacao] =
-    useState<OrdenacaoLocais>('original')
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
 
   const buscaRef = useRef<HTMLInputElement>(null)
   const resultadoRef = useRef<HTMLParagraphElement>(null)
@@ -101,16 +108,13 @@ export default function Locais() {
    * Atualiza os filtros na URL
    * e retorna para a primeira página.
    */
-  const atualizarFiltros = (
-    novos: Partial<FiltrosLocais>,
-  ) => {
+  const atualizarFiltros = (novos: Partial<FiltrosLocais>) => {
     const filtrosAtualizados: FiltrosLocais = {
       ...filtros,
       ...novos,
     }
 
-    const parametrosAtualizados =
-      new URLSearchParams(searchParams)
+    const parametrosAtualizados = new URLSearchParams(searchParams)
 
     // Remove apenas os parâmetros controlados pelos filtros.
     parametrosAtualizados.delete('busca')
@@ -118,11 +122,9 @@ export default function Locais() {
     parametrosAtualizados.delete('recursos')
 
     // Adiciona novamente apenas os filtros ativos.
-    filtrosParaUrl(filtrosAtualizados).forEach(
-      (valor, chave) => {
-        parametrosAtualizados.set(chave, valor)
-      },
-    )
+    filtrosParaUrl(filtrosAtualizados).forEach((valor, chave) => {
+      parametrosAtualizados.set(chave, valor)
+    })
 
     setSearchParams(parametrosAtualizados, {
       replace: true,
@@ -147,9 +149,7 @@ export default function Locais() {
    * Com focarBusca, abre o painel no
    * mobile para levar o foco à busca.
    */
-  const limparFiltros = (
-    { focarBusca = false } = {},
-  ) => {
+  const limparFiltros = ({ focarBusca = false } = {}) => {
     atualizarFiltros(FILTROS_VAZIOS)
 
     if (buscaRef.current?.offsetParent) {
@@ -183,17 +183,12 @@ export default function Locais() {
   /*
    * Calcula a quantidade de páginas.
    */
-  const totalPaginas = Math.ceil(
-    locaisOrdenados.length / ITENS_POR_PAGINA,
-  )
+  const totalPaginas = Math.ceil(locaisOrdenados.length / ITENS_POR_PAGINA)
 
   /*
    * Garante que a página atual continue válida.
    */
-  const paginaValida = Math.min(
-    paginaAtual,
-    Math.max(totalPaginas, 1),
-  )
+  const paginaValida = Math.min(paginaAtual, Math.max(totalPaginas, 1))
 
   const indiceInicial = (paginaValida - 1) * ITENS_POR_PAGINA
 
@@ -295,6 +290,12 @@ export default function Locais() {
       >
         Locais acessíveis
       </h1>
+
+      {emModoReserva && (
+        <AvisoDadosReserva
+          onDispensar={() => tituloRef.current?.focus()}
+        />
+      )}
 
       <p className="mt-2 max-w-2xl text-secundaria">
         Combine os filtros para encontrar
