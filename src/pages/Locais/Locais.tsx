@@ -64,8 +64,14 @@ export default function Locais() {
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
   const resultado = estado.status === 'sucesso' ? estado.dados : null
-  const locais: Local[] = resultado?.locais ?? []
-  const emModoReserva = resultado?.origem === 'reserva'
+
+  // Garantimos compatibilidade: se for array (como no mock de testes), usamos direto.
+  // Se for o novo formato de objeto da branch, acessamos .locais
+  const locais: Local[] = Array.isArray(resultado)
+    ? resultado
+    : (resultado?.locais ?? [])
+
+  const emModoReserva = !Array.isArray(resultado) && resultado?.origem === 'reserva'
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
