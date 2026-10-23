@@ -1,4 +1,4 @@
-import { listaLocais } from '../data/locais'
+import { listaLocais, ultimaAtualizacaoLocais } from '../data/locais'
 import type { Local } from '../types/local'
 import {
   FalhaServicoError,
@@ -19,6 +19,7 @@ export type OrigemDados = 'principal' | 'reserva'
 export type ResultadoLocais = {
   locais: Local[]
   origem: OrigemDados
+  ultimaAtualizacao: string
 }
 
 function aguardar(ms: number) {
@@ -65,7 +66,7 @@ export function listarLocais(): Promise<ResultadoLocais> {
         throw new FalhaServicoError('resposta_invalida')
       }
 
-      return { locais: [...dados], origem: 'principal' as const }
+      return { locais: [...dados], origem: 'principal' as const, ultimaAtualizacao: ultimaAtualizacaoLocais }
     } catch (erro) {
       const reserva = obterBaseReserva()
 
@@ -73,7 +74,8 @@ export function listarLocais(): Promise<ResultadoLocais> {
         throw erro
       }
 
-      return { locais: reserva, origem: 'reserva' as const }
+      // A reserva usa o mesmo snapshot local, não o horário da retentativa.
+      return { locais: reserva, origem: 'reserva' as const, ultimaAtualizacao: ultimaAtualizacaoLocais }
     }
   }, tempoLimite('locais'))
 }
