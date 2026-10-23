@@ -1,9 +1,12 @@
-import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import LocalCard from '../../components/LocalCard/LocalCard'
+import AvisoDadosReserva from '../../components/Feedback/AvisoDadosReserva'
+import LoadingState from '../../components/Feedback/LoadingState'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
 
@@ -33,6 +36,12 @@ import {
 } from '../../utils/filtrosUrl'
 
 import {
+  filtrarHistorico,
+  obterHistorico,
+  salvarTermo,
+} from '../../utils/historicoBusca'
+
+import {
   ordenarLocais,
   type OrdenacaoLocais,
 } from '../../types/ordenarLocais'
@@ -55,53 +64,45 @@ function lerFavoritos(): number[] {
 }
 
 const foco =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600'
 
-const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
-
-const classeLinkDetalhes = [
-  'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700',
-  'px-4 font-semibold text-blue-800',
-  'hover:bg-blue-50',
-  foco,
-].join(' ')
+const campo = `h-11 w-full rounded-md border border-borda-funcional bg-fundo px-3 text-texto ${foco}`
 
 export default function Locais() {
   usePageTitle('Locais acessíveis')
-  
-  const [searchParams, setSearchParams] =
-    useSearchParams()
 
+  const [searchParams, setSearchParams] = useSearchParams()
   const filtros = lerFiltrosDaUrl(searchParams)
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const locais: Local[] = estado.status === 'sucesso' ? estado.dados : []
+  const resultado = estado.status === 'sucesso' ? estado.dados : null
 
-  const [filtrosAbertos, setFiltrosAbertos] =
-    useState(false)
+  // Garantimos compatibilidade: se for array (como no mock de testes), usamos direto.
+  // Se for o novo formato de objeto da branch, acessamos .locais
+  const locais: Local[] = Array.isArray(resultado)
+    ? resultado
+    : (resultado?.locais ?? [])
 
-  const [paginaAtual, setPaginaAtual] =
-    useState(1)
+  const emModoReserva = !Array.isArray(resultado) && resultado?.origem === 'reserva'
 
-  const [ordenacao, setOrdenacao] =
-    useState<OrdenacaoLocais>('original')
+  const [somenteFavoritos, setSomenteFavoritos] = useState(false)
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [paginaAtual, setPaginaAtual] = useState(1)
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
 
-  const [somenteFavoritos, setSomenteFavoritos] =
-    useState(false)
-
-  const buscaRef =
-    useRef<HTMLInputElement>(null)
-
-  const resultadoRef =
-    useRef<HTMLParagraphElement>(null)
-
-  const tituloRef =
-    useRef<HTMLHeadingElement>(null)
+  const buscaRef = useRef<HTMLInputElement>(null)
+  const resultadoRef = useRef<HTMLParagraphElement>(null)
+  const tituloRef = useRef<HTMLHeadingElement>(null)
 
   const buscaId = useId()
+  const sugestoesId = useId()
   const categoriaId = useId()
   const recursosId = useId()
+
+  const [historico, setHistorico] = useState(obterHistorico)
+  const [sugestoesAbertas, setSugestoesAbertas] = useState(false)
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(-1)
 
   const houveRetentativa = useRef(false)
 
@@ -121,36 +122,124 @@ export default function Locais() {
       resultadoRef.current?.focus()
     }
   }, [estado])
+
   /*
    * Atualiza os filtros na URL
    * e retorna para a primeira página.
    */
-  const atualizarFiltros = (
-    novos: Partial<FiltrosLocais>,
-  ) => {
-    setSearchParams(
-      filtrosParaUrl({
-        ...filtros,
-        ...novos,
-      }),
-      { replace: true },
-    )
+  const atualizarFiltros = (novos: Partial<FiltrosLocais>) => {
+    const filtrosAtualizados: FiltrosLocais = {
+      ...filtros,
+      ...novos,
+    }
+
+    const parametrosAtualizados = new URLSearchParams(searchParams)
+
+    // Remove apenas os parâmetros controlados pelos filtros.
+    parametrosAtualizados.delete('busca')
+    parametrosAtualizados.delete('categoria')
+    parametrosAtualizados.delete('recursos')
+
+    // Adiciona novamente apenas os filtros ativos.
+    filtrosParaUrl(filtrosAtualizados).forEach((valor, chave) => {
+      parametrosAtualizados.set(chave, valor)
+    })
+
+    setSearchParams(parametrosAtualizados, {
+      replace: true,
+    })
 
     setPaginaAtual(1)
   }
 
   /*
+   * Sugestões do histórico para o
+   * valor atual do campo de busca.
+   */
+  const sugestoes = filtrarHistorico(
+    historico,
+    filtros.busca,
+  )
+
+  const listaSugestoesVisivel =
+    sugestoesAbertas && sugestoes.length > 0
+
+  const fecharSugestoes = () => {
+    setSugestoesAbertas(false)
+    setSugestaoAtiva(-1)
+  }
+
+  /*
+   * Grava o termo pesquisado sem
+   * depender do localStorage para buscar.
+   */
+  const registrarBusca = (termo: string) => {
+    setHistorico(salvarTermo(termo))
+  }
+
+  /*
+   * Preenche o campo com a sugestão,
+   * atualiza os resultados e mantém
+   * o foco na busca.
+   */
+  const selecionarSugestao = (termo: string) => {
+    atualizarFiltros({ busca: termo })
+    registrarBusca(termo)
+    fecharSugestoes()
+    buscaRef.current?.focus()
+  }
+
+  const navegarSugestoes = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (sugestoes.length === 0) {
+        return
+      }
+
+      event.preventDefault()
+      setSugestoesAbertas(true)
+
+      const passo = event.key === 'ArrowDown' ? 1 : -1
+
+      setSugestaoAtiva((atual) => {
+        if (!listaSugestoesVisivel || atual === -1) {
+          return passo === 1 ? 0 : sugestoes.length - 1
+        }
+
+        return (atual + passo + sugestoes.length) % sugestoes.length
+      })
+
+      return
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+
+      if (listaSugestoesVisivel && sugestaoAtiva >= 0) {
+        selecionarSugestao(sugestoes[sugestaoAtiva])
+      } else {
+        registrarBusca(filtros.busca)
+        fecharSugestoes()
+      }
+
+      return
+    }
+
+    if (event.key === 'Escape' && listaSugestoesVisivel) {
+      // Impede que o campo search apague o texto digitado.
+      event.preventDefault()
+      fecharSugestoes()
+    }
+  }
+
+  /*
    * Alterna um recurso de acessibilidade.
    */
-  const alternarRecurso = (
-    recurso: RecursoAcessibilidade,
-  ) => {
-    const recursos =
-      filtros.recursos.includes(recurso)
-        ? filtros.recursos.filter(
-            (item) => item !== recurso,
-          )
-        : [...filtros.recursos, recurso]
+  const alternarRecurso = (recurso: RecursoAcessibilidade) => {
+    const recursos = filtros.recursos.includes(recurso)
+      ? filtros.recursos.filter((item) => item !== recurso)
+      : [...filtros.recursos, recurso]
 
     atualizarFiltros({ recursos })
   }
@@ -160,9 +249,7 @@ export default function Locais() {
    * Com focarBusca, abre o painel no
    * mobile para levar o foco à busca.
    */
-  const limparFiltros = (
-    { focarBusca = false } = {},
-  ) => {
+  const limparFiltros = ({ focarBusca = false } = {}) => {
     atualizarFiltros(FILTROS_VAZIOS)
     setSomenteFavoritos(false)
 
@@ -180,18 +267,15 @@ export default function Locais() {
   }
 
   /*
-   * Altera a ordenação e retorna
-   * para a primeira página.
+   * Altera a ordenação e retorna para a primeira página.
    */
-  const alterarOrdenacao = (
-    novaOrdenacao: OrdenacaoLocais,
-  ) => {
+  const alterarOrdenacao = (novaOrdenacao: OrdenacaoLocais) => {
     setOrdenacao(novaOrdenacao)
     setPaginaAtual(1)
   }
 
   /*
-   * Aplica os filtros.
+   * Aplica os filtros e a ordenação.
    */
   const favoritosSalvos = lerFavoritos()
   const locaisFiltrados = filtrarLocais(
@@ -242,45 +326,28 @@ export default function Locais() {
   /*
    * Calcula a quantidade de páginas.
    */
-  const totalPaginas = Math.ceil(
-    locaisOrdenados.length /
-      ITENS_POR_PAGINA,
-  )
+  const totalPaginas = Math.ceil(locaisOrdenados.length / ITENS_POR_PAGINA)
 
   /*
-   * Garante que a página atual
-   * continue válida após alterações
-   * nos filtros.
+   * Garante que a página atual continue válida.
    */
-  const paginaValida = Math.min(
-    paginaAtual,
-    Math.max(totalPaginas, 1),
-  )
+  const paginaValida = Math.min(paginaAtual, Math.max(totalPaginas, 1))
 
-  const indiceInicial =
-    (paginaValida - 1) *
-    ITENS_POR_PAGINA
+  const indiceInicial = (paginaValida - 1) * ITENS_POR_PAGINA
 
   /*
    * Locais exibidos na página atual.
    */
-  const locaisPaginados =
-    locaisOrdenados.slice(
-      indiceInicial,
-      indiceInicial +
-        ITENS_POR_PAGINA,
-    )
+  const locaisPaginados = locaisOrdenados.slice(
+    indiceInicial,
+    indiceInicial + ITENS_POR_PAGINA,
+  )
 
   /*
    * Troca de página.
    */
-  const mudarPagina = (
-    pagina: number,
-  ) => {
-    if (
-      pagina >= 1 &&
-      pagina <= totalPaginas
-    ) {
+  const mudarPagina = (pagina: number) => {
+    if (pagina >= 1 && pagina <= totalPaginas) {
       setPaginaAtual(pagina)
       tituloRef.current?.focus({ preventScroll: true })
     }
@@ -300,22 +367,15 @@ export default function Locais() {
           Locais acessíveis
         </h1>
 
-        <ContagemResultados total={null} />
-
-        <p
-          role="status"
-          className="mt-4"
-        >
-          Carregando locais...
-        </p>
+        <LoadingState message="Carregando locais..." />
       </main>
     )
   }
 
   /*
-   * Estado de erro.
+   * Estado de erro, com opção para tentar novamente.
    */
-  if (estado.status === 'erro') {  
+  if (estado.status === 'erro') {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <h1
@@ -348,54 +408,44 @@ export default function Locais() {
         Locais acessíveis
       </h1>
 
-      <p className="mt-2 max-w-2xl text-slate-600">
+      {emModoReserva && (
+        <AvisoDadosReserva
+          onDispensar={() => tituloRef.current?.focus()}
+        />
+      )}
+
+      <p className="mt-2 max-w-2xl text-secundaria">
         Combine os filtros para encontrar
         locais que atendam às suas
         necessidades.
       </p>
 
-      <ContagemResultados
-        total={locaisFiltrados.length}
-      />
+      <ContagemResultados total={locaisFiltrados.length} />
 
       <button
         type="button"
-        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 lg:hidden ${foco}`}
+        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 lg:hidden ${foco}`}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
-        onClick={() =>
-          setFiltrosAbertos(
-            (aberto) => !aberto,
-          )
-        }
+        onClick={() => setFiltrosAbertos((aberto) => !aberto)}
       >
         {filtrosAbertos
           ? 'Ocultar filtros'
-          : `Mostrar filtros${
-  totalFiltrosAtivos
-    ? ` (${totalFiltrosAtivos})`
-    : ''
-} `}
+          : `Mostrar filtros${totalFiltrosAtivos ? ` (${totalFiltrosAtivos})` : ''}`}
       </button>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[18rem_1fr]">
         <section
           id="painel-filtros"
-          className={`${
-  filtrosAbertos
-    ? 'block'
-    : 'hidden'
-} lg:block`}
+          className={`${filtrosAbertos ? 'block' : 'hidden'} lg:block`}
           aria-label="Filtros de locais"
         >
           <form
             role="search"
-            onSubmit={(event) =>
-              event.preventDefault()
-            }
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            onSubmit={(event) => event.preventDefault()}
+            className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
           >
-            <div>
+            <div className="relative">
               <label
                 htmlFor={buscaId}
                 className="mb-2 block font-semibold"
@@ -407,16 +457,75 @@ export default function Locais() {
                 ref={buscaRef}
                 id={buscaId}
                 type="search"
-                value={filtros.busca}
-                onChange={(event) =>
-                  atualizarFiltros({
-                    busca:
-                      event.target.value,
-                  })
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={listaSugestoesVisivel}
+                aria-controls={sugestoesId}
+                aria-activedescendant={
+                  listaSugestoesVisivel &&
+                    sugestaoAtiva >= 0
+                    ? `${sugestoesId}-${sugestaoAtiva}`
+                    : undefined
                 }
+                autoComplete="off"
+                value={filtros.busca}
+                onChange={(event) => {
+                  atualizarFiltros({
+                    busca: event.target.value,
+                  })
+                  setSugestoesAbertas(true)
+                  setSugestaoAtiva(-1)
+                }}
+                onFocus={() => setSugestoesAbertas(true)}
+                onClick={() => setSugestoesAbertas(true)}
+                onBlur={() => {
+                  registrarBusca(filtros.busca)
+                  fecharSugestoes()
+                }}
+                onKeyDown={navegarSugestoes}
                 placeholder="Nome, endereço ou CEP"
                 className={campo}
               />
+
+              <ul
+                id={sugestoesId}
+                role="listbox"
+                aria-label="Buscas recentes"
+                hidden={!listaSugestoesVisivel}
+                className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-md border border-slate-300 bg-white py-1 shadow-lg"
+              >
+                {sugestoes.map((termo, indice) => (
+                  <li
+                    key={termo}
+                    id={`${sugestoesId}-${indice}`}
+                    role="option"
+                    aria-selected={indice === sugestaoAtiva}
+                    // Evita o blur do campo antes do clique.
+                    onMouseDown={(event) =>
+                      event.preventDefault()
+                    }
+                    onClick={() => selecionarSugestao(termo)}
+                    className={`flex min-h-11 cursor-pointer items-center px-3 text-slate-900 ${indice === sugestaoAtiva
+                        ? 'bg-blue-50 font-semibold text-blue-800'
+                        : 'hover:bg-slate-50'
+                      }`}
+                  >
+                    {termo}
+                  </li>
+                ))}
+              </ul>
+
+              <p
+                aria-live="polite"
+                className="sr-only"
+              >
+                {listaSugestoesVisivel
+                  ? `${sugestoes.length} ${sugestoes.length === 1
+                    ? 'busca recente disponível'
+                    : 'buscas recentes disponíveis'
+                  }. Use as setas para navegar.`
+                  : ''}
+              </p>
             </div>
 
             <div className="mt-5">
@@ -432,74 +541,44 @@ export default function Locais() {
                 value={filtros.categoria}
                 onChange={(event) =>
                   atualizarFiltros({
-                    categoria:
-                      event.target
-                        .value as
-                        | Categoria
-                        | '',
+                    categoria: event.target.value as Categoria | '',
                   })
                 }
                 className={campo}
               >
-                <option value="">
-                  Todas as categorias
-                </option>
+                <option value="">Todas as categorias</option>
 
-                {CATEGORIAS.map(
-                  (categoria) => (
-                    <option
-                      key={categoria}
-                      value={categoria}
-                    >
-                      {
-                        CATEGORIA_ROTULOS[
-                          categoria
-                        ]
-                      }
-                    </option>
-                  ),
-                )}
+                {CATEGORIAS.map((categoria) => (
+                  <option key={categoria} value={categoria}>
+                    {CATEGORIA_ROTULOS[categoria]}
+                  </option>
+                ))}
               </select>
             </div>
 
             <fieldset className="mt-5">
-              <legend
-                id={recursosId}
-                className="font-semibold"
-              >
+              <legend id={recursosId} className="font-semibold">
                 Recursos de acessibilidade
               </legend>
 
               <div className="mt-3 space-y-2">
-                {RECURSOS.map(
-                  (recurso) => (
-                    <label
-                      key={recurso}
-                      className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-slate-50"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filtros.recursos.includes(
-                          recurso,
-                        )}
-                        onChange={() =>
-                          alternarRecurso(
-                            recurso,
-                          )
-                        }
-                        className="h-4 w-4"
-                      />
+                {RECURSOS.map((recurso) => (
+                  <label
+                    key={recurso}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-fundo-suave"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filtros.recursos.includes(recurso)}
+                      onChange={() => alternarRecurso(recurso)}
+                      className="h-4 w-4"
+                    />
 
-                      <span className="text-sm">
-                        {
-                          RECURSO_ROTULOS[
-                            recurso
-                          ]
-                        }
-                      </span>
-                    </label>
-                  ),
-                )}
+                    <span className="text-sm">
+                      {RECURSO_ROTULOS[recurso]}
+                    </span>
+                  </label>
+                ))}
               </div>
             </fieldset>
 
@@ -519,10 +598,8 @@ export default function Locais() {
             <button
               type="button"
               onClick={() => limparFiltros()}
-              disabled={
-                totalFiltrosAtivos === 0
-              }
-              className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
+              disabled={totalFiltrosAtivos === 0}
+              className={`mt-5 min-h-11 w-full rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 hover:bg-fundo-suave disabled:cursor-not-allowed disabled:border-borda-decorativa disabled:text-secundaria ${foco}`}
             >
               Limpar filtros
             </button>
@@ -530,7 +607,7 @@ export default function Locais() {
         </section>
 
         <section aria-label="Resultados dos locais">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-borda-decorativa bg-fundo p-4 shadow-sm">
             <p
               ref={resultadoRef}
               tabIndex={-1}
@@ -538,20 +615,29 @@ export default function Locais() {
               aria-live="polite"
               className="font-semibold focus:outline-none"
             >
-              {locaisFiltrados.length ===
-              0
-                ? 'Nenhum local encontrado com esses filtros.'
-                : `${ locaisFiltrados.length } ${
-  locaisFiltrados.length ===
-    1
-    ? 'local encontrado'
-    : 'locais encontrados'
-}.`}
+              {locais.length === 0
+                ? 'Nenhum local cadastrado no momento.'
+                : locaisFiltrados.length === 0
+                  ? 'Nenhum local encontrado com esses filtros.'
+                  : `${locaisFiltrados.length} ${locaisFiltrados.length === 1
+                    ? 'local encontrado'
+                    : 'locais encontrados'
+                  }.`}
             </p>
           </div>
 
-          {locaisFiltrados.length ===
-          0 ? (
+          {locais.length === 0 ? (
+            <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+              <h2 className="text-xl font-bold">
+                Nenhum local disponível
+              </h2>
+
+              <p className="mt-2 text-slate-600">
+                Ainda não há locais cadastrados para exibir.
+                Tente novamente mais tarde.
+              </p>
+            </div>
+          ) : locaisFiltrados.length === 0 ? (
             <div className="mt-6">
               {resumoFiltrosAtivos}
               <EmptyState
@@ -574,33 +660,25 @@ export default function Locais() {
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-texto">
                       {filtros.busca.trim() && (
                         <li>
-                          Busca por “
-                          {filtros.busca.trim()}”
+                          Busca por “{filtros.busca.trim()}”
                         </li>
                       )}
 
                       {filtros.categoria && (
                         <li>
                           Categoria:{' '}
-                          {
-                            CATEGORIA_ROTULOS[
-                              filtros.categoria
-                            ]
-                          }
+                          {CATEGORIA_ROTULOS[filtros.categoria]}
                         </li>
                       )}
 
-                      {filtros.recursos.map(
-                        (recurso) => (
-                          <li key={recurso}>
-                            Recurso:{' '}
-                            {
-                              RECURSO_ROTULOS[
-                                recurso
-                              ]
-                            }
-                          </li>
-                        ),
+                      {filtros.recursos.map((recurso) => (
+                        <li key={recurso}>
+                          Recurso: {RECURSO_ROTULOS[recurso]}
+                        </li>
+                      ))}
+
+                      {somenteFavoritos && (
+                        <li>Somente favoritos</li>
                       )}
                     </ul>
                   </div>
@@ -622,24 +700,15 @@ export default function Locais() {
                   value={ordenacao}
                   onChange={(event) =>
                     alterarOrdenacao(
-                      event.target
-                        .value as OrdenacaoLocais,
+                      event.target.value as OrdenacaoLocais,
                     )
                   }
                   aria-controls="resultados-locais"
                   className={campo}
                 >
-                  <option value="original">
-                    Ordem original
-                  </option>
-
-                  <option value="nome-asc">
-                    Nome: A–Z
-                  </option>
-
-                  <option value="nome-desc">
-                    Nome: Z–A
-                  </option>
+                  <option value="original">Ordem original</option>
+                  <option value="nome-asc">Nome: A–Z</option>
+                  <option value="nome-desc">Nome: Z–A</option>
                 </select>
               </div>
 
@@ -650,82 +719,9 @@ export default function Locais() {
                 aria-label="Locais encontrados"
                 className="mt-6 grid gap-5 md:grid-cols-2"
               >
-                {locaisPaginados.map(
-                  (local) => (
-                    <article
-                      key={local.id}
-                      className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-                    >
-                      <h2 className="text-xl font-bold">
-                        {local.nome}
-                      </h2>
-
-                      <p className="mt-3 text-sm text-slate-700">
-                        <strong>
-                          Endereço:
-                        </strong>{' '}
-                        {local.endereco}
-                      </p>
-
-                      <p className="mt-1 text-sm text-slate-700">
-                        <strong>
-                          CEP:
-                        </strong>{' '}
-                        {local.cep}
-                      </p>
-
-                      <p className="mt-2 text-sm text-slate-700">
-                        <strong>
-                          Categoria:
-                        </strong>{' '}
-                        {
-                          CATEGORIA_ROTULOS[
-                            local.categoria
-                          ]
-                        }
-                      </p>
-
-                      <div className="mt-4">
-                        <h3 className="font-semibold">
-                          Recursos de
-                          acessibilidade
-                        </h3>
-
-                        <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-                          {local.recursosAcessibilidade.map(
-                            (
-                              recurso,
-                            ) => (
-                              <li
-                                key={
-                                  recurso
-                                }
-                              >
-                                {
-                                  RECURSO_ROTULOS[
-                                    recurso
-                                  ]
-                                }
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      </div>
-
-                      <Link
-                        to={`/locais/${local.id}`}
-                        className={classeLinkDetalhes}
-                        >
-                        Ver detalhes
-                        <span className="sr-only">
-                          {' '}
-                          de{' '}
-                          {local.nome}
-                        </span>
-                      </Link>
-                    </article>
-                  ),
-                )}
+                {locaisPaginados.map((local) => (
+                  <LocalCard key={local.id} local={local} />
+                ))}
               </section>
             </>
           )}
@@ -737,16 +733,10 @@ export default function Locais() {
             >
               <button
                 type="button"
-                onClick={() =>
-                  mudarPagina(
-                    paginaValida - 1,
-                  )
-                }
-                disabled={
-                  paginaValida === 1
-                }
+                onClick={() => mudarPagina(paginaValida - 1)}
+                disabled={paginaValida === 1}
                 aria-label="Ir para a página anterior"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Anterior
               </button>
@@ -756,35 +746,23 @@ export default function Locais() {
                 className="flex flex-wrap items-center justify-center gap-2"
               >
                 {Array.from(
-                  {
-                    length: totalPaginas,
-                  },
+                  { length: totalPaginas },
                   (_, index) => {
-                    const pagina =
-                      index + 1
+                    const pagina = index + 1
 
                     return (
                       <button
                         key={pagina}
                         type="button"
-                        onClick={() =>
-                          mudarPagina(
-                            pagina,
-                          )
-                        }
+                        onClick={() => mudarPagina(pagina)}
                         aria-current={
-                          pagina ===
-                          paginaValida
-                            ? 'page'
-                            : undefined
+                          pagina === paginaValida ? 'page' : undefined
                         }
-                        aria-label={`Página ${ pagina } `}
-                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${
-  pagina ===
-    paginaValida
-    ? 'bg-blue-700 text-white'
-    : 'border border-slate-300 hover:bg-slate-100'
-} ${ foco } `}
+                        aria-label={`Página ${pagina}`}
+                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
+                            ? 'bg-primaria-600 text-texto-inverso'
+                            : 'border border-borda-funcional hover:bg-fundo-suave'
+                          } ${foco}`}
                       >
                         {pagina}
                       </button>
@@ -795,17 +773,10 @@ export default function Locais() {
 
               <button
                 type="button"
-                onClick={() =>
-                  mudarPagina(
-                    paginaValida + 1,
-                  )
-                }
-                disabled={
-                  paginaValida ===
-                  totalPaginas
-                }
+                onClick={() => mudarPagina(paginaValida + 1)}
+                disabled={paginaValida === totalPaginas}
                 aria-label="Ir para a próxima página"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Próxima
               </button>
@@ -813,7 +784,7 @@ export default function Locais() {
           )}
         </section>
       </div>
-      <BotaoVoltarAoTopo /> 
+      <BotaoVoltarAoTopo />
     </main>
   )
 }
