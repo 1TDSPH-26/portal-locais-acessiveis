@@ -1,4 +1,4 @@
-import { useEffect, useId, useRef, useState } from 'react'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
@@ -34,6 +34,12 @@ import {
   filtrosParaUrl,
   lerFiltrosDaUrl,
 } from '../../utils/filtrosUrl'
+
+import {
+  filtrarHistorico,
+  obterHistorico,
+  salvarTermo,
+} from '../../utils/historicoBusca'
 
 import {
   ordenarLocais,
@@ -76,8 +82,15 @@ export default function Locais() {
   const tituloRef = useRef<HTMLHeadingElement>(null)
 
   const buscaId = useId()
+  const sugestoesId = useId()
   const categoriaId = useId()
   const recursosId = useId()
+
+  const [historico, setHistorico] = useState(obterHistorico)
+
+  const [sugestoesAbertas, setSugestoesAbertas] = useState(false)
+
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(-1)
 
   const houveRetentativa = useRef(false)
 
@@ -125,6 +138,87 @@ export default function Locais() {
     })
 
     setPaginaAtual(1)
+  }
+
+  /*
+   * Sugestões do histórico para o
+   * valor atual do campo de busca.
+   */
+  const sugestoes = filtrarHistorico(
+    historico,
+    filtros.busca,
+  )
+
+  const listaSugestoesVisivel =
+    sugestoesAbertas && sugestoes.length > 0
+
+  const fecharSugestoes = () => {
+    setSugestoesAbertas(false)
+    setSugestaoAtiva(-1)
+  }
+
+  /*
+   * Grava o termo pesquisado sem
+   * depender do localStorage para buscar.
+   */
+  const registrarBusca = (termo: string) => {
+    setHistorico(salvarTermo(termo))
+  }
+
+  /*
+   * Preenche o campo com a sugestão,
+   * atualiza os resultados e mantém
+   * o foco na busca.
+   */
+  const selecionarSugestao = (termo: string) => {
+    atualizarFiltros({ busca: termo })
+    registrarBusca(termo)
+    fecharSugestoes()
+    buscaRef.current?.focus()
+  }
+
+  const navegarSugestoes = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (sugestoes.length === 0) {
+        return
+      }
+
+      event.preventDefault()
+      setSugestoesAbertas(true)
+
+      const passo = event.key === 'ArrowDown' ? 1 : -1
+
+      setSugestaoAtiva((atual) => {
+        if (!listaSugestoesVisivel || atual === -1) {
+          return passo === 1 ? 0 : sugestoes.length - 1
+        }
+
+        return (atual + passo + sugestoes.length) % sugestoes.length
+      })
+
+      return
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+
+      if (listaSugestoesVisivel && sugestaoAtiva >= 0) {
+        selecionarSugestao(sugestoes[sugestaoAtiva])
+      } else {
+        registrarBusca(filtros.busca)
+        fecharSugestoes()
+      }
+
+      return
+    }
+
+    if (event.key === 'Escape' && listaSugestoesVisivel) {
+      // Impede que o campo search apague o texto digitado.
+      event.preventDefault()
+      fecharSugestoes()
+    }
   }
 
   /*
@@ -322,7 +416,7 @@ export default function Locais() {
             onSubmit={(event) => event.preventDefault()}
             className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
           >
-            <div>
+            <div className="relative">
               <label
                 htmlFor={buscaId}
                 className="mb-2 block font-semibold"
@@ -334,13 +428,75 @@ export default function Locais() {
                 ref={buscaRef}
                 id={buscaId}
                 type="search"
-                value={filtros.busca}
-                onChange={(event) =>
-                  atualizarFiltros({ busca: event.target.value })
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={listaSugestoesVisivel}
+                aria-controls={sugestoesId}
+                aria-activedescendant={
+                  listaSugestoesVisivel &&
+                    sugestaoAtiva >= 0
+                    ? `${sugestoesId}-${sugestaoAtiva}`
+                    : undefined
                 }
+                autoComplete="off"
+                value={filtros.busca}
+                onChange={(event) => {
+                  atualizarFiltros({
+                    busca: event.target.value,
+                  })
+                  setSugestoesAbertas(true)
+                  setSugestaoAtiva(-1)
+                }}
+                onFocus={() => setSugestoesAbertas(true)}
+                onClick={() => setSugestoesAbertas(true)}
+                onBlur={() => {
+                  registrarBusca(filtros.busca)
+                  fecharSugestoes()
+                }}
+                onKeyDown={navegarSugestoes}
                 placeholder="Nome, endereço ou CEP"
                 className={campo}
               />
+
+              <ul
+                id={sugestoesId}
+                role="listbox"
+                aria-label="Buscas recentes"
+                hidden={!listaSugestoesVisivel}
+                className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-md border border-slate-300 bg-white py-1 shadow-lg"
+              >
+                {sugestoes.map((termo, indice) => (
+                  <li
+                    key={termo}
+                    id={`${sugestoesId}-${indice}`}
+                    role="option"
+                    aria-selected={indice === sugestaoAtiva}
+                    // Evita o blur do campo antes do clique.
+                    onMouseDown={(event) =>
+                      event.preventDefault()
+                    }
+                    onClick={() => selecionarSugestao(termo)}
+                    className={`flex min-h-11 cursor-pointer items-center px-3 text-slate-900 ${indice === sugestaoAtiva
+                        ? 'bg-blue-50 font-semibold text-blue-800'
+                        : 'hover:bg-slate-50'
+                      }`}
+                  >
+                    {termo}
+                  </li>
+                ))}
+              </ul>
+
+              <p
+                aria-live="polite"
+                className="sr-only"
+              >
+                {listaSugestoesVisivel
+                  ? `${sugestoes.length} ${sugestoes.length === 1
+                    ? 'busca recente disponível'
+                    : 'buscas recentes disponíveis'
+                  }. Use as setas para navegar.`
+                  : ''}
+              </p>
             </div>
 
             <div className="mt-5">
