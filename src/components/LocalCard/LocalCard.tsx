@@ -85,7 +85,7 @@ export default function LocalCard({ local, detalhesUrl, onRemoveFavorite }: Loca
       </ul>
 
       <Link
-        to={detalhesUrl ?? '/locais'}
+        to={detalhesUrl ?? `/locais/${local.id}`}
         className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"
       >
         Ver detalhes
