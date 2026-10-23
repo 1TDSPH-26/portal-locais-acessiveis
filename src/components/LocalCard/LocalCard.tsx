@@ -34,9 +34,10 @@ const RECURSO_LABELS: Record<RecursoAcessibilidade, string> = {
 interface LocalCardProps {
   local: Local
   detalhesUrl?: string
+  onRemoveFavorite?: () => void
 }
 
-export default function LocalCard({ local, detalhesUrl }: LocalCardProps) {
+export default function LocalCard({ local, detalhesUrl, onRemoveFavorite }: LocalCardProps) {
   const [favoritado, setFavoritado] = useState(() =>
     lerFavoritos().includes(local.id),
   )
@@ -50,6 +51,7 @@ export default function LocalCard({ local, detalhesUrl }: LocalCardProps) {
     try {
       localStorage.setItem(FAVORITOS_STORAGE_KEY, JSON.stringify(novosFavoritos))
       setFavoritado(novosFavoritos.includes(local.id))
+      if (!novosFavoritos.includes(local.id)) onRemoveFavorite?.()
     } catch {
       return
     }

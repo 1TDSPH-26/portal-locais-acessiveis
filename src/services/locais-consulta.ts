@@ -4,6 +4,7 @@ import {
   FalhaServicoError,
   executarConsulta,
   falhaSimulada,
+  modoReservaSimulado,
 } from './falha-servico'
 
 // Enquanto a API não está disponível, os dados vêm do arquivo local,
@@ -13,6 +14,12 @@ import {
 const ATRASO_SIMULADO_MS = 300
 const ATRASO_TEMPO_ESGOTADO_MS = 60_000
 const TEMPO_LIMITE_SIMULACAO_MS = 1500
+
+export type OrigemDados = 'principal' | 'reserva'
+export type ResultadoLocais = {
+  locais: Local[]
+  origem: OrigemDados
+}
 
 function aguardar(ms: number) {
   return new Promise((resolver) => setTimeout(resolver, ms))
@@ -34,21 +41,40 @@ async function consultarFonte<T>(recurso: string, obter: () => T): Promise<T> {
   return obter()
 }
 
+function obterBaseReserva(): Local[] | null {
+  return modoReservaSimulado() ? [...listaLocais] : null
+}
+
 function tempoLimite(recurso: string) {
   return falhaSimulada(recurso) === 'tempo_esgotado'
     ? TEMPO_LIMITE_SIMULACAO_MS
     : undefined
 }
 
-export function listarLocais(): Promise<Local[]> {
+export function listarLocais(): Promise<ResultadoLocais> {
   return executarConsulta(async () => {
-    const dados = await consultarFonte('locais', () => listaLocais)
+    try {
+      // A simulação derruba a fonte principal para exercitar o fallback.
+      if (modoReservaSimulado()) {
+        throw new FalhaServicoError('indisponivel')
+      }
 
-    if (!Array.isArray(dados)) {
-      throw new FalhaServicoError('resposta_invalida')
+      const dados = await consultarFonte('locais', () => listaLocais)
+
+      if (!Array.isArray(dados)) {
+        throw new FalhaServicoError('resposta_invalida')
+      }
+
+      return { locais: [...dados], origem: 'principal' as const }
+    } catch (erro) {
+      const reserva = obterBaseReserva()
+
+      if (!reserva) {
+        throw erro
+      }
+
+      return { locais: reserva, origem: 'reserva' as const }
     }
-
-    return [...dados]
   }, tempoLimite('locais'))
 }
 

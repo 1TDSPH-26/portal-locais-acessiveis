@@ -1,7 +1,14 @@
+
 import type {
   Categoria,
   RecursoAcessibilidade,
 } from '../types/local'
+
+import {
+  CATEGORIAS,
+  RECURSOS,
+} from '../data/rotulos'
+
 import {
   FILTROS_VAZIOS,
   type FiltrosLocais,
@@ -21,7 +28,10 @@ export function filtrosParaUrl(
   }
 
   if (filtros.recursos.length > 0) {
-    params.set('recursos', filtros.recursos.join(','))
+    params.set(
+      'recursos',
+      filtros.recursos.join(','),
+    )
   }
 
   return params
@@ -35,17 +45,28 @@ export function lerFiltrosDaUrl(
   const categoriaParam =
     searchParams.get('categoria') ?? ''
 
-  const categoria =
-    categoriaParam === ''
-      ? ''
-      : categoriaParam as Categoria
+  const categoria: Categoria | '' =
+    CATEGORIAS.includes(
+      categoriaParam as Categoria,
+    )
+      ? (categoriaParam as Categoria)
+      : ''
 
   const recursosParam =
     searchParams.get('recursos') ?? ''
 
-  const recursos = recursosParam
-    .split(',')
-    .filter(Boolean) as RecursoAcessibilidade[]
+  const recursos: RecursoAcessibilidade[] = [
+    ...new Set(
+      recursosParam
+        .split(',')
+        .filter(
+          (recurso): recurso is RecursoAcessibilidade =>
+            RECURSOS.includes(
+              recurso as RecursoAcessibilidade,
+            ),
+        ),
+    ),
+  ]
 
   return {
     ...FILTROS_VAZIOS,
