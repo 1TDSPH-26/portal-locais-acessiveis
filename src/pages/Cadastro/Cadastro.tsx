@@ -312,7 +312,7 @@ export default function Cadastro() {
                 <button
                   type="button"
                   onClick={reiniciarFormulario}
-                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-sucesso px-4 py-2 font-corpo text-corpo-14 font-semibold text-white shadow-xs hover:bg-green-700 focus:outline-2 focus:outline-offset-2 focus:outline-sucesso cursor-pointer"
+                  className="inline-flex min-h-11 items-center justify-center rounded-md bg-sucesso px-4 py-2 font-corpo text-corpo-14 font-semibold text-texto-inverso shadow-xs hover:brightness-90 focus:outline-2 focus:outline-offset-2 focus:outline-sucesso cursor-pointer"
                 >
                   Cadastrar outro local
                 </button>
@@ -641,7 +641,7 @@ export default function Cadastro() {
           <button
             type="submit"
             disabled={enviando}
-            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md bg-primaria-600 px-6 py-3.5 font-corpo text-botao font-bold text-white shadow-xs hover:bg-primaria-700 active:bg-primaria-800 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 disabled:cursor-not-allowed disabled:opacity-60 min-h-[48px] transition-colors cursor-pointer"
+            className="w-full sm:w-auto inline-flex items-center justify-center rounded-md bg-primaria-600 px-6 py-3.5 font-corpo text-botao font-bold text-texto-inverso shadow-xs hover:bg-primaria-700 active:bg-primaria-800 focus:outline-3 focus:outline-offset-2 focus:outline-primaria-600 disabled:cursor-not-allowed disabled:opacity-60 min-h-[48px] transition-colors cursor-pointer"
           >
             {enviando ? 'Enviando...' : 'Cadastrar local'}
           </button>

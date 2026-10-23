@@ -1,4 +1,3 @@
-
 import { useEffect, useId, useRef, useState } from 'react'
 import { Link, useSearchParams } from 'react-router'
 
@@ -44,14 +43,14 @@ import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
 const ITENS_POR_PAGINA = 4
 
 const foco =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600'
 
-const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
+const campo = `h-11 w-full rounded-md border border-borda-funcional bg-fundo px-3 text-texto ${foco}`
 
 const classeLinkDetalhes = [
-  'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700',
-  'px-4 font-semibold text-blue-800',
-  'hover:bg-blue-50',
+  'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600',
+  'px-4 font-semibold text-primaria-700',
+  'hover:bg-fundo-suave',
   foco,
 ].join(' ')
 
@@ -103,34 +102,34 @@ export default function Locais() {
    * e retorna para a primeira página.
    */
   const atualizarFiltros = (
-  novos: Partial<FiltrosLocais>,
+    novos: Partial<FiltrosLocais>,
   ) => {
     const filtrosAtualizados: FiltrosLocais = {
       ...filtros,
       ...novos,
+    }
+
+    const parametrosAtualizados =
+      new URLSearchParams(searchParams)
+
+    // Remove apenas os parâmetros controlados pelos filtros.
+    parametrosAtualizados.delete('busca')
+    parametrosAtualizados.delete('categoria')
+    parametrosAtualizados.delete('recursos')
+
+    // Adiciona novamente apenas os filtros ativos.
+    filtrosParaUrl(filtrosAtualizados).forEach(
+      (valor, chave) => {
+        parametrosAtualizados.set(chave, valor)
+      },
+    )
+
+    setSearchParams(parametrosAtualizados, {
+      replace: true,
+    })
+
+    setPaginaAtual(1)
   }
-
-  const parametrosAtualizados =
-    new URLSearchParams(searchParams)
-
-  // Remove apenas os parâmetros controlados pelos filtros.
-  parametrosAtualizados.delete('busca')
-  parametrosAtualizados.delete('categoria')
-  parametrosAtualizados.delete('recursos')
-
-  // Adiciona novamente apenas os filtros ativos.
-  filtrosParaUrl(filtrosAtualizados).forEach(
-    (valor, chave) => {
-      parametrosAtualizados.set(chave, valor)
-    },
-  )
-
-  setSearchParams(parametrosAtualizados, {
-    replace: true,
-  })
-
-  setPaginaAtual(1)
-}
 
   /*
    * Alterna um recurso de acessibilidade.
@@ -297,8 +296,9 @@ export default function Locais() {
         Locais acessíveis
       </h1>
 
-      <p className="mt-2 max-w-2xl text-slate-600">
-        Combine os filtros para encontrar locais que atendam às suas
+      <p className="mt-2 max-w-2xl text-secundaria">
+        Combine os filtros para encontrar
+        locais que atendam às suas
         necessidades.
       </p>
 
@@ -306,7 +306,7 @@ export default function Locais() {
 
       <button
         type="button"
-        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 lg:hidden ${foco}`}
+        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 lg:hidden ${foco}`}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
         onClick={() => setFiltrosAbertos((aberto) => !aberto)}
@@ -325,7 +325,7 @@ export default function Locais() {
           <form
             role="search"
             onSubmit={(event) => event.preventDefault()}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
           >
             <div>
               <label
@@ -385,7 +385,7 @@ export default function Locais() {
                 {RECURSOS.map((recurso) => (
                   <label
                     key={recurso}
-                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-slate-50"
+                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-fundo-suave"
                   >
                     <input
                       type="checkbox"
@@ -406,7 +406,7 @@ export default function Locais() {
               type="button"
               onClick={() => limparFiltros()}
               disabled={totalFiltrosAtivos === 0}
-              className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
+              className={`mt-5 min-h-11 w-full rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 hover:bg-fundo-suave disabled:cursor-not-allowed disabled:border-borda-decorativa disabled:text-secundaria ${foco}`}
             >
               Limpar filtros
             </button>
@@ -414,7 +414,7 @@ export default function Locais() {
         </section>
 
         <section aria-label="Resultados dos locais">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-borda-decorativa bg-fundo p-4 shadow-sm">
             <p
               ref={resultadoRef}
               tabIndex={-1}
@@ -442,7 +442,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('busca')}
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
                       Busca: {filtros.busca}{' '}
                       <span aria-hidden="true">×</span>
@@ -456,7 +456,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('categoria')}
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
                       {CATEGORIA_ROTULOS[filtros.categoria]}{' '}
                       <span aria-hidden="true">×</span>
@@ -470,7 +470,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('recurso', recurso)}
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
                       {RECURSO_ROTULOS[recurso]}{' '}
                       <span aria-hidden="true">×</span>
@@ -484,7 +484,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => limparFiltros()}
-                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-primaria-700 underline ${foco}`}
                     >
                       Limpar todos
                     </button>
@@ -583,21 +583,21 @@ export default function Locais() {
                 {locaisPaginados.map((local) => (
                   <article
                     key={local.id}
-                    className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+                    className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
                   >
                     <h2 className="text-xl font-bold">
                       {local.nome}
                     </h2>
 
-                    <p className="mt-3 text-sm text-slate-700">
+                    <p className="mt-3 text-sm text-secundaria">
                       <strong>Endereço:</strong> {local.endereco}
                     </p>
 
-                    <p className="mt-1 text-sm text-slate-700">
+                    <p className="mt-1 text-sm text-secundaria">
                       <strong>CEP:</strong> {local.cep}
                     </p>
 
-                    <p className="mt-2 text-sm text-slate-700">
+                    <p className="mt-2 text-sm text-secundaria">
                       <strong>Categoria:</strong>{' '}
                       {CATEGORIA_ROTULOS[local.categoria]}
                     </p>
@@ -607,7 +607,7 @@ export default function Locais() {
                         Recursos de acessibilidade
                       </h3>
 
-                      <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
+                      <ul className="mt-2 list-disc pl-5 text-sm text-secundaria">
                         {local.recursosAcessibilidade.map((recurso) => (
                           <li key={recurso}>
                             {RECURSO_ROTULOS[recurso]}
@@ -615,20 +615,16 @@ export default function Locais() {
                         ))}
                       </ul>
                     </div>
+
                     <Link
                       to={`/locais/${local.id}`}
                       className={classeLinkDetalhes}
                     >
                       Ver detalhes
-                      <span className="sr-only">
-                        {' '}
-                        de{' '}
-                        {local.nome}
-                      </span>
+                      <span className="sr-only"> de {local.nome}</span>
                     </Link>
                   </article>
-                ),
-                )}
+                ))}
               </section>
             </>
           )}
@@ -643,7 +639,7 @@ export default function Locais() {
                 onClick={() => mudarPagina(paginaValida - 1)}
                 disabled={paginaValida === 1}
                 aria-label="Ir para a página anterior"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Anterior
               </button>
@@ -667,8 +663,8 @@ export default function Locais() {
                         }
                         aria-label={`Página ${pagina}`}
                         className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
-                          ? 'bg-blue-700 text-white'
-                          : 'border border-slate-300 hover:bg-slate-100'
+                            ? 'bg-primaria-600 text-texto-inverso'
+                            : 'border border-borda-funcional hover:bg-fundo-suave'
                           } ${foco}`}
                       >
                         {pagina}
@@ -683,7 +679,7 @@ export default function Locais() {
                 onClick={() => mudarPagina(paginaValida + 1)}
                 disabled={paginaValida === totalPaginas}
                 aria-label="Ir para a próxima página"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Próxima
               </button>

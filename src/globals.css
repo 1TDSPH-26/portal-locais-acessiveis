@@ -5,11 +5,15 @@
   /* Cores */
   --color-primaria-600: #4F46E5;
   --color-primaria-700: #4338CA;
+  --color-primaria-800: #3730A3;
   --color-fundo: #FFFFFF;
   --color-fundo-branco: #FFFFFF;
   --color-fundo-suave: #EEF2FF;
   --color-fundo-escuro: #312E81;
   --color-texto: #0F172A;
+  /* Texto sobre superfícies escuras (Hero, cabeçalhos de página, rodapé) */
+  --color-texto-inverso: #FFFFFF;
+  --color-texto-inverso-suave: #EEF2FF;
   --color-texto-principal: #0F172A;
   --color-secundaria: #475569;
   --color-borda-decorativa: #E2E8F0;
@@ -68,15 +72,40 @@ html[data-font-size="3"] {
    ACESSIBILIDADE — ALTO CONTRASTE
    ========================================================= */
 
+/*
+ * Todos os tokens que definem fundo/texto/borda são redefinidos aqui,
+ * para que nenhuma página fique "presa" às cores do modo padrão.
+ * Meta: contraste mínimo de 7:1 (WCAG AAA) para texto.
+ */
 html.high-contrast {
+  /* Superfícies claras */
   --color-fundo: #FFFFFF;
+  --color-fundo-branco: #FFFFFF;
   --color-fundo-suave: #EEF2FF;
+
+  /* Superfícies escuras (Hero de Início, cabeçalho de Sobre, rodapé) */
+  --color-fundo-escuro: #000000;
+
+  /* Texto */
   --color-texto: #000000;
+  --color-texto-principal: #000000;
   --color-secundaria: #1E293B;
+  --color-texto-inverso: #FFFFFF;
+  --color-texto-inverso-suave: #FFFFFF;
+
+  /* Bordas */
   --color-borda-decorativa: #475569;
   --color-borda-funcional: #000000;
+
+  /* Marca */
   --color-primaria-600: #312E81;
   --color-primaria-700: #1E1B4B;
+  --color-primaria-800: #000000;
+
+  /* Status */
+  --color-sucesso: #14532D;
+  --color-aviso: #713F12;
+  --color-erro: #991B1B;
 }
 
 
@@ -157,10 +186,20 @@ html.high-contrast .accessibility-button:focus-visible {
    ALTO CONTRASTE — LINKS
    ========================================================= */
 
-html.high-contrast a {
-  color: #4a43b3;
-}
+/*
+ * Fica em @layer base e usa :where() (especificidade zero) para que
+ * links estilizados com utilitários do Tailwind (botões, links no Hero,
+ * no cabeçalho de Sobre e no rodapé) mantenham a cor do próprio token.
+ * Só links "crus", sem cor definida, recebem este padrão.
+ */
+@layer base {
+  :where(html.high-contrast) a {
+    color: var(--color-primaria-600);
+    text-decoration: underline;
+    text-underline-offset: 0.2em;
+  }
 
-html.high-contrast a:hover {
-  color: #1E1B4B;
+  :where(html.high-contrast) a:hover {
+    color: var(--color-primaria-700);
+  }
 }
