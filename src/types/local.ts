@@ -26,4 +26,8 @@ export type Local = {
   cep: string;
   categoria: Categoria;
   recursosAcessibilidade: RecursoAcessibilidade[];
+  coordenadas?: {
+    latitude: number;
+    longitude: number;
+  };
 };

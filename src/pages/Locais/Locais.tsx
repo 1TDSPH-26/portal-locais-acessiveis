@@ -4,6 +4,7 @@ import { Link, useSearchParams } from 'react-router'
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import LoadingState from '../../components/Feedback/LoadingState'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
 
@@ -55,33 +56,23 @@ const classeLinkDetalhes = [
 
 export default function Locais() {
   usePageTitle('Locais acessíveis')
-  
-  const [searchParams, setSearchParams] =
-    useSearchParams()
 
+  const [searchParams, setSearchParams] = useSearchParams()
   const filtros = lerFiltrosDaUrl(searchParams)
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const locais: Local[] = estado.status === 'sucesso' ? estado.dados : []
+  const locais: Local[] =
+    estado.status === 'sucesso' ? estado.dados : []
 
-  const [filtrosAbertos, setFiltrosAbertos] =
-    useState(false)
-
-  const [paginaAtual, setPaginaAtual] =
-    useState(1)
-
+  const [filtrosAbertos, setFiltrosAbertos] = useState(false)
+  const [paginaAtual, setPaginaAtual] = useState(1)
   const [ordenacao, setOrdenacao] =
     useState<OrdenacaoLocais>('original')
 
-  const buscaRef =
-    useRef<HTMLInputElement>(null)
-
-  const resultadoRef =
-    useRef<HTMLParagraphElement>(null)
-
-  const tituloRef =
-    useRef<HTMLHeadingElement>(null)
+  const buscaRef = useRef<HTMLInputElement>(null)
+  const resultadoRef = useRef<HTMLParagraphElement>(null)
+  const tituloRef = useRef<HTMLHeadingElement>(null)
 
   const buscaId = useId()
   const categoriaId = useId()
@@ -105,6 +96,7 @@ export default function Locais() {
       resultadoRef.current?.focus()
     }
   }, [estado])
+
   /*
    * Atualiza os filtros na URL
    * e retorna para a primeira página.
@@ -112,13 +104,29 @@ export default function Locais() {
   const atualizarFiltros = (
     novos: Partial<FiltrosLocais>,
   ) => {
-    setSearchParams(
-      filtrosParaUrl({
-        ...filtros,
-        ...novos,
-      }),
-      { replace: true },
+    const filtrosAtualizados: FiltrosLocais = {
+      ...filtros,
+      ...novos,
+    }
+
+    const parametrosAtualizados =
+      new URLSearchParams(searchParams)
+
+    // Remove apenas os parâmetros controlados pelos filtros.
+    parametrosAtualizados.delete('busca')
+    parametrosAtualizados.delete('categoria')
+    parametrosAtualizados.delete('recursos')
+
+    // Adiciona novamente apenas os filtros ativos.
+    filtrosParaUrl(filtrosAtualizados).forEach(
+      (valor, chave) => {
+        parametrosAtualizados.set(chave, valor)
+      },
     )
+
+    setSearchParams(parametrosAtualizados, {
+      replace: true,
+    })
 
     setPaginaAtual(1)
   }
@@ -126,15 +134,10 @@ export default function Locais() {
   /*
    * Alterna um recurso de acessibilidade.
    */
-  const alternarRecurso = (
-    recurso: RecursoAcessibilidade,
-  ) => {
-    const recursos =
-      filtros.recursos.includes(recurso)
-        ? filtros.recursos.filter(
-            (item) => item !== recurso,
-          )
-        : [...filtros.recursos, recurso]
+  const alternarRecurso = (recurso: RecursoAcessibilidade) => {
+    const recursos = filtros.recursos.includes(recurso)
+      ? filtros.recursos.filter((item) => item !== recurso)
+      : [...filtros.recursos, recurso]
 
     atualizarFiltros({ recursos })
   }
@@ -163,77 +166,50 @@ export default function Locais() {
   }
 
   /*
-   * Altera a ordenação e retorna
-   * para a primeira página.
+   * Altera a ordenação e retorna para a primeira página.
    */
-  const alterarOrdenacao = (
-    novaOrdenacao: OrdenacaoLocais,
-  ) => {
+  const alterarOrdenacao = (novaOrdenacao: OrdenacaoLocais) => {
     setOrdenacao(novaOrdenacao)
     setPaginaAtual(1)
   }
 
   /*
-   * Aplica os filtros.
+   * Aplica os filtros e a ordenação.
    */
-  const locaisFiltrados = filtrarLocais(
-    locais,
-    filtros,
-  )
-
-  /*
-   * Aplica a ordenação depois dos filtros.
-   */
-  const locaisOrdenados = ordenarLocais(
-    locaisFiltrados,
-    ordenacao,
-  )
-
-  const totalFiltrosAtivos =
-    contarFiltrosAtivos(filtros)
+  const locaisFiltrados = filtrarLocais(locais, filtros)
+  const locaisOrdenados = ordenarLocais(locaisFiltrados, ordenacao)
+  const totalFiltrosAtivos = contarFiltrosAtivos(filtros)
 
   /*
    * Calcula a quantidade de páginas.
    */
   const totalPaginas = Math.ceil(
-    locaisOrdenados.length /
-      ITENS_POR_PAGINA,
+    locaisOrdenados.length / ITENS_POR_PAGINA,
   )
 
   /*
-   * Garante que a página atual
-   * continue válida após alterações
-   * nos filtros.
+   * Garante que a página atual continue válida.
    */
   const paginaValida = Math.min(
     paginaAtual,
     Math.max(totalPaginas, 1),
   )
 
-  const indiceInicial =
-    (paginaValida - 1) *
-    ITENS_POR_PAGINA
+  const indiceInicial = (paginaValida - 1) * ITENS_POR_PAGINA
 
   /*
    * Locais exibidos na página atual.
    */
-  const locaisPaginados =
-    locaisOrdenados.slice(
-      indiceInicial,
-      indiceInicial +
-        ITENS_POR_PAGINA,
-    )
+  const locaisPaginados = locaisOrdenados.slice(
+    indiceInicial,
+    indiceInicial + ITENS_POR_PAGINA,
+  )
 
   /*
    * Troca de página.
    */
-  const mudarPagina = (
-    pagina: number,
-  ) => {
-    if (
-      pagina >= 1 &&
-      pagina <= totalPaginas
-    ) {
+  const mudarPagina = (pagina: number) => {
+    if (pagina >= 1 && pagina <= totalPaginas) {
       setPaginaAtual(pagina)
       tituloRef.current?.focus({ preventScroll: true })
     }
@@ -243,34 +219,20 @@ export default function Locais() {
    * Remove um filtro específico.
    */
   const removerFiltro = (
-    tipo:
-      | 'busca'
-      | 'categoria'
-      | 'recurso',
+    tipo: 'busca' | 'categoria' | 'recurso',
     recurso?: RecursoAcessibilidade,
   ) => {
     if (tipo === 'busca') {
-      atualizarFiltros({
-        busca: '',
-      })
+      atualizarFiltros({ busca: '' })
     }
 
     if (tipo === 'categoria') {
-      atualizarFiltros({
-        categoria: '',
-      })
+      atualizarFiltros({ categoria: '' })
     }
 
-    if (
-      tipo === 'recurso' &&
-      recurso
-    ) {
+    if (tipo === 'recurso' && recurso) {
       atualizarFiltros({
-        recursos:
-          filtros.recursos.filter(
-            (item) =>
-              item !== recurso,
-          ),
+        recursos: filtros.recursos.filter((item) => item !== recurso),
       })
     }
 
@@ -293,22 +255,15 @@ export default function Locais() {
           Locais acessíveis
         </h1>
 
-        <ContagemResultados total={null} />
-
-        <p
-          role="status"
-          className="mt-4"
-        >
-          Carregando locais...
-        </p>
+        <LoadingState message="Carregando locais..." />
       </main>
     )
   }
 
   /*
-   * Estado de erro.
+   * Estado de erro, com opção para tentar novamente.
    */
-  if (estado.status === 'erro') {  
+  if (estado.status === 'erro') {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
         <h1
@@ -347,45 +302,29 @@ export default function Locais() {
         necessidades.
       </p>
 
-      <ContagemResultados
-        total={locaisFiltrados.length}
-      />
+      <ContagemResultados total={locaisFiltrados.length} />
 
       <button
         type="button"
         className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 lg:hidden ${foco}`}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
-        onClick={() =>
-          setFiltrosAbertos(
-            (aberto) => !aberto,
-          )
-        }
+        onClick={() => setFiltrosAbertos((aberto) => !aberto)}
       >
         {filtrosAbertos
           ? 'Ocultar filtros'
-          : `Mostrar filtros${
-  totalFiltrosAtivos
-    ? ` (${totalFiltrosAtivos})`
-    : ''
-} `}
+          : `Mostrar filtros${totalFiltrosAtivos ? ` (${totalFiltrosAtivos})` : ''}`}
       </button>
 
       <div className="mt-6 grid gap-8 lg:grid-cols-[18rem_1fr]">
         <section
           id="painel-filtros"
-          className={`${
-  filtrosAbertos
-    ? 'block'
-    : 'hidden'
-} lg:block`}
+          className={`${filtrosAbertos ? 'block' : 'hidden'} lg:block`}
           aria-label="Filtros de locais"
         >
           <form
             role="search"
-            onSubmit={(event) =>
-              event.preventDefault()
-            }
+            onSubmit={(event) => event.preventDefault()}
             className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
           >
             <div>
@@ -402,10 +341,7 @@ export default function Locais() {
                 type="search"
                 value={filtros.busca}
                 onChange={(event) =>
-                  atualizarFiltros({
-                    busca:
-                      event.target.value,
-                  })
+                  atualizarFiltros({ busca: event.target.value })
                 }
                 placeholder="Nome, endereço ou CEP"
                 className={campo}
@@ -425,83 +361,51 @@ export default function Locais() {
                 value={filtros.categoria}
                 onChange={(event) =>
                   atualizarFiltros({
-                    categoria:
-                      event.target
-                        .value as
-                        | Categoria
-                        | '',
+                    categoria: event.target.value as Categoria | '',
                   })
                 }
                 className={campo}
               >
-                <option value="">
-                  Todas as categorias
-                </option>
+                <option value="">Todas as categorias</option>
 
-                {CATEGORIAS.map(
-                  (categoria) => (
-                    <option
-                      key={categoria}
-                      value={categoria}
-                    >
-                      {
-                        CATEGORIA_ROTULOS[
-                          categoria
-                        ]
-                      }
-                    </option>
-                  ),
-                )}
+                {CATEGORIAS.map((categoria) => (
+                  <option key={categoria} value={categoria}>
+                    {CATEGORIA_ROTULOS[categoria]}
+                  </option>
+                ))}
               </select>
             </div>
 
             <fieldset className="mt-5">
-              <legend
-                id={recursosId}
-                className="font-semibold"
-              >
+              <legend id={recursosId} className="font-semibold">
                 Recursos de acessibilidade
               </legend>
 
               <div className="mt-3 space-y-2">
-                {RECURSOS.map(
-                  (recurso) => (
-                    <label
-                      key={recurso}
-                      className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-fundo-suave"
-                    >
-                      <input
-                        type="checkbox"
-                        checked={filtros.recursos.includes(
-                          recurso,
-                        )}
-                        onChange={() =>
-                          alternarRecurso(
-                            recurso,
-                          )
-                        }
-                        className="h-4 w-4"
-                      />
+                {RECURSOS.map((recurso) => (
+                  <label
+                    key={recurso}
+                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-fundo-suave"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={filtros.recursos.includes(recurso)}
+                      onChange={() => alternarRecurso(recurso)}
+                      className="h-4 w-4"
+                    />
 
-                      <span className="text-sm">
-                        {
-                          RECURSO_ROTULOS[
-                            recurso
-                          ]
-                        }
-                      </span>
-                    </label>
-                  ),
-                )}
+                    <span className="text-sm">
+                      {RECURSO_ROTULOS[recurso]}
+                    </span>
+                  </label>
+                ))}
               </div>
             </fieldset>
 
             <button
               type="button"
               onClick={() => limparFiltros()}
-              disabled={
-                totalFiltrosAtivos === 0
-              }
+              disabled={totalFiltrosAtivos === 0}
               className={`mt-5 min-h-11 w-full rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 hover:bg-fundo-suave disabled:cursor-not-allowed disabled:border-borda-decorativa disabled:text-secundaria ${foco}`}
             >
               Limpar filtros
@@ -518,15 +422,14 @@ export default function Locais() {
               aria-live="polite"
               className="font-semibold focus:outline-none"
             >
-              {locaisFiltrados.length ===
-              0
-                ? 'Nenhum local encontrado com esses filtros.'
-                : `${ locaisFiltrados.length } ${
-  locaisFiltrados.length ===
-    1
-    ? 'local encontrado'
-    : 'locais encontrados'
-}.`}
+              {locais.length === 0
+                ? 'Nenhum local cadastrado no momento.'
+                : locaisFiltrados.length === 0
+                  ? 'Nenhum local encontrado com esses filtros.'
+                  : `${locaisFiltrados.length} ${locaisFiltrados.length === 1
+                    ? 'local encontrado'
+                    : 'locais encontrados'
+                  }.`}
             </p>
 
             {totalFiltrosAtivos > 0 && (
@@ -538,23 +441,12 @@ export default function Locais() {
                   <li>
                     <button
                       type="button"
-                      onClick={() =>
-                        removerFiltro(
-                          'busca',
-                        )
-                      }
+                      onClick={() => removerFiltro('busca')}
                       className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
-                      Busca:{' '}
-                      {filtros.busca}{' '}
-                      <span aria-hidden="true">
-                        ×
-                      </span>
-
-                      <span className="sr-only">
-                        {' '}
-                        remover filtro
-                      </span>
+                      Busca: {filtros.busca}{' '}
+                      <span aria-hidden="true">×</span>
+                      <span className="sr-only"> remover filtro</span>
                     </button>
                   </li>
                 )}
@@ -563,68 +455,35 @@ export default function Locais() {
                   <li>
                     <button
                       type="button"
-                      onClick={() =>
-                        removerFiltro(
-                          'categoria',
-                        )
-                      }
+                      onClick={() => removerFiltro('categoria')}
                       className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
-                      {
-                        CATEGORIA_ROTULOS[
-                          filtros.categoria
-                        ]
-                      }{' '}
-                      <span aria-hidden="true">
-                        ×
-                      </span>
-
-                      <span className="sr-only">
-                        {' '}
-                        remover filtro
-                      </span>
+                      {CATEGORIA_ROTULOS[filtros.categoria]}{' '}
+                      <span aria-hidden="true">×</span>
+                      <span className="sr-only"> remover filtro</span>
                     </button>
                   </li>
                 )}
 
-                {filtros.recursos.map(
-                  (recurso) => (
-                    <li key={recurso}>
-                      <button
-                        type="button"
-                        onClick={() =>
-                          removerFiltro(
-                            'recurso',
-                            recurso,
-                          )
-                        }
-                        className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
-                      >
-                        {
-                          RECURSO_ROTULOS[
-                            recurso
-                          ]
-                        }{' '}
-                        <span aria-hidden="true">
-                          ×
-                        </span>
-
-                        <span className="sr-only">
-                          {' '}
-                          remover filtro
-                        </span>
-                      </button>
-                    </li>
-                  ),
-                )}
+                {filtros.recursos.map((recurso) => (
+                  <li key={recurso}>
+                    <button
+                      type="button"
+                      onClick={() => removerFiltro('recurso', recurso)}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                    >
+                      {RECURSO_ROTULOS[recurso]}{' '}
+                      <span aria-hidden="true">×</span>
+                      <span className="sr-only"> remover filtro</span>
+                    </button>
+                  </li>
+                ))}
 
                 {totalFiltrosAtivos > 1 && (
                   <li>
                     <button
                       type="button"
-                      onClick={() =>
-                        limparFiltros()
-                      }
+                      onClick={() => limparFiltros()}
                       className={`rounded-full px-3 py-1.5 text-sm font-semibold text-primaria-700 underline ${foco}`}
                     >
                       Limpar todos
@@ -635,8 +494,18 @@ export default function Locais() {
             )}
           </div>
 
-          {locaisFiltrados.length ===
-          0 ? (
+          {locais.length === 0 ? (
+            <div className="mt-6 rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center">
+              <h2 className="text-xl font-bold">
+                Nenhum local disponível
+              </h2>
+
+              <p className="mt-2 text-slate-600">
+                Ainda não há locais cadastrados para exibir.
+                Tente novamente mais tarde.
+              </p>
+            </div>
+          ) : locaisFiltrados.length === 0 ? (
             <div className="mt-6">
               <EmptyState
                 title="Nenhum local encontrado com esses filtros"
@@ -658,34 +527,22 @@ export default function Locais() {
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-texto">
                       {filtros.busca.trim() && (
                         <li>
-                          Busca por “
-                          {filtros.busca.trim()}”
+                          Busca por “{filtros.busca.trim()}”
                         </li>
                       )}
 
                       {filtros.categoria && (
                         <li>
                           Categoria:{' '}
-                          {
-                            CATEGORIA_ROTULOS[
-                              filtros.categoria
-                            ]
-                          }
+                          {CATEGORIA_ROTULOS[filtros.categoria]}
                         </li>
                       )}
 
-                      {filtros.recursos.map(
-                        (recurso) => (
-                          <li key={recurso}>
-                            Recurso:{' '}
-                            {
-                              RECURSO_ROTULOS[
-                                recurso
-                              ]
-                            }
-                          </li>
-                        ),
-                      )}
+                      {filtros.recursos.map((recurso) => (
+                        <li key={recurso}>
+                          Recurso: {RECURSO_ROTULOS[recurso]}
+                        </li>
+                      ))}
                     </ul>
                   </div>
                 )}
@@ -706,24 +563,15 @@ export default function Locais() {
                   value={ordenacao}
                   onChange={(event) =>
                     alterarOrdenacao(
-                      event.target
-                        .value as OrdenacaoLocais,
+                      event.target.value as OrdenacaoLocais,
                     )
                   }
                   aria-controls="resultados-locais"
                   className={campo}
                 >
-                  <option value="original">
-                    Ordem original
-                  </option>
-
-                  <option value="nome-asc">
-                    Nome: A–Z
-                  </option>
-
-                  <option value="nome-desc">
-                    Nome: Z–A
-                  </option>
+                  <option value="original">Ordem original</option>
+                  <option value="nome-asc">Nome: A–Z</option>
+                  <option value="nome-desc">Nome: Z–A</option>
                 </select>
               </div>
 
@@ -732,82 +580,51 @@ export default function Locais() {
                 aria-label="Locais encontrados"
                 className="mt-6 grid gap-5 md:grid-cols-2"
               >
-                {locaisPaginados.map(
-                  (local) => (
-                    <article
-                      key={local.id}
-                      className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
+                {locaisPaginados.map((local) => (
+                  <article
+                    key={local.id}
+                    className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
+                  >
+                    <h2 className="text-xl font-bold">
+                      {local.nome}
+                    </h2>
+
+                    <p className="mt-3 text-sm text-secundaria">
+                      <strong>Endereço:</strong> {local.endereco}
+                    </p>
+
+                    <p className="mt-1 text-sm text-secundaria">
+                      <strong>CEP:</strong> {local.cep}
+                    </p>
+
+                    <p className="mt-2 text-sm text-secundaria">
+                      <strong>Categoria:</strong>{' '}
+                      {CATEGORIA_ROTULOS[local.categoria]}
+                    </p>
+
+                    <div className="mt-4">
+                      <h3 className="font-semibold">
+                        Recursos de acessibilidade
+                      </h3>
+
+                      <ul className="mt-2 list-disc pl-5 text-sm text-secundaria">
+                        {local.recursosAcessibilidade.map((recurso) => (
+                          <li key={recurso}>
+                            {RECURSO_ROTULOS[recurso]}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+
+                    <Link
+                      to={`/locais/${local.id}`}
+                      className={classeLinkDetalhes}
                     >
-                      <h2 className="text-xl font-bold">
-                        {local.nome}
-                      </h2>
-
-                      <p className="mt-3 text-sm text-secundaria">
-                        <strong>
-                          Endereço:
-                        </strong>{' '}
-                        {local.endereco}
-                      </p>
-
-                      <p className="mt-1 text-sm text-secundaria">
-                        <strong>
-                          CEP:
-                        </strong>{' '}
-                        {local.cep}
-                      </p>
-
-                      <p className="mt-2 text-sm text-secundaria">
-                        <strong>
-                          Categoria:
-                        </strong>{' '}
-                        {
-                          CATEGORIA_ROTULOS[
-                            local.categoria
-                          ]
-                        }
-                      </p>
-
-                      <div className="mt-4">
-                        <h3 className="font-semibold">
-                          Recursos de
-                          acessibilidade
-                        </h3>
-
-                        <ul className="mt-2 list-disc pl-5 text-sm text-secundaria">
-                          {local.recursosAcessibilidade.map(
-                            (
-                              recurso,
-                            ) => (
-                              <li
-                                key={
-                                  recurso
-                                }
-                              >
-                                {
-                                  RECURSO_ROTULOS[
-                                    recurso
-                                  ]
-                                }
-                              </li>
-                            ),
-                          )}
-                        </ul>
-                      </div>
-
-                      <Link
-                        to={`/locais/${local.id}`}
-                        className={classeLinkDetalhes}
-                        >
-                        Ver detalhes
-                        <span className="sr-only">
-                          {' '}
-                          de{' '}
-                          {local.nome}
-                        </span>
-                      </Link>
-                    </article>
-                  ),
-                )}
+                      Ver detalhes
+                      <span className="sr-only"> de {local.nome}</span>
+                    </Link>
+                  </article>
+                ))}
               </section>
             </>
           )}
@@ -819,14 +636,8 @@ export default function Locais() {
             >
               <button
                 type="button"
-                onClick={() =>
-                  mudarPagina(
-                    paginaValida - 1,
-                  )
-                }
-                disabled={
-                  paginaValida === 1
-                }
+                onClick={() => mudarPagina(paginaValida - 1)}
+                disabled={paginaValida === 1}
                 aria-label="Ir para a página anterior"
                 className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
@@ -838,35 +649,23 @@ export default function Locais() {
                 className="flex flex-wrap items-center justify-center gap-2"
               >
                 {Array.from(
-                  {
-                    length: totalPaginas,
-                  },
+                  { length: totalPaginas },
                   (_, index) => {
-                    const pagina =
-                      index + 1
+                    const pagina = index + 1
 
                     return (
                       <button
                         key={pagina}
                         type="button"
-                        onClick={() =>
-                          mudarPagina(
-                            pagina,
-                          )
-                        }
+                        onClick={() => mudarPagina(pagina)}
                         aria-current={
-                          pagina ===
-                          paginaValida
-                            ? 'page'
-                            : undefined
+                          pagina === paginaValida ? 'page' : undefined
                         }
-                        aria-label={`Página ${ pagina } `}
-                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${
-  pagina ===
-    paginaValida
-    ? 'bg-primaria-600 text-texto-inverso'
-    : 'border border-borda-funcional hover:bg-fundo-suave'
-} ${ foco } `}
+                        aria-label={`Página ${pagina}`}
+                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
+                            ? 'bg-primaria-600 text-texto-inverso'
+                            : 'border border-borda-funcional hover:bg-fundo-suave'
+                          } ${foco}`}
                       >
                         {pagina}
                       </button>
@@ -877,15 +676,8 @@ export default function Locais() {
 
               <button
                 type="button"
-                onClick={() =>
-                  mudarPagina(
-                    paginaValida + 1,
-                  )
-                }
-                disabled={
-                  paginaValida ===
-                  totalPaginas
-                }
+                onClick={() => mudarPagina(paginaValida + 1)}
+                disabled={paginaValida === totalPaginas}
                 aria-label="Ir para a próxima página"
                 className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
@@ -895,7 +687,7 @@ export default function Locais() {
           )}
         </section>
       </div>
-      <BotaoVoltarAoTopo /> 
+      <BotaoVoltarAoTopo />
     </main>
   )
 }

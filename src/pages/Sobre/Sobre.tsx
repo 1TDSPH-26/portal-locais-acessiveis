@@ -122,8 +122,14 @@ export default function Sobre() {
               </li>
             ))}
           </ul>
-        </section>
 
+          <Link
+            to="/acessibilidade"
+            className="mt-6 inline-flex min-h-12 items-center text-primaria-700 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primaria-600"
+          >
+            Consulte nossa Declaração de Acessibilidade completa
+          </Link>
+        </section>
         <section aria-labelledby="sobre-equipe" className="grid gap-5 md:grid-cols-3 md:gap-10">
           <h2 id="sobre-equipe" className={tituloSecao}>Quem faz</h2>
           <div className="space-y-5 md:col-span-2">
