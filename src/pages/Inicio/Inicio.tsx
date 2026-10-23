@@ -33,14 +33,14 @@ export default function Inicio() {
 
   return (
     <div className="w-full bg-fundo text-texto font-corpo">
-      <section className="w-full bg-fundo-escuro text-fundo">
+      <section className="w-full bg-fundo-escuro text-texto-inverso">
         <div className="max-w-[1440px] min-h-[492px] mx-auto px-4 md:px-16 py-12 md:py-[88px] flex flex-col justify-center gap-6">
           <div className="flex flex-col gap-3">
-            <h1 className="font-display text-h1 md:text-display font-bold leading-tight text-fundo">
+            <h1 className="font-display text-h1 md:text-display font-bold leading-tight text-texto-inverso">
               Saber antes <br className="hidden sm:inline" />
               de sair de casa.
             </h1>
-            <p className="text-corpo-16 md:text-corpo-18 text-fundo-suave max-w-2xl">
+            <p className="text-corpo-16 md:text-corpo-18 text-texto-inverso-suave max-w-2xl">
               Entrada, circulação, banheiro e atendimento — verificados, não
               presumidos.
             </p>
@@ -52,7 +52,7 @@ export default function Inicio() {
           >
             <label
               htmlFor={searchInputId}
-              className="text-label text-fundo-suave font-medium"
+              className="text-label text-texto-inverso-suave font-medium"
             >
               Buscar local ou endereço
             </label>
@@ -109,7 +109,7 @@ export default function Inicio() {
               </div>
               <button
                 type="submit"
-                className="w-full sm:w-auto h-12 px-6 bg-fundo text-fundo-escuro font-display font-bold text-botao rounded-lg hover:bg-fundo-suave transition-colors cursor-pointer shrink-0"
+                className="w-full sm:w-auto h-12 px-6 bg-fundo text-fundo-escuro font-display font-bold text-botao rounded-lg hover:bg-fundo-suave transition-colors cursor-pointer shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-texto-inverso"
               >
                 Buscar
               </button>

@@ -1,5 +1,6 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
+import { renderToStaticMarkup } from 'react-dom/server'
 import { MemoryRouter } from 'react-router'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { useConsulta } from '../../hooks/useConsulta'
@@ -10,6 +11,9 @@ import Locais from './Locais'
 vi.mock('../../hooks/useConsulta', () => ({
   useConsulta: vi.fn(),
 }))
+
+type EstadoConsultaLocais =
+  ReturnType<typeof useConsulta<Local[]>>['estado']
 
 const locaisTeste: Local[] = [
   {
@@ -59,6 +63,20 @@ function renderizarLocais() {
   }
 }
 
+function renderizarLocaisEstatico(estado: EstadoConsultaLocais) {
+  vi.mocked(useConsulta).mockReturnValue({
+    estado,
+    retentando: false,
+    tentarNovamente: vi.fn(),
+  })
+
+  return renderToStaticMarkup(
+    <MemoryRouter initialEntries={['/locais']}>
+      <Locais />
+    </MemoryRouter>,
+  )
+}
+
 function nomesExibidos() {
   return within(
     screen.getByRole('region', { name: 'Locais encontrados' }),
@@ -75,19 +93,19 @@ function opcoes() {
     .map((opcao) => opcao.textContent)
 }
 
-beforeEach(() => {
-  vi.mocked(useConsulta).mockReturnValue({
-    estado: { status: 'sucesso', dados: locaisTeste },
-    retentando: false,
-    tentarNovamente: vi.fn(),
-  })
-})
-
-afterEach(() => {
-  vi.restoreAllMocks()
-})
-
 describe('Locais — histórico de buscas', () => {
+  beforeEach(() => {
+    vi.mocked(useConsulta).mockReturnValue({
+      estado: { status: 'sucesso', dados: locaisTeste },
+      retentando: false,
+      tentarNovamente: vi.fn(),
+    })
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
+  })
+
   it('exibe todas as buscas recentes ao focar o campo vazio', async () => {
     salvarHistorico(['Parque', 'Padaria', 'Biblioteca'])
     const { usuario, campo } = renderizarLocais()
@@ -227,5 +245,63 @@ describe('Locais — histórico de buscas', () => {
 
     expect(campo).toHaveValue('Parque')
     expect(nomesExibidos()).toEqual(['Parque Municipal'])
+  })
+})
+
+describe('Estados da página de locais', () => {
+  beforeEach(() => {
+    vi.mocked(useConsulta).mockReset()
+  })
+
+  it('mostra o estado de carregamento', () => {
+    const html = renderizarLocaisEstatico({
+      status: 'carregando',
+    })
+
+    expect(html).toContain('Locais acessíveis')
+    expect(html).toContain('Carregando locais...')
+  })
+
+  it('mostra o erro e a opção de tentar novamente', () => {
+    const html = renderizarLocaisEstatico({
+      status: 'erro',
+      mensagem: 'Serviço indisponível para este teste.',
+    })
+
+    expect(html).toContain(
+      'Não foi possível carregar os locais',
+    )
+    expect(html).toContain(
+      'Serviço indisponível para este teste.',
+    )
+    expect(html).toContain('Tentar novamente')
+  })
+
+  it('informa quando não existem locais cadastrados', () => {
+    const html = renderizarLocaisEstatico({
+      status: 'sucesso',
+      dados: [],
+    })
+
+    expect(html).toContain(
+      'Nenhum local cadastrado no momento.',
+    )
+    expect(html).toContain('Nenhum local disponível')
+  })
+
+  it('exibe os locais recebidos e seus links de detalhes', () => {
+    const html = renderizarLocaisEstatico({
+      status: 'sucesso',
+      dados: locaisTeste,
+    })
+
+    for (const local of locaisTeste) {
+      expect(html).toContain(local.nome)
+      expect(html).toContain(`/locais/${local.id}`)
+    }
+
+    expect(html).toContain('Biblioteca Central')
+    expect(html).toContain('Parque Municipal')
+    expect(html).toContain('Padaria Bom Dia')
   })
 })
