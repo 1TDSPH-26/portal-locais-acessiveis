@@ -49,6 +49,19 @@ import usePageTitle from '../../hooks/usePageTitle'
 import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
 
 const ITENS_POR_PAGINA = 4
+const FAVORITOS_STORAGE_KEY = 'locais-favoritos'
+
+function lerFavoritos(): number[] {
+  try {
+    const dados = localStorage.getItem(FAVORITOS_STORAGE_KEY)
+    const favoritos: unknown = dados ? JSON.parse(dados) : []
+    return Array.isArray(favoritos)
+      ? favoritos.filter((id): id is number => Number.isInteger(id))
+      : []
+  } catch {
+    return []
+  }
+}
 
 const foco =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600'
@@ -73,6 +86,7 @@ export default function Locais() {
 
   const emModoReserva = !Array.isArray(resultado) && resultado?.origem === 'reserva'
 
+  const [somenteFavoritos, setSomenteFavoritos] = useState(false)
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
   const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
@@ -87,9 +101,7 @@ export default function Locais() {
   const recursosId = useId()
 
   const [historico, setHistorico] = useState(obterHistorico)
-
   const [sugestoesAbertas, setSugestoesAbertas] = useState(false)
-
   const [sugestaoAtiva, setSugestaoAtiva] = useState(-1)
 
   const houveRetentativa = useRef(false)
@@ -239,6 +251,7 @@ export default function Locais() {
    */
   const limparFiltros = ({ focarBusca = false } = {}) => {
     atualizarFiltros(FILTROS_VAZIOS)
+    setSomenteFavoritos(false)
 
     if (buscaRef.current?.offsetParent) {
       buscaRef.current.focus()
@@ -264,9 +277,51 @@ export default function Locais() {
   /*
    * Aplica os filtros e a ordenação.
    */
-  const locaisFiltrados = filtrarLocais(locais, filtros)
-  const locaisOrdenados = ordenarLocais(locaisFiltrados, ordenacao)
-  const totalFiltrosAtivos = contarFiltrosAtivos(filtros)
+  const favoritosSalvos = lerFavoritos()
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    filtros,
+  ).filter((local) =>
+    !somenteFavoritos || favoritosSalvos.includes(local.id),
+  )
+
+  /*
+   * Aplica a ordenação depois dos filtros.
+   */
+  const locaisOrdenados = ordenarLocais(
+    locaisFiltrados,
+    ordenacao,
+  )
+
+  const totalFiltrosAtivos =
+    contarFiltrosAtivos(filtros) + Number(somenteFavoritos)
+
+  const resumoFiltrosAtivos = totalFiltrosAtivos > 0 ? (
+    <section aria-label="Filtros aplicados" className="mt-4">
+      <ul className="flex flex-wrap gap-2">
+        {filtros.busca.trim() && (
+          <li className="max-w-full break-words rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
+            Busca: {filtros.busca.trim()}
+          </li>
+        )}
+        {filtros.categoria && (
+          <li className="max-w-full break-words rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
+            Categoria: {CATEGORIA_ROTULOS[filtros.categoria]}
+          </li>
+        )}
+        {filtros.recursos.map((recurso) => (
+          <li key={recurso} className="max-w-full break-words rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
+            Recurso: {RECURSO_ROTULOS[recurso]}
+          </li>
+        ))}
+        {somenteFavoritos && (
+          <li className="max-w-full break-words rounded-full border border-slate-300 bg-white px-3 py-1.5 text-sm font-semibold text-slate-800">
+            Somente favoritos
+          </li>
+        )}
+      </ul>
+    </section>
+  ) : null
 
   /*
    * Calcula a quantidade de páginas.
@@ -296,32 +351,6 @@ export default function Locais() {
       setPaginaAtual(pagina)
       tituloRef.current?.focus({ preventScroll: true })
     }
-  }
-
-  /*
-   * Remove um filtro específico.
-   */
-  const removerFiltro = (
-    tipo: 'busca' | 'categoria' | 'recurso',
-    recurso?: RecursoAcessibilidade,
-  ) => {
-    if (tipo === 'busca') {
-      atualizarFiltros({ busca: '' })
-    }
-
-    if (tipo === 'categoria') {
-      atualizarFiltros({ categoria: '' })
-    }
-
-    if (tipo === 'recurso' && recurso) {
-      atualizarFiltros({
-        recursos: filtros.recursos.filter((item) => item !== recurso),
-      })
-    }
-
-    window.setTimeout(() => {
-      resultadoRef.current?.focus()
-    }, 0)
   }
 
   /*
@@ -553,6 +582,19 @@ export default function Locais() {
               </div>
             </fieldset>
 
+            <label className="mt-5 flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={somenteFavoritos}
+                onChange={(event) => {
+                  setSomenteFavoritos(event.target.checked)
+                  setPaginaAtual(1)
+                }}
+                className="h-4 w-4"
+              />
+              <span className="text-sm">Somente favoritos</span>
+            </label>
+
             <button
               type="button"
               onClick={() => limparFiltros()}
@@ -582,67 +624,6 @@ export default function Locais() {
                     : 'locais encontrados'
                   }.`}
             </p>
-
-            {totalFiltrosAtivos > 0 && (
-              <ul
-                aria-label="Filtros aplicados"
-                className="mt-3 flex flex-wrap gap-2"
-              >
-                {filtros.busca.trim() && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => removerFiltro('busca')}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
-                    >
-                      Busca: {filtros.busca}{' '}
-                      <span aria-hidden="true">×</span>
-                      <span className="sr-only"> remover filtro</span>
-                    </button>
-                  </li>
-                )}
-
-                {filtros.categoria && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => removerFiltro('categoria')}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
-                    >
-                      {CATEGORIA_ROTULOS[filtros.categoria]}{' '}
-                      <span aria-hidden="true">×</span>
-                      <span className="sr-only"> remover filtro</span>
-                    </button>
-                  </li>
-                )}
-
-                {filtros.recursos.map((recurso) => (
-                  <li key={recurso}>
-                    <button
-                      type="button"
-                      onClick={() => removerFiltro('recurso', recurso)}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
-                    >
-                      {RECURSO_ROTULOS[recurso]}{' '}
-                      <span aria-hidden="true">×</span>
-                      <span className="sr-only"> remover filtro</span>
-                    </button>
-                  </li>
-                ))}
-
-                {totalFiltrosAtivos > 1 && (
-                  <li>
-                    <button
-                      type="button"
-                      onClick={() => limparFiltros()}
-                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-primaria-700 underline ${foco}`}
-                    >
-                      Limpar todos
-                    </button>
-                  </li>
-                )}
-              </ul>
-            )}
           </div>
 
           {locais.length === 0 ? (
@@ -658,6 +639,7 @@ export default function Locais() {
             </div>
           ) : locaisFiltrados.length === 0 ? (
             <div className="mt-6">
+              {resumoFiltrosAtivos}
               <EmptyState
                 title="Nenhum local encontrado com esses filtros"
                 message="Tente desmarcar alguns recursos de acessibilidade, selecionar outra categoria ou buscar por termos mais genéricos."
@@ -694,6 +676,10 @@ export default function Locais() {
                           Recurso: {RECURSO_ROTULOS[recurso]}
                         </li>
                       ))}
+
+                      {somenteFavoritos && (
+                        <li>Somente favoritos</li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -725,6 +711,8 @@ export default function Locais() {
                   <option value="nome-desc">Nome: Z–A</option>
                 </select>
               </div>
+
+              {resumoFiltrosAtivos}
 
               <section
                 id="resultados-locais"
