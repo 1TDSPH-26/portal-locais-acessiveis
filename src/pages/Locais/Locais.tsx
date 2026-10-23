@@ -1,10 +1,11 @@
-
-import { useEffect, useId, useRef, useState } from 'react'
-import { Link, useSearchParams } from 'react-router'
+import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
+import { useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
+import LocalCard from '../../components/LocalCard/LocalCard'
+import AvisoDadosReserva from '../../components/Feedback/AvisoDadosReserva'
 import LoadingState from '../../components/Feedback/LoadingState'
 import { useConsulta } from '../../hooks/useConsulta'
 import { listarLocais } from '../../services/locais-consulta'
@@ -35,6 +36,12 @@ import {
 } from '../../utils/filtrosUrl'
 
 import {
+  filtrarHistorico,
+  obterHistorico,
+  salvarTermo,
+} from '../../utils/historicoBusca'
+
+import {
   ordenarLocais,
   type OrdenacaoLocais,
 } from '../../types/ordenarLocais'
@@ -44,16 +51,9 @@ import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
 const ITENS_POR_PAGINA = 4
 
 const foco =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-blue-700'
+  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600'
 
-const campo = `h-11 w-full rounded-md border border-slate-300 bg-white px-3 text-slate-900 ${foco}`
-
-const classeLinkDetalhes = [
-  'mt-4 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700',
-  'px-4 font-semibold text-blue-800',
-  'hover:bg-blue-50',
-  foco,
-].join(' ')
+const campo = `h-11 w-full rounded-md border border-borda-funcional bg-fundo px-3 text-texto ${foco}`
 
 export default function Locais() {
   usePageTitle('Locais acessíveis')
@@ -63,21 +63,34 @@ export default function Locais() {
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
-  const locais: Local[] =
-    estado.status === 'sucesso' ? estado.dados : []
+  const resultado = estado.status === 'sucesso' ? estado.dados : null
+
+  // Garantimos compatibilidade: se for array (como no mock de testes), usamos direto.
+  // Se for o novo formato de objeto da branch, acessamos .locais
+  const locais: Local[] = Array.isArray(resultado)
+    ? resultado
+    : (resultado?.locais ?? [])
+
+  const emModoReserva = !Array.isArray(resultado) && resultado?.origem === 'reserva'
 
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
-  const [ordenacao, setOrdenacao] =
-    useState<OrdenacaoLocais>('original')
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
 
   const buscaRef = useRef<HTMLInputElement>(null)
   const resultadoRef = useRef<HTMLParagraphElement>(null)
   const tituloRef = useRef<HTMLHeadingElement>(null)
 
   const buscaId = useId()
+  const sugestoesId = useId()
   const categoriaId = useId()
   const recursosId = useId()
+
+  const [historico, setHistorico] = useState(obterHistorico)
+
+  const [sugestoesAbertas, setSugestoesAbertas] = useState(false)
+
+  const [sugestaoAtiva, setSugestaoAtiva] = useState(-1)
 
   const houveRetentativa = useRef(false)
 
@@ -102,35 +115,111 @@ export default function Locais() {
    * Atualiza os filtros na URL
    * e retorna para a primeira página.
    */
-  const atualizarFiltros = (
-  novos: Partial<FiltrosLocais>,
-  ) => {
+  const atualizarFiltros = (novos: Partial<FiltrosLocais>) => {
     const filtrosAtualizados: FiltrosLocais = {
       ...filtros,
       ...novos,
+    }
+
+    const parametrosAtualizados = new URLSearchParams(searchParams)
+
+    // Remove apenas os parâmetros controlados pelos filtros.
+    parametrosAtualizados.delete('busca')
+    parametrosAtualizados.delete('categoria')
+    parametrosAtualizados.delete('recursos')
+
+    // Adiciona novamente apenas os filtros ativos.
+    filtrosParaUrl(filtrosAtualizados).forEach((valor, chave) => {
+      parametrosAtualizados.set(chave, valor)
+    })
+
+    setSearchParams(parametrosAtualizados, {
+      replace: true,
+    })
+
+    setPaginaAtual(1)
   }
 
-  const parametrosAtualizados =
-    new URLSearchParams(searchParams)
-
-  // Remove apenas os parâmetros controlados pelos filtros.
-  parametrosAtualizados.delete('busca')
-  parametrosAtualizados.delete('categoria')
-  parametrosAtualizados.delete('recursos')
-
-  // Adiciona novamente apenas os filtros ativos.
-  filtrosParaUrl(filtrosAtualizados).forEach(
-    (valor, chave) => {
-      parametrosAtualizados.set(chave, valor)
-    },
+  /*
+   * Sugestões do histórico para o
+   * valor atual do campo de busca.
+   */
+  const sugestoes = filtrarHistorico(
+    historico,
+    filtros.busca,
   )
 
-  setSearchParams(parametrosAtualizados, {
-    replace: true,
-  })
+  const listaSugestoesVisivel =
+    sugestoesAbertas && sugestoes.length > 0
 
-  setPaginaAtual(1)
-}
+  const fecharSugestoes = () => {
+    setSugestoesAbertas(false)
+    setSugestaoAtiva(-1)
+  }
+
+  /*
+   * Grava o termo pesquisado sem
+   * depender do localStorage para buscar.
+   */
+  const registrarBusca = (termo: string) => {
+    setHistorico(salvarTermo(termo))
+  }
+
+  /*
+   * Preenche o campo com a sugestão,
+   * atualiza os resultados e mantém
+   * o foco na busca.
+   */
+  const selecionarSugestao = (termo: string) => {
+    atualizarFiltros({ busca: termo })
+    registrarBusca(termo)
+    fecharSugestoes()
+    buscaRef.current?.focus()
+  }
+
+  const navegarSugestoes = (
+    event: KeyboardEvent<HTMLInputElement>,
+  ) => {
+    if (event.key === 'ArrowDown' || event.key === 'ArrowUp') {
+      if (sugestoes.length === 0) {
+        return
+      }
+
+      event.preventDefault()
+      setSugestoesAbertas(true)
+
+      const passo = event.key === 'ArrowDown' ? 1 : -1
+
+      setSugestaoAtiva((atual) => {
+        if (!listaSugestoesVisivel || atual === -1) {
+          return passo === 1 ? 0 : sugestoes.length - 1
+        }
+
+        return (atual + passo + sugestoes.length) % sugestoes.length
+      })
+
+      return
+    }
+
+    if (event.key === 'Enter') {
+      event.preventDefault()
+
+      if (listaSugestoesVisivel && sugestaoAtiva >= 0) {
+        selecionarSugestao(sugestoes[sugestaoAtiva])
+      } else {
+        registrarBusca(filtros.busca)
+        fecharSugestoes()
+      }
+
+      return
+    }
+
+    if (event.key === 'Escape' && listaSugestoesVisivel) {
+      // Impede que o campo search apague o texto digitado.
+      event.preventDefault()
+      fecharSugestoes()
+    }
+  }
 
   /*
    * Alterna um recurso de acessibilidade.
@@ -148,9 +237,7 @@ export default function Locais() {
    * Com focarBusca, abre o painel no
    * mobile para levar o foco à busca.
    */
-  const limparFiltros = (
-    { focarBusca = false } = {},
-  ) => {
+  const limparFiltros = ({ focarBusca = false } = {}) => {
     atualizarFiltros(FILTROS_VAZIOS)
 
     if (buscaRef.current?.offsetParent) {
@@ -184,17 +271,12 @@ export default function Locais() {
   /*
    * Calcula a quantidade de páginas.
    */
-  const totalPaginas = Math.ceil(
-    locaisOrdenados.length / ITENS_POR_PAGINA,
-  )
+  const totalPaginas = Math.ceil(locaisOrdenados.length / ITENS_POR_PAGINA)
 
   /*
    * Garante que a página atual continue válida.
    */
-  const paginaValida = Math.min(
-    paginaAtual,
-    Math.max(totalPaginas, 1),
-  )
+  const paginaValida = Math.min(paginaAtual, Math.max(totalPaginas, 1))
 
   const indiceInicial = (paginaValida - 1) * ITENS_POR_PAGINA
 
@@ -297,8 +379,15 @@ export default function Locais() {
         Locais acessíveis
       </h1>
 
-      <p className="mt-2 max-w-2xl text-slate-600">
-        Combine os filtros para encontrar locais que atendam às suas
+      {emModoReserva && (
+        <AvisoDadosReserva
+          onDispensar={() => tituloRef.current?.focus()}
+        />
+      )}
+
+      <p className="mt-2 max-w-2xl text-secundaria">
+        Combine os filtros para encontrar
+        locais que atendam às suas
         necessidades.
       </p>
 
@@ -306,7 +395,7 @@ export default function Locais() {
 
       <button
         type="button"
-        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 lg:hidden ${foco}`}
+        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 lg:hidden ${foco}`}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
         onClick={() => setFiltrosAbertos((aberto) => !aberto)}
@@ -325,9 +414,9 @@ export default function Locais() {
           <form
             role="search"
             onSubmit={(event) => event.preventDefault()}
-            className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
+            className="rounded-lg border border-borda-decorativa bg-fundo p-5 shadow-sm"
           >
-            <div>
+            <div className="relative">
               <label
                 htmlFor={buscaId}
                 className="mb-2 block font-semibold"
@@ -339,13 +428,75 @@ export default function Locais() {
                 ref={buscaRef}
                 id={buscaId}
                 type="search"
-                value={filtros.busca}
-                onChange={(event) =>
-                  atualizarFiltros({ busca: event.target.value })
+                role="combobox"
+                aria-autocomplete="list"
+                aria-expanded={listaSugestoesVisivel}
+                aria-controls={sugestoesId}
+                aria-activedescendant={
+                  listaSugestoesVisivel &&
+                    sugestaoAtiva >= 0
+                    ? `${sugestoesId}-${sugestaoAtiva}`
+                    : undefined
                 }
+                autoComplete="off"
+                value={filtros.busca}
+                onChange={(event) => {
+                  atualizarFiltros({
+                    busca: event.target.value,
+                  })
+                  setSugestoesAbertas(true)
+                  setSugestaoAtiva(-1)
+                }}
+                onFocus={() => setSugestoesAbertas(true)}
+                onClick={() => setSugestoesAbertas(true)}
+                onBlur={() => {
+                  registrarBusca(filtros.busca)
+                  fecharSugestoes()
+                }}
+                onKeyDown={navegarSugestoes}
                 placeholder="Nome, endereço ou CEP"
                 className={campo}
               />
+
+              <ul
+                id={sugestoesId}
+                role="listbox"
+                aria-label="Buscas recentes"
+                hidden={!listaSugestoesVisivel}
+                className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-md border border-slate-300 bg-white py-1 shadow-lg"
+              >
+                {sugestoes.map((termo, indice) => (
+                  <li
+                    key={termo}
+                    id={`${sugestoesId}-${indice}`}
+                    role="option"
+                    aria-selected={indice === sugestaoAtiva}
+                    // Evita o blur do campo antes do clique.
+                    onMouseDown={(event) =>
+                      event.preventDefault()
+                    }
+                    onClick={() => selecionarSugestao(termo)}
+                    className={`flex min-h-11 cursor-pointer items-center px-3 text-slate-900 ${indice === sugestaoAtiva
+                        ? 'bg-blue-50 font-semibold text-blue-800'
+                        : 'hover:bg-slate-50'
+                      }`}
+                  >
+                    {termo}
+                  </li>
+                ))}
+              </ul>
+
+              <p
+                aria-live="polite"
+                className="sr-only"
+              >
+                {listaSugestoesVisivel
+                  ? `${sugestoes.length} ${sugestoes.length === 1
+                    ? 'busca recente disponível'
+                    : 'buscas recentes disponíveis'
+                  }. Use as setas para navegar.`
+                  : ''}
+              </p>
             </div>
 
             <div className="mt-5">
@@ -385,7 +536,7 @@ export default function Locais() {
                 {RECURSOS.map((recurso) => (
                   <label
                     key={recurso}
-                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-slate-50"
+                    className="flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-fundo-suave"
                   >
                     <input
                       type="checkbox"
@@ -406,7 +557,7 @@ export default function Locais() {
               type="button"
               onClick={() => limparFiltros()}
               disabled={totalFiltrosAtivos === 0}
-              className={`mt-5 min-h-11 w-full rounded-md border-2 border-blue-700 px-4 font-semibold text-blue-800 hover:bg-blue-50 disabled:cursor-not-allowed disabled:border-slate-300 disabled:text-slate-400 ${foco}`}
+              className={`mt-5 min-h-11 w-full rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 hover:bg-fundo-suave disabled:cursor-not-allowed disabled:border-borda-decorativa disabled:text-secundaria ${foco}`}
             >
               Limpar filtros
             </button>
@@ -414,7 +565,7 @@ export default function Locais() {
         </section>
 
         <section aria-label="Resultados dos locais">
-          <div className="rounded-lg border border-slate-200 bg-white p-4 shadow-sm">
+          <div className="rounded-lg border border-borda-decorativa bg-fundo p-4 shadow-sm">
             <p
               ref={resultadoRef}
               tabIndex={-1}
@@ -442,7 +593,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('busca')}
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
                       Busca: {filtros.busca}{' '}
                       <span aria-hidden="true">×</span>
@@ -456,7 +607,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('categoria')}
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
                       {CATEGORIA_ROTULOS[filtros.categoria]}{' '}
                       <span aria-hidden="true">×</span>
@@ -470,7 +621,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('recurso', recurso)}
-                      className={`rounded-full bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-800 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
                       {RECURSO_ROTULOS[recurso]}{' '}
                       <span aria-hidden="true">×</span>
@@ -484,7 +635,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => limparFiltros()}
-                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-blue-800 underline ${foco}`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-primaria-700 underline ${foco}`}
                     >
                       Limpar todos
                     </button>
@@ -581,54 +732,8 @@ export default function Locais() {
                 className="mt-6 grid gap-5 md:grid-cols-2"
               >
                 {locaisPaginados.map((local) => (
-                  <article
-                    key={local.id}
-                    className="rounded-lg border border-slate-200 bg-white p-5 shadow-sm"
-                  >
-                    <h2 className="text-xl font-bold">
-                      {local.nome}
-                    </h2>
-
-                    <p className="mt-3 text-sm text-slate-700">
-                      <strong>Endereço:</strong> {local.endereco}
-                    </p>
-
-                    <p className="mt-1 text-sm text-slate-700">
-                      <strong>CEP:</strong> {local.cep}
-                    </p>
-
-                    <p className="mt-2 text-sm text-slate-700">
-                      <strong>Categoria:</strong>{' '}
-                      {CATEGORIA_ROTULOS[local.categoria]}
-                    </p>
-
-                    <div className="mt-4">
-                      <h3 className="font-semibold">
-                        Recursos de acessibilidade
-                      </h3>
-
-                      <ul className="mt-2 list-disc pl-5 text-sm text-slate-700">
-                        {local.recursosAcessibilidade.map((recurso) => (
-                          <li key={recurso}>
-                            {RECURSO_ROTULOS[recurso]}
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                    <Link
-                      to={`/locais/${local.id}`}
-                      className={classeLinkDetalhes}
-                    >
-                      Ver detalhes
-                      <span className="sr-only">
-                        {' '}
-                        de{' '}
-                        {local.nome}
-                      </span>
-                    </Link>
-                  </article>
-                ),
-                )}
+                  <LocalCard key={local.id} local={local} />
+                ))}
               </section>
             </>
           )}
@@ -643,7 +748,7 @@ export default function Locais() {
                 onClick={() => mudarPagina(paginaValida - 1)}
                 disabled={paginaValida === 1}
                 aria-label="Ir para a página anterior"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Anterior
               </button>
@@ -667,8 +772,8 @@ export default function Locais() {
                         }
                         aria-label={`Página ${pagina}`}
                         className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
-                          ? 'bg-blue-700 text-white'
-                          : 'border border-slate-300 hover:bg-slate-100'
+                            ? 'bg-primaria-600 text-texto-inverso'
+                            : 'border border-borda-funcional hover:bg-fundo-suave'
                           } ${foco}`}
                       >
                         {pagina}
@@ -683,7 +788,7 @@ export default function Locais() {
                 onClick={() => mudarPagina(paginaValida + 1)}
                 disabled={paginaValida === totalPaginas}
                 aria-label="Ir para a próxima página"
-                className={`min-h-11 rounded-md border border-slate-300 px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
               >
                 Próxima
               </button>

@@ -1,16 +1,18 @@
-import { renderToStaticMarkup } from 'react-dom/server'
+import { render, screen, waitFor, within } from '@testing-library/react'
+import userEvent from '@testing-library/user-event'
 import { MemoryRouter, Route, Routes } from 'react-router'
 import { beforeEach, describe, expect, it, vi } from 'vitest'
-import { useConsulta } from '../../hooks/useConsulta'
+import { FalhaServicoError } from '../../services/falha-servico'
+import { buscarLocalPorId } from '../../services/locais-consulta'
 import type { Local } from '../../types/local'
 import DetalhesLocal from './DetalhesLocal'
 
-vi.mock('../../hooks/useConsulta', () => ({
-  useConsulta: vi.fn(),
+vi.mock('../../services/locais-consulta', () => ({
+  buscarLocalPorId: vi.fn(),
 }))
 
-type EstadoConsultaLocal =
-  ReturnType<typeof useConsulta<Local | null>>['estado']
+const mensagemIndisponivel =
+  'O serviço de dados está indisponível no momento. Verifique sua conexão e tente novamente em instantes.'
 
 const locaisTeste: Local[] = [
   {
@@ -19,7 +21,7 @@ const locaisTeste: Local[] = [
     endereco: 'Rua dos Livros, 10',
     cep: '01001-000',
     categoria: 'educacao',
-    recursosAcessibilidade: ['rampa_acesso'],
+    recursosAcessibilidade: ['rampa_acesso', 'piso_tatil', 'libras'],
   },
   {
     id: 2,
@@ -31,100 +33,248 @@ const locaisTeste: Local[] = [
   },
 ]
 
-function renderizarDetalhe(
-  estado: EstadoConsultaLocal,
-  caminho = '/locais/1',
-) {
-   vi.mocked(useConsulta).mockReturnValue({
-    estado,
-    retentando: false,
-    tentarNovamente: vi.fn(),
-  })
-
-  return renderToStaticMarkup(
+function renderizarDetalhe(caminho = '/locais/1') {
+  return render(
     <MemoryRouter initialEntries={[caminho]}>
       <Routes>
         <Route path="/locais/:id" element={<DetalhesLocal />} />
+        <Route path="/locais" element={<h1>Listagem de locais</h1>} />
+        <Route path="/" element={<h1>Página inicial</h1>} />
       </Routes>
     </MemoryRouter>,
   )
 }
 
-function verificarBreadcrumb(html: string, paginaAtual: string) {
-  const navegacoes =
-    html.match(
-      /<nav\b[^>]*aria-label="Caminho de navegação"[^>]*>[\s\S]*?<\/nav>/g,
-    ) ?? []
-
-  expect(navegacoes).toHaveLength(1)
-
-  const breadcrumb = navegacoes[0] ?? ''
-  const conteudoLista =
-    breadcrumb.match(/<ol\b[^>]*>([\s\S]*?)<\/ol>/)?.[1] ?? ''
-  const itens =
-    conteudoLista.match(/<li\b[^>]*>[\s\S]*?<\/li>/g) ?? []
+function verificarBreadcrumb(paginaAtual: string) {
+  const breadcrumb = screen.getByRole('navigation', {
+    name: 'Caminho de navegação',
+  })
+  const itens = within(breadcrumb).getAllByRole('listitem')
 
   expect(itens).toHaveLength(3)
-  expect(breadcrumb.match(/<a\b/g) ?? []).toHaveLength(2)
-
-  expect(itens[0]).toMatch(
-    /<a\b[^>]*href="\/"[^>]*>\s*Início\s*<\/a>/,
-  )
-  expect(itens[1]).toMatch(
-    /<a\b[^>]*href="\/locais"[^>]*>\s*Locais\s*<\/a>/,
-  )
+  expect(within(breadcrumb).getAllByRole('link')).toHaveLength(2)
 
   expect(
-    breadcrumb.match(/\baria-current="page"/g) ?? [],
-  ).toHaveLength(1)
-  expect(itens[2]).toMatch(/^<li\b[^>]*aria-current="page"/)
-  expect(itens[2]).toContain(paginaAtual)
-  expect(itens[2]).not.toMatch(/<a\b/)
+    within(itens[0]).getByRole('link', { name: 'Início' }),
+  ).toHaveAttribute('href', '/')
+  expect(
+    within(itens[1]).getByRole('link', { name: 'Locais' }),
+  ).toHaveAttribute('href', '/locais')
 
-  const separadorDecorativo =
-    /<span\b[^>]*aria-hidden="true"[^>]*>\s*\/\s*<\/span>/
+  expect(breadcrumb.querySelectorAll('[aria-current="page"]')).toHaveLength(1)
+  expect(itens[2]).toHaveAttribute('aria-current', 'page')
+  expect(itens[2]).toHaveTextContent(paginaAtual)
+  expect(within(itens[2]).queryByRole('link')).not.toBeInTheDocument()
 
-  expect(itens[1]).toMatch(separadorDecorativo)
-  expect(itens[2]).toMatch(separadorDecorativo)
+  for (const item of [itens[1], itens[2]]) {
+    const separador = item.querySelector('span[aria-hidden="true"]')
+    expect(separador).toHaveTextContent('/')
+  }
 }
 
-describe('Breadcrumb da página de detalhes', () => {
+describe('Página de detalhes do local', () => {
   beforeEach(() => {
-    vi.mocked(useConsulta).mockReset()
+    vi.clearAllMocks()
   })
 
-  it('mantém o caminho de navegação durante o carregamento', () => {
-    const html = renderizarDetalhe({ status: 'carregando' })
+  describe('carregamento', () => {
+    it('exibe o LoadingState enquanto a consulta está pendente', () => {
+      vi.mocked(buscarLocalPorId).mockReturnValue(new Promise(() => {}))
 
-    verificarBreadcrumb(html, 'Detalhes do local')
-  })
+      renderizarDetalhe('/locais/1')
 
-  it('mantém a identificação genérica quando a consulta falha', () => {
-    const html = renderizarDetalhe({
-      status: 'erro',
-      mensagem: 'Serviço indisponível para este teste.',
+      const carregando = screen.getByRole('status')
+      expect(carregando).toHaveAttribute('aria-busy', 'true')
+      expect(carregando).toHaveAttribute('aria-live', 'polite')
+      expect(carregando).toHaveTextContent('Carregando detalhes do local...')
+
+      expect(screen.queryByRole('heading', { level: 1 })).not.toBeInTheDocument()
+      expect(buscarLocalPorId).toHaveBeenCalledWith('1')
+      verificarBreadcrumb('Detalhes do local')
     })
-
-    verificarBreadcrumb(html, 'Detalhes do local')
   })
 
-  it('identifica o estado de local não encontrado', () => {
-    const html = renderizarDetalhe(
-      { status: 'sucesso', dados: null },
-      '/locais/999',
-    )
+  describe('sucesso', () => {
+    it('renderiza título, endereço, CEP, categoria e recursos do local', async () => {
+      const local = locaisTeste[0]
+      vi.mocked(buscarLocalPorId).mockResolvedValue(local)
 
-    verificarBreadcrumb(html, 'Local não encontrado')
-  })
+      renderizarDetalhe(`/locais/${local.id}`)
 
-  it('identifica cada local pelo nome recebido na consulta', () => {
-    for (const local of locaisTeste) {
-      const html = renderizarDetalhe(
-        { status: 'sucesso', dados: local },
-        `/locais/${local.id}`,
+      const titulo = await screen.findByRole('heading', {
+        level: 1,
+        name: 'Biblioteca Central',
+      })
+      expect(titulo).toHaveAttribute('id', 'detalhe-titulo')
+      expect(screen.getByRole('article')).toHaveAttribute(
+        'aria-labelledby',
+        'detalhe-titulo',
       )
 
-      verificarBreadcrumb(html, local.nome)
-    }
+      const termos = screen.getAllByRole('term').map((t) => t.textContent)
+      const definicoes = screen
+        .getAllByRole('definition')
+        .map((d) => d.textContent)
+      expect(termos).toEqual(['Endereço', 'CEP', 'Categoria'])
+      expect(definicoes).toEqual([
+        'Rua dos Livros, 10',
+        '01001-000',
+        'Educação',
+      ])
+
+      expect(screen.queryByRole('status')).not.toBeInTheDocument()
+      verificarBreadcrumb('Biblioteca Central')
+    })
+
+    it('lista os recursos de acessibilidade em uma região rotulada', async () => {
+      vi.mocked(buscarLocalPorId).mockResolvedValue(locaisTeste[0])
+
+      renderizarDetalhe('/locais/1')
+
+      const tituloRecursos = await screen.findByRole('heading', {
+        level: 2,
+        name: 'Recursos de acessibilidade',
+      })
+      const regiao = screen.getByRole('region', {
+        name: 'Recursos de acessibilidade',
+      })
+      expect(regiao).toHaveAttribute('aria-labelledby', tituloRecursos.id)
+
+      const lista = within(regiao).getByRole('list')
+      const recursos = within(lista)
+        .getAllByRole('listitem')
+        .map((item) => item.textContent)
+      expect(recursos).toEqual([
+        'Rampa de acesso',
+        'Piso tátil',
+        'Atendimento em Libras',
+      ])
+    })
+
+    it('identifica cada local pelo nome no breadcrumb', async () => {
+      for (const local of locaisTeste) {
+        vi.mocked(buscarLocalPorId).mockResolvedValue(local)
+
+        const { unmount } = renderizarDetalhe(`/locais/${local.id}`)
+
+        await screen.findByRole('heading', { level: 1, name: local.nome })
+        expect(buscarLocalPorId).toHaveBeenLastCalledWith(String(local.id))
+        verificarBreadcrumb(local.nome)
+
+        unmount()
+      }
+    })
+
+    it('volta para a listagem pelo breadcrumb', async () => {
+      const user = userEvent.setup()
+      vi.mocked(buscarLocalPorId).mockResolvedValue(locaisTeste[0])
+
+      renderizarDetalhe('/locais/1')
+      await screen.findByRole('heading', { level: 1, name: 'Biblioteca Central' })
+
+      await user.click(screen.getByRole('link', { name: 'Locais' }))
+
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Listagem de locais' }),
+      ).toBeInTheDocument()
+    })
+  })
+
+  describe('erro', () => {
+    it('exibe a mensagem do serviço quando a consulta é rejeitada', async () => {
+      vi.mocked(buscarLocalPorId).mockRejectedValue(
+        new FalhaServicoError('tempo_esgotado'),
+      )
+
+      renderizarDetalhe('/locais/1')
+
+      const alerta = await screen.findByRole('alert')
+      expect(alerta).toHaveTextContent('Não foi possível carregar este local')
+      expect(alerta).toHaveTextContent(
+        'O serviço demorou mais do que o esperado para responder. Tente novamente em instantes.',
+      )
+      expect(
+        screen.getByRole('heading', { level: 1, name: 'Detalhes do local' }),
+      ).toBeInTheDocument()
+      expect(screen.getByRole('region', { name: 'Detalhes do local' }))
+        .toHaveAttribute('aria-labelledby', 'detalhe-erro')
+      verificarBreadcrumb('Detalhes do local')
+    })
+
+    it('converte falhas de rede em mensagem amigável, sem detalhe técnico', async () => {
+      vi.mocked(buscarLocalPorId).mockRejectedValue(
+        new TypeError('Failed to fetch'),
+      )
+
+      renderizarDetalhe('/locais/1')
+
+      const alerta = await screen.findByRole('alert')
+      expect(alerta).toHaveTextContent(mensagemIndisponivel)
+      expect(alerta).not.toHaveTextContent('Failed to fetch')
+    })
+
+    it('reexecuta a consulta ao clicar em "Tentar novamente"', async () => {
+      const user = userEvent.setup()
+      vi.mocked(buscarLocalPorId)
+        .mockRejectedValueOnce(new FalhaServicoError('indisponivel'))
+        .mockResolvedValueOnce(locaisTeste[1])
+
+      renderizarDetalhe('/locais/2')
+
+      await screen.findByRole('alert')
+      expect(buscarLocalPorId).toHaveBeenCalledTimes(1)
+
+      await user.click(screen.getByRole('button', { name: 'Tentar novamente' }))
+
+      expect(
+        await screen.findByRole('heading', { level: 1, name: 'Parque Municipal' }),
+      ).toBeInTheDocument()
+      expect(buscarLocalPorId).toHaveBeenCalledTimes(2)
+      expect(buscarLocalPorId).toHaveBeenLastCalledWith('2')
+      expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+    })
+
+    it('desabilita o botão enquanto a nova tentativa está em andamento', async () => {
+      const user = userEvent.setup()
+      vi.mocked(buscarLocalPorId)
+        .mockRejectedValueOnce(new FalhaServicoError('indisponivel'))
+        .mockReturnValueOnce(new Promise(() => {}))
+
+      renderizarDetalhe('/locais/1')
+
+      await user.click(
+        await screen.findByRole('button', { name: 'Tentar novamente' }),
+      )
+
+      const botao = await screen.findByRole('button', {
+        name: 'Tentando novamente...',
+      })
+      expect(botao).toBeDisabled()
+      expect(botao).toHaveAttribute('aria-busy', 'true')
+      await waitFor(() => expect(buscarLocalPorId).toHaveBeenCalledTimes(2))
+    })
+  })
+
+  describe('local não encontrado', () => {
+    it.each(['999', 'invalido'])(
+      'exibe mensagem amigável para o id "%s"',
+      async (id) => {
+        vi.mocked(buscarLocalPorId).mockResolvedValue(null)
+
+        renderizarDetalhe(`/locais/${id}`)
+
+        const titulo = await screen.findByRole('heading', {
+          level: 1,
+          name: 'Local não encontrado',
+        })
+        expect(titulo).toHaveAttribute('id', 'detalhe-nao-encontrado')
+        expect(
+          screen.getByText(/Não encontramos nenhum local com o identificador/),
+        ).toBeInTheDocument()
+        expect(buscarLocalPorId).toHaveBeenCalledWith(id)
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+        verificarBreadcrumb('Local não encontrado')
+      },
+    )
   })
 })
