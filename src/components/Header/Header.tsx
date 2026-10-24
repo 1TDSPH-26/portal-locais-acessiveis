@@ -3,6 +3,7 @@ import { NavLink, Link } from 'react-router'
 import FontDecreaseButton from '../AcessibilityControls/FontDecreaseButton'
 import FontIncreaseButton from '../AcessibilityControls/FontIncreaseButton'
 import ContrastButton from '../AcessibilityControls/ContrastButton'
+import { lerIdsFavoritos, observarFavoritos } from '../../utils/favoritos'
 // Cada item daqui vira um link no menu
 // O "end" é usado quando queremos q a rota seja exata (ex: "/")
 
@@ -20,8 +21,35 @@ const navItems: NavItem[] = [
   { to: '/sobre', label: 'Sobre' },
 ]
 
+const classeBadgeFavoritos =
+  'inline-flex min-w-6 shrink-0 items-center justify-center rounded-full bg-primaria-600 px-2 py-0.5 text-label font-bold text-fundo'
+
+function descreverFavoritos(quantidade: number) {
+  return `Favoritos, ${quantidade} ${quantidade === 1 ? 'local salvo' : 'locais salvos'}`
+}
+
 export default function Header() {
   const [menuAberto, setMenuAberto] = useState(false)
+  const [quantidadeFavoritos, setQuantidadeFavoritos] = useState(
+    () => lerIdsFavoritos().length,
+  )
+  const [anuncioFavoritos, setAnuncioFavoritos] = useState('')
+  const ultimaQuantidade = useRef(quantidadeFavoritos)
+
+  useEffect(() => {
+    const atualizar = (anunciar = true) => {
+      const quantidade = lerIdsFavoritos().length
+      if (quantidade === ultimaQuantidade.current) return
+
+      ultimaQuantidade.current = quantidade
+      setQuantidadeFavoritos(quantidade)
+      if (anunciar) setAnuncioFavoritos(descreverFavoritos(quantidade))
+    }
+
+    const cancelar = observarFavoritos(() => atualizar())
+    atualizar(false)
+    return cancelar
+  }, [])
   
   const botaoMenuRef = useRef<HTMLButtonElement>(null)
 
@@ -56,6 +84,9 @@ export default function Header() {
 
   return (
     <header className="w-full bg-fundo" role="banner">
+      <p role="status" aria-live="polite" aria-atomic="true" className="sr-only">
+        {anuncioFavoritos}
+      </p>
       {/* Faixa de acesso rápido */}
       <div className="w-full bg-fundo border-b border-borda-decorativa">
         <div className="max-w-[1440px] h-16 mx-auto px-4 md:px-16 py-2 flex items-center justify-between">
@@ -84,7 +115,7 @@ export default function Header() {
     </div>
       {/* Menu principal */}
       <div className="w-full bg-fundo border-b border-borda-decorativa">
-        <div className="max-w-[1440px] h-[88px] mx-auto px-4 md:px-16 py-5 flex items-center justify-between">
+        <div className="max-w-[1440px] min-h-[88px] mx-auto px-4 md:px-6 lg:px-16 py-5 flex flex-wrap items-center justify-between gap-4">
           
           {/* Logo / Marca */}
           <Link to="/" className="text-primaria-600 font-display font-bold text-h2 hover:opacity-90 transition-opacity">
@@ -93,17 +124,23 @@ export default function Header() {
 
           {/* Navegação Desktop */}
           <nav id="menu-principal" aria-label="Navegação principal" className="hidden md:block">
-            <ul className="flex items-center gap-8 list-none m-0 p-0">
+            <ul className="flex flex-wrap items-center gap-3 lg:gap-8 list-none m-0 p-0">
               {navItems.map(({ to, label, end }) => (
                 <li key={to}>
                   <NavLink 
                     to={to} 
                     end={end} 
-                    className={({ isActive }) => `font-corpo text-corpo-16 transition-colors pb-1 ${
+                    aria-label={to === '/favoritos' ? descreverFavoritos(quantidadeFavoritos) : undefined}
+                    className={({ isActive }) => `inline-flex items-center gap-2 font-corpo text-corpo-16 transition-colors pb-1 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primaria-600 ${
                       isActive ? 'text-primaria-600 font-bold border-b-2 border-primaria-600' : 'text-secundaria hover:text-texto font-medium'
                     }`}
                   >
                     {label}
+                    {to === '/favoritos' && (
+                      <span aria-hidden="true" className={classeBadgeFavoritos}>
+                        {quantidadeFavoritos}
+                      </span>
+                    )}
                   </NavLink>
                 </li>
               ))}
@@ -140,11 +177,17 @@ export default function Header() {
                     to={to} 
                     end={end} 
                     onClick={() => setMenuAberto(false)} 
-                    className={({ isActive }) => `block py-2 px-3 rounded-lg font-corpo text-corpo-16 ${
+                    aria-label={to === '/favoritos' ? descreverFavoritos(quantidadeFavoritos) : undefined}
+                    className={({ isActive }) => `flex items-center gap-2 py-2 px-3 rounded-lg font-corpo text-corpo-16 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600 ${
                       isActive ? 'bg-fundo-suave text-primaria-600 font-bold' : 'text-texto hover:bg-fundo-suave'
                     }`}
                   >
                     {label}
+                    {to === '/favoritos' && (
+                      <span aria-hidden="true" className={classeBadgeFavoritos}>
+                        {quantidadeFavoritos}
+                      </span>
+                    )}
                   </NavLink>
                 </li>
               ))}

@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
+import DataAtualizacao from '../../components/Feedback/DataAtualizacao'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LocalCard from '../../components/LocalCard/LocalCard'
@@ -364,6 +365,7 @@ export default function Locais() {
           message={estado.mensagem}
           onRetry={reexecutarConsulta}
           retrying={retentando}
+          focusOnMount
         />
       </main>
     )
@@ -392,6 +394,10 @@ export default function Locais() {
       </p>
 
       <ContagemResultados total={locaisFiltrados.length} />
+      <DataAtualizacao
+        tipo="base"
+        data={!Array.isArray(resultado) ? resultado?.ultimaAtualizacao : undefined}
+      />
 
       <button
         type="button"
