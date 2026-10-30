@@ -306,3 +306,131 @@ describe('Estados da página de locais', () => {
     expect(html).toContain('Padaria Bom Dia')
   })
 })
+
+// Oito locais fora de ordem alfabética, com acentos e categorias variadas.
+const locaisOrdenacao: Local[] = [
+  ['Zoológico Municipal', 'lazer'],
+  ['Biblioteca Central', 'educacao'],
+  ['Ótica Visão Clara', 'servico_publico'],
+  ['Academia Movimento', 'lazer'],
+  ['Hospital Esperança', 'saude'],
+  ['Escola Aprender', 'educacao'],
+  ['Restaurante Bom Sabor', 'restaurante'],
+  ['Café Encontro', 'restaurante'],
+].map(([nome, categoria], indice) => ({
+  id: indice + 1,
+  nome,
+  endereco: `Rua Teste, ${indice + 1}`,
+  cep: '01001-000',
+  categoria: categoria as Local['categoria'],
+  recursosAcessibilidade: ['rampa_acesso'],
+}))
+
+function montarLocais(dados: Local[] = locaisOrdenacao) {
+  vi.mocked(useConsulta).mockReturnValue({
+    estado: { status: 'sucesso', dados },
+    retentando: false,
+    tentarNovamente: vi.fn(),
+  })
+
+  return render(
+    <MemoryRouter initialEntries={['/locais']}>
+      <Locais />
+    </MemoryRouter>,
+  )
+}
+
+// Títulos dos cards na ordem em que aparecem no DOM.
+function titulosDosCards() {
+  const resultados = screen.getByRole('region', {
+    name: 'Locais encontrados',
+  })
+
+  return within(resultados)
+    // Atualizado de level: 2 para level: 3 por causa do componente <LocalCard />
+    .getAllByRole('heading', { level: 3 })
+    .map((titulo) => titulo.textContent)
+}
+
+// A contagem acessível é a região viva com aria-atomic.
+function contagemResultados() {
+  const regiao = screen
+    .getAllByRole('status')
+    .find((elemento) => elemento.getAttribute('aria-atomic') === 'true')
+
+  if (!regiao) throw new Error('Contagem de resultados não encontrada')
+  return regiao
+}
+
+describe('Ordenação e contagem na página de locais', () => {
+  beforeEach(() => {
+    vi.mocked(useConsulta).mockReset()
+  })
+
+  it('reorganiza os cards no DOM ao trocar a ordenação', async () => {
+    const usuario = userEvent.setup()
+    montarLocais()
+
+    const seletor = screen.getByRole('combobox', { name: 'Ordenar por' })
+    expect(seletor).toHaveValue('original')
+    expect(titulosDosCards()).toEqual([
+      'Zoológico Municipal',
+      'Biblioteca Central',
+      'Ótica Visão Clara',
+      'Academia Movimento',
+    ])
+
+    await usuario.selectOptions(seletor, 'nome-asc')
+    expect(titulosDosCards()).toEqual([
+      'Academia Movimento',
+      'Biblioteca Central',
+      'Café Encontro',
+      'Escola Aprender',
+    ])
+
+    await usuario.selectOptions(seletor, 'nome-desc')
+    expect(titulosDosCards()).toEqual([
+      'Zoológico Municipal',
+      'Restaurante Bom Sabor',
+      'Ótica Visão Clara',
+      'Hospital Esperança',
+    ])
+
+    await usuario.selectOptions(seletor, 'original')
+    expect(titulosDosCards()).toEqual([
+      'Zoológico Municipal',
+      'Biblioteca Central',
+      'Ótica Visão Clara',
+      'Academia Movimento',
+    ])
+  })
+
+  it('atualiza a contagem conforme os filtros ativos', async () => {
+    const usuario = userEvent.setup()
+    montarLocais()
+
+    // Atualizado de 'searchbox' para 'combobox' devido ao autocompletar
+    const busca = screen.getByRole('combobox', { name: 'Buscar' })
+
+    expect(contagemResultados()).toHaveTextContent('8 locais encontrados.')
+
+    await usuario.type(busca, 'Zoológico')
+    expect(contagemResultados()).toHaveTextContent('1 local encontrado.')
+
+    await usuario.clear(busca)
+    await usuario.type(busca, 'inexistente')
+    expect(contagemResultados()).toHaveTextContent(
+      'Nenhum local encontrado.',
+    )
+  })
+
+  it('anuncia a contagem em uma região viva acessível', () => {
+    montarLocais()
+
+    const regiao = contagemResultados()
+
+    expect(regiao).toHaveAttribute('role', 'status')
+    expect(regiao).toHaveAttribute('aria-live', 'polite')
+    expect(regiao).toHaveAttribute('aria-atomic', 'true')
+  })
+})
