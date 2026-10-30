@@ -1,3 +1,4 @@
+
 import { describe, expect, it } from 'vitest'
 import { listaLocais } from '../data/locais'
 import { filtrarLocais, type FiltrosLocais } from './filtrarLocais'
@@ -6,6 +7,7 @@ const filtrosVazios: FiltrosLocais = {
   busca: '',
   categoria: '',
   recursos: [],
+  somenteFavoritos: false,
 }
 
 describe('filtrarLocais', () => {
@@ -128,5 +130,53 @@ describe('filtrarLocais', () => {
     const resultado = filtrarLocais(listaLocais, filtros)
 
     expect(resultado).toHaveLength(1)
+  })
+
+  it('filtra somente os locais favoritos', () => {
+    const favorito = listaLocais[0]
+
+    const filtros: FiltrosLocais = {
+      ...filtrosVazios,
+      somenteFavoritos: true,
+    }
+
+    const resultado = filtrarLocais(
+      listaLocais,
+      filtros,
+      [String(favorito.id)],
+    )
+
+    expect(resultado).toHaveLength(1)
+    expect(resultado[0].id).toBe(favorito.id)
+  })
+
+  it('combina o filtro de favoritos com os outros filtros', () => {
+    const favorito = listaLocais[0]
+
+    const filtros: FiltrosLocais = {
+      ...filtrosVazios,
+      somenteFavoritos: true,
+      busca: favorito.nome,
+    }
+
+    const resultado = filtrarLocais(
+      listaLocais,
+      filtros,
+      [String(favorito.id)],
+    )
+
+    expect(resultado).toHaveLength(1)
+    expect(resultado[0].id).toBe(favorito.id)
+  })
+
+  it('não retorna locais quando nenhum deles é favorito', () => {
+    const filtros: FiltrosLocais = {
+      ...filtrosVazios,
+      somenteFavoritos: true,
+    }
+
+    const resultado = filtrarLocais(listaLocais, filtros, [])
+
+    expect(resultado).toHaveLength(0)
   })
 })

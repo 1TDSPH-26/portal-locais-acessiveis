@@ -1,4 +1,3 @@
-
 import type {
   Categoria,
   RecursoAcessibilidade,
@@ -14,8 +13,13 @@ import {
   type FiltrosLocais,
 } from './filtrarLocais'
 
+import type { OrdenacaoLocais } from '../types/ordenarLocais'
+
+const ORDENACOES_VALIDAS: OrdenacaoLocais[] = ['original', 'nome-asc', 'nome-desc']
+
 export function filtrosParaUrl(
   filtros: FiltrosLocais,
+  ordem: OrdenacaoLocais = 'original'
 ): URLSearchParams {
   const params = new URLSearchParams()
 
@@ -33,6 +37,14 @@ export function filtrosParaUrl(
       filtros.recursos.join(','),
     )
   }
+  
+  if (ordem !== 'original') {
+    params.set('ordem', ordem)
+  }
+
+  if (filtros.somenteFavoritos) {
+    params.set('somenteFavoritos', 'true')
+  }
 
   return params
 }
@@ -42,18 +54,14 @@ export function lerFiltrosDaUrl(
 ): FiltrosLocais {
   const busca = searchParams.get('busca') ?? ''
 
-  const categoriaParam =
-    searchParams.get('categoria') ?? ''
+  const categoriaParam = searchParams.get('categoria') ?? ''
 
   const categoria: Categoria | '' =
-    CATEGORIAS.includes(
-      categoriaParam as Categoria,
-    )
+    CATEGORIAS.includes(categoriaParam as Categoria)
       ? (categoriaParam as Categoria)
       : ''
 
-  const recursosParam =
-    searchParams.get('recursos') ?? ''
+  const recursosParam = searchParams.get('recursos') ?? ''
 
   const recursos: RecursoAcessibilidade[] = [
     ...new Set(
@@ -61,9 +69,7 @@ export function lerFiltrosDaUrl(
         .split(',')
         .filter(
           (recurso): recurso is RecursoAcessibilidade =>
-            RECURSOS.includes(
-              recurso as RecursoAcessibilidade,
-            ),
+            RECURSOS.includes(recurso as RecursoAcessibilidade),
         ),
     ),
   ]
@@ -73,5 +79,20 @@ export function lerFiltrosDaUrl(
     busca,
     categoria,
     recursos,
+    somenteFavoritos:
+      searchParams.get('somenteFavoritos') === 'true',
   }
+}
+
+export function lerOrdemDaUrl(
+  searchParams: URLSearchParams,
+): OrdenacaoLocais {
+  const ordemParam = searchParams.get('ordem')
+  if (
+    ordemParam &&
+    ORDENACOES_VALIDAS.includes(ordemParam as OrdenacaoLocais)
+  ) {
+    return ordemParam as OrdenacaoLocais
+  }
+  return 'original'
 }
