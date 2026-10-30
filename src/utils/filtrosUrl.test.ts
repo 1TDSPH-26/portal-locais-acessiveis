@@ -17,6 +17,7 @@ describe('filtrosParaUrl', () => {
 
   it('converte os filtros ativos em parâmetros', () => {
     const params = filtrosParaUrl({
+      ...FILTROS_VAZIOS,
       busca: 'Hospital Central',
       categoria: 'saude',
       recursos: ['elevador', 'rampa_acesso'],
@@ -27,6 +28,16 @@ describe('filtrosParaUrl', () => {
     expect(params.get('recursos')).toBe(
       'elevador,rampa_acesso',
     )
+    expect(params.has('somenteFavoritos')).toBe(false)
+  })
+
+  it('adiciona o parâmetro quando somente favoritos está ativo', () => {
+    const params = filtrosParaUrl({
+      ...FILTROS_VAZIOS,
+      somenteFavoritos: true,
+    })
+
+    expect(params.get('somenteFavoritos')).toBe('true')
   })
 
   it('omite a busca quando ela contém apenas espaços', () => {
@@ -46,9 +57,19 @@ describe('lerFiltrosDaUrl', () => {
     )
 
     expect(lerFiltrosDaUrl(params)).toEqual({
+      ...FILTROS_VAZIOS,
       busca: 'Hospital',
       categoria: 'saude',
       recursos: ['elevador', 'rampa_acesso'],
+    })
+  })
+
+  it('recupera o filtro de somente favoritos', () => {
+    const params = new URLSearchParams('somenteFavoritos=true')
+
+    expect(lerFiltrosDaUrl(params)).toEqual({
+      ...FILTROS_VAZIOS,
+      somenteFavoritos: true,
     })
   })
 

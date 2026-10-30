@@ -1,3 +1,4 @@
+
 import type {
   Categoria,
   Local,
@@ -8,12 +9,14 @@ export type FiltrosLocais = {
   busca: string
   categoria: Categoria | ''
   recursos: RecursoAcessibilidade[]
+  somenteFavoritos: boolean
 }
 
 export const FILTROS_VAZIOS: FiltrosLocais = {
   busca: '',
   categoria: '',
   recursos: [],
+  somenteFavoritos: false,
 }
 
 export function contarFiltrosAtivos(
@@ -31,12 +34,17 @@ export function contarFiltrosAtivos(
 
   total += filtros.recursos.length
 
+  if (filtros.somenteFavoritos) {
+    total += 1
+  }
+
   return total
 }
 
 export function filtrarLocais(
   locais: Local[],
   filtros: FiltrosLocais,
+  idsFavoritos: string[] = [],
 ): Local[] {
   const busca = filtros.busca.trim().toLowerCase()
 
@@ -57,10 +65,15 @@ export function filtrarLocais(
         local.recursosAcessibilidade.includes(recurso),
       )
 
+    const correspondeFavoritos =
+      !filtros.somenteFavoritos ||
+      idsFavoritos.includes(String(local.id))
+
     return (
       correspondeBusca &&
       correspondeCategoria &&
-      correspondeRecursos
+      correspondeRecursos &&
+      correspondeFavoritos
     )
   })
 }
