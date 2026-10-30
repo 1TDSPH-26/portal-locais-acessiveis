@@ -1,16 +1,16 @@
-# Portal de Locais e Serviços Acessíveis — CP1
+# Portal de Locais e Serviços Acessíveis — CP3
 
-## Documentação técnica — CP2
+## Documentação técnica
 
-- [Modelo de dados Local](docs/modelo-local.md): campos, tipos, categorias, recursos de acessibilidade, exemplo e uso na implementação atual.
+- [Modelo de dados Local](docs/modelo-local.md): campos, tipos, categorias, recursos de acessibilidade, exemplo e uso na implementação.
+- [Modelo de Relatório de Release](docs/modelo-release.md): checklist de verificação e formulário para aprovação formal da release.
+- [Modelo de Relatório do Tech Lead](docs/modelo-relatorio-tech-lead.md): registro de consolidação das entregas e decisões técnicas.
 
-> As seções de CP1 abaixo preservam o histórico daquela entrega. Para o modelo `Local` e seu uso atual, consulte a documentação de CP2 acima.
+O Portal de Locais e Serviços Acessíveis é uma aplicação web que tem como objetivo facilitar a descoberta, avaliação e compartilhamento de estabelecimentos e serviços com recursos de acessibilidade. A plataforma permite a consulta avançada com filtros combinados, visualização detalhada, gerenciamento de favoritos com persistência local e cadastro de novos locais com validações acessíveis.
 
-O Portal de Locais e Serviços Acessíveis é uma aplicação web que tem como objetivo facilitar a descoberta de estabelecimentos e serviços com recursos de acessibilidade. A proposta é permitir a consulta e o cadastro de locais, organizados por categoria e por recursos como rampas, banheiros adaptados, piso tátil e atendimento em Libras.
+Este documento reúne as instruções de execução, comandos de qualidade, mapa de rotas funcionais e a composição oficial das squads para a entrega da **Release CP3**.
 
-Este documento reúne as instruções de execução e as informações disponíveis para a entrega do CP1. Foi preparado na branch `feature/issue-48-README`, referente à issue 48, sem alterações no código da aplicação.
-
-> **Situação da entrega:** integrantes, papéis, squads, Figma e GitHub Projects registrados conforme informações da equipe. As funcionalidades podem evoluir conforme as issues são implementadas e validadas. Este arquivo não substitui a evidência de validação do QA.
+---
 
 ## Recursos oficiais
 
@@ -20,128 +20,158 @@ Este documento reúne as instruções de execução e as informações disponív
 | Board do GitHub Projects | [Project 2 — 1TDSPH-26](https://github.com/orgs/1TDSPH-26/projects/2) |
 | Figma | [Lugares Acessíveis — Guia de Estilos](https://www.figma.com/design/wFjJ9JQOaaqRK2gH9ql329/Lugares-Acess%C3%ADveis-%E2%80%94-Guia-de-Estilos-%7C-Squad-1-A--Copy-?node-id=0-1) |
 
+---
+
 ## Stack tecnológica
 
 | Tecnologia | Utilização |
 | --- | --- |
-| React | Construção da interface com componentes. |
-| Vite | Servidor de desenvolvimento e geração do build. |
-| TypeScript | Tipagem do código e dos modelos de dados. |
-| Tailwind CSS | Estilização; integração com Vite via `@tailwindcss/vite`. |
-| React Router | Navegação no navegador e definição das rotas. |
-| Oxlint | Verificação estática executada pelo comando de lint. |
-
-**React Router DOM:** embora o escopo da issue use essa denominação, esta versão instala `react-router` e importa desse pacote `BrowserRouter`, `Routes`, `Route`, `NavLink` e `Link`. O pacote `react-router-dom` não consta no `package.json`. Esta documentação descreve a implementação existente, sem adicionar ou alterar dependências.
+| React 19 | Construção da interface com componentes funcionais reativos. |
+| Vite | Servidor de desenvolvimento ultrarrápido e geração de build de produção. |
+| TypeScript | Tipagem estática rigorosa dos componentes, serviços e modelos de dados. |
+| Tailwind CSS v4 | Estilização utilitária e tokens globais integrados via `@tailwindcss/vite`. |
+| React Router v8 | Roteamento dinâmico SPA e navegação acessível no cliente. |
+| Oxlint | Verificação e análise estática de código ultrarrápida. |
+| Vitest & Testing Library | Testes unitários e de integração de componentes, hooks e utilitários. |
+| Playwright | Testes ponta a ponta (E2E) e validação de acessibilidade. |
 
 As dependências declaradas ficam em `package.json`; as versões resolvidas para instalação reproduzível ficam em `package-lock.json`.
+
+---
 
 ## Instalação e execução local
 
 ### 1. Pré-requisitos
 
-- Git instalado e acesso de leitura ao repositório.
-- Node.js 22.12 ou superior da linha 22, com npm. A integração contínua utiliza Node.js 22.
-- Terminal, navegador e conexão com a internet para baixar o projeto e as dependências.
+- Git instalado e acesso ao repositório.
+- Node.js 22.x LTS (compatível com a automação de CI do GitHub Actions) e npm.
+- Terminal moderno e navegador web.
 
-Confira as ferramentas:
+Confira os pré-requisitos instalados:
 
 ```bash
 git --version
 node --version
 npm --version
-<!-- CI: validação da entrega da Issue #88 — filtros combinados de locais. -->
+```
 
-### 2. Clonar e entrar na pasta
+### 2. Clonar e acessar o projeto
 
 ```bash
 git clone https://github.com/1TDSPH-26/portal-locais-acessiveis.git
 cd portal-locais-acessiveis
-git switch develop
+git switch release/cp3
 ```
 
-`develop` é a branch padrão registrada no clone inspecionado. Para avaliar uma entrega específica, o QA deve usar a branch ou tag indicada pela equipe e registrar o commit testado. A branch local de autoria deste documento é `feature/issue-48-README`; sua publicação não é presumida nestas instruções.
+> Em ambiente de produção e avaliação final da release, utilize a branch `main` ou a tag publicada. Para o fluxo de desenvolvimento contínuo, utilize `develop`.
 
 ### 3. Instalar as dependências
 
-Execute na raiz, onde estão `package.json` e `package-lock.json`:
+Execute na raiz do projeto:
 
 ```bash
 npm ci
 ```
 
-Não é necessário criar outro projeto Vite nem instalar React ou Tailwind separadamente. `npm ci` usa o lockfile versionado. Se houver incompatibilidade entre o manifesto e o lockfile, registre o erro para a equipe corrigir; não apague o lockfile para contornar o problema.
-
-### 4. Iniciar a aplicação
+### 4. Iniciar a aplicação em desenvolvimento
 
 ```bash
 npm run dev
 ```
 
-Abra o endereço informado pelo Vite no terminal, normalmente `http://localhost:5173`. Se essa porta estiver ocupada, use a porta efetivamente exibida. Para encerrar o servidor, pressione `Ctrl+C` no terminal.
+Abra o endereço informado pelo terminal (geralmente `http://localhost:5173`). Para encerrar o servidor, pressione `Ctrl+C`.
 
 ### Configuração de ambiente
 
-O código inspecionado não utiliza variáveis de ambiente nem integra uma API. Portanto, não é necessário criar `.env` para executar esta versão. O `.env.example` contém somente um exemplo de endereço público de API para uma futura integração; ele não representa um backend disponível.
+As variáveis de ambiente suportadas estão exemplificadas em `.env.example`. Para uso local não confidencial, crie um arquivo `.env` baseado no modelo:
 
-Nunca inclua senhas, tokens, credenciais ou dados pessoais sensíveis neste documento. Variáveis com prefixo `VITE_` podem ser expostas no navegador e não devem armazenar segredos.
+```bash
+cp .env.example .env
+```
+
+> **Atenção:** Nunca versione senhas, tokens ou dados sensíveis. Variáveis expostas no cliente com o prefixo `VITE_` são públicas por definição.
+
+---
 
 ## Comandos disponíveis
 
 | Comando | Finalidade |
 | --- | --- |
-| `npm ci` | Instalar as dependências conforme o lockfile. |
-| `npm run dev` | Iniciar o servidor de desenvolvimento. |
-| `npm run lint` | Executar Oxlint. |
-| `npm run build` | Executar `tsc -b` e gerar a versão de produção em `dist/`. |
-| `npm run preview` | Servir localmente o build já gerado; usar após `npm run build`. |
+| `npm ci` | Instalação limpa e determinística das dependências via lockfile. |
+| `npm run dev` | Inicia o servidor local de desenvolvimento Vite com HMR. |
+| `npm run lint` | Executa o linter Oxlint em todos os arquivos do projeto. |
+| `npm run build` | Valida tipagens TypeScript (`tsc -b`) e gera o pacote de produção em `dist/`. |
+| `npm test` | Executa todos os testes unitários e de integração com Vitest. |
+| `npm run preview` | Serve localmente a versão compilada em `dist/` para validação pré-deploy. |
 
-Não existe script `test` no `package.json` inspecionado. Os comandos acima foram conferidos no manifesto, mas não executados nesta alteração exclusivamente documental; instalação limpa e execução ainda precisam de evidência do QA.
+---
 
-## Rotas e estado atual
+## Rotas da aplicação
 
-| Rota | Página | Estado observado no código |
+As rotas são declaradas em `src/routes/AppRoutes.tsx`:
+
+| Rota | Página | Descrição e Funcionalidade |
 | --- | --- | --- |
-| `/` | Home | Página inicial com título. |
-| `/locais` | Locais | Título de listagem; sem listagem funcional implementada. |
-| `/cadastrar` | Cadastro | Título de cadastro; sem formulário funcional implementado. |
-| `/sobre` | Sobre | Título informativo sobre o projeto. |
-| Caminho não reconhecido | NotFound | Rota de página não encontrada. |
+| `/` | Início | Apresentação do portal, busca rápida, atalhos de navegação e destaques de acessibilidade. |
+| `/locais` | Locais | Listagem de locais com paginação, filtros combinados, histórico de busca e ordenação. |
+| `/locais/:id` | Detalhes | Visualização detalhada do local, recursos acessíveis, endereço e compartilhamento de link. |
+| `/favoritos` | Favoritos | Gerenciamento de locais salvos com contador acessível via leitores de tela e persistência local. |
+| `/cadastrar` | Cadastro | Formulário para cadastro de novos locais com validações de campos, CEP e acessibilidade. |
+| `/sobre` | Sobre | Informações sobre a iniciativa, objetivos de inclusão e histórico do projeto. |
+| `/acessibilidade` | Acessibilidade | Recursos assistivos, guia de navegação por teclado e conformidade com diretrizes. |
+| `/erro` | Indisponibilidade | Tratamento amigável e mensagens para indisponibilidade ou falhas de serviço. |
+| `*` | NotFound | Página acessível para rotas não encontradas (404) com retorno seguro à navegação. |
 
-As rotas são declaradas em `src/routes/AppRoutes.tsx`. A presença dessas rotas não comprova que listagem, cadastro ou persistência estejam concluídos.
+---
 
 ## Equipe e responsabilidades
 
+### Liderança Técnica (Tech Leads)
 
-### Squad 1 
-| Papel | Nome ou identificação fornecida | GitHub |
+Responsáveis pela arquitetura, integração de branches, governança de código, revisão técnica de PRs e preparação da release:
+
+| Papel | Nome | GitHub |
 | --- | --- | --- |
 | TL | Murilo de Souza | [murilo-a-souza](https://github.com/murilo-a-souza) |
-| QA | Enzo Nukui | [EnzoNukui](https://github.com/EnzoNukui) |
-| QA | Marina Fernandes | [marifernandesgm](https://github.com/marifernandesgm) |
-| DEV | Carlos Franco | [francosdev](https://github.com/francosdev) |
-| DEV | Giovanni Zorzetto Oliveira | [Gizetto61](https://github.com/Gizetto61) |
-| DEV | Leticia Almeida | [lehalmeidafc0](https://github.com/lehalmeidafc0) |
-| DEV | Felipe Lima | [felipelima2005](https://github.com/felipelima2005) |
-| DEV | Nicolas | [nicolaspk](https://github.com/nicolaspk) |
-| DEV | Ruhtra10 | [ruhtradev10](https://github.com/ruhtradev10) |
-| DEV | Le Felix | [LeticiaFelix18](https://github.com/LeticiaFelix18) |
-| DEV | Sam Giulian Altoe | [Sammer-07](https://github.com/Sammer-07) |
-| DEV | Diego Trujillo | [diegotrujillo011](https://github.com/diegotrujillo011) |
-| DEV | Milena Silva Conegin | [MilenaConegin](https://github.com/MilenaConegin) |
-| DEV | Raphael Gomes Brito | [PhaelRGB](https://github.com/PhaelRGB) |
-| DEV | Andre Luiz | [AndreL050690](https://github.com/AndreL050690) |
-| DEV | Eduardo Guelere | [Eduardoguelere](https://github.com/Eduardoguelere) |
-| DEV | Isabelle Ferreira | [isabelleferreiraa](https://github.com/isabelleferreiraa) |
-| DEV | Andre Luiz | [andreluizramos414](https://github.com/andreluizramos414) |
-| DEV | Henrique Bonachela de Carvalho Carabante | [henriquebonachela](https://github.com/henriquebonachela) |
+| TL | Giovanni Ferreira Alves de Azevedo | [GiovanniDEVazevedo](https://github.com/GiovanniDEVazevedo) |
 
-### Squad 2
+---
+
+### Squad 1 (Time A)
 
 | Papel | Integrante | GitHub |
 | --- | --- | --- |
-| TL | Carolina Kotz | [carolinakotz](https://github.com/carolinakotz) |
-| QA | Giovanni Ferreira Alves de Azevedo | [GiovanniDEVazevedo](https://github.com/GiovanniDEVazevedo) |
-| QA | Tárik Moussa Alma | [cearaa](https://github.com/cearaa) |
+| QA | Enzo Nukui | [EnzoNukui](https://github.com/EnzoNukui) |
+| DEV | André Luiz | [AndreL050690](https://github.com/AndreL050690) |
+| DEV | Diego Trujillo | [diegotrujillo011](https://github.com/diegotrujillo011) |
+| DEV | Eduardo Guelere | [Eduardoguelere](https://github.com/Eduardoguelere) |
+| DEV | Henrique Bonachela de Carvalho Carabante | [henriquebonachela](https://github.com/henriquebonachela) |
+| DEV | Leticia Almeida | [lehalmeidafc0](https://github.com/lehalmeidafc0) |
+| DEV | Leticia Felix | [LeticiaFelix18](https://github.com/LeticiaFelix18) |
+| DEV | Nicolas | [nicolaspk](https://github.com/nicolaspk) |
+
+---
+
+### Squad 2 (Time B)
+
+| Papel | Integrante | GitHub |
+| --- | --- | --- |
+| QA | Marina Fernandes | [marifernandesgm](https://github.com/marifernandesgm) |
+| DEV | Giovanni Zorzetto Oliveira | [Gizetto61](https://github.com/Gizetto61) |
+| DEV | Carlos Franco | [francosdev](https://github.com/francosdev) |
+| DEV | Felipe Lima | [felipelima2005](https://github.com/felipelima2005) |
+| DEV | Raphael Gomes Brito | [PhaelRGB](https://github.com/PhaelRGB) |
+| DEV | João Gabriel Dantas Moura | [Gabrieo367](https://github.com/Gabrieo367) |
+| DEV | Isabelle Ferreira | [isabelleferreiraa](https://github.com/isabelleferreiraa) |
+| DEV | Milena Silva Conegin | [MilenaConegin](https://github.com/MilenaConegin) |
+
+---
+
+### Squad 3 (Time 1)
+
+| Papel | Integrante | GitHub |
+| --- | --- | --- |
+| QA | — *(Liderança realocada para TL)* | — |
 | DEV | Arthur Palacio Alves | [Thiefman469](https://github.com/Thiefman469) |
 | DEV | Carlos Eduardo Tsucamoto Chiarelli | [carlostsucamoto](https://github.com/carlostsucamoto) |
 | DEV | Cauã de Souza Vasconcellos | [cauadesouzavasconcellos-byte](https://github.com/cauadesouzavasconcellos-byte) |
@@ -149,56 +179,57 @@ As rotas são declaradas em `src/routes/AppRoutes.tsx`. A presença dessas rotas
 | DEV | Gabriel Feitosa de Lima | [gabefeitosa](https://github.com/gabefeitosa) |
 | DEV | Giovanni Lopez Zavam | [Giovanni0403](https://github.com/Giovanni0403) |
 | DEV | Guilherme da Costa Campos | [guilherme76campos-creator](https://github.com/guilherme76campos-creator) |
+
+---
+
+### Squad 4 (Time 2)
+
+| Papel | Integrante | GitHub |
+| --- | --- | --- |
+| QA | Tárik Moussa Alma | [cearaa](https://github.com/cearaa) |
 | DEV | Fabricio Aquiles Sales da Silva | [fabricioaquiles](https://github.com/fabricioaquiles) |
 | DEV | Italo Eujacio de Oliveira Neto | [I-neeto99](https://github.com/I-neeto99) |
-| DEV | João Gabriel Dantas Moura | [Gabrieo367](https://github.com/Gabrieo367) |
+| DEV | Záyon Alves Marques | [Zayon101](https://github.com/Zayon101) |
 | DEV | Luigi Tormim Carqueijeiro | [LuigiT2703](https://github.com/LuigiT2703) |
 | DEV | Murilo Martins de Campos | [Muale-0](https://github.com/Muale-0) |
 | DEV | Pedro Henrique Salvatore | [Pedro-H-Salvatore](https://github.com/Pedro-H-Salvatore) |
 | DEV | Thiago Andrade Silva Piedade | [EuThiaguera](https://github.com/EuThiaguera) |
-| DEV | Záyon Alves Marques | [Zayon101](https://github.com/Zayon101) |
 
+---
 
+### Descrição dos Papéis
 
-- **TL (Tech Lead):** acompanha decisões técnicas, revisão e integração das entregas.
-- **DEV (Developer):** implementa e documenta a demanda atribuída.
-- **QA (Quality Assurance):** valida os critérios de aceite e registra evidências e problemas encontrados.
+- **TL (Tech Lead):** Acompanha decisões arquiteturais, governança de código, revisão técnica de Pull Requests, resolução de conflitos e integração contínua das entregas.
+- **QA (Quality Assurance):** Conduz planos de teste, valida critérios de aceite e acessibilidade, e emite os relatórios formais de decisão (Go/No-Go).
+- **DEV (Developer):** Constrói e testa as funcionalidades, componentes e regras de negócio especificadas nas issues.
+
+---
 
 ## Estrutura de pastas
 
 ```text
 portal-locais-acessiveis/
-├── .github/                 # Templates, responsáveis e workflow de qualidade
-├── docs/                    # Guias, configuração e modelos de relatórios
-│   └── tutoriais/           # Orientações do fluxo de trabalho
+├── .github/                 # Workflows de CI/CD, templates de Issue/PR e CODEOWNERS
+├── docs/                    # Documentação técnica de modelos, labels e releases
+│   └── tutoriais/           # Guias de fluxo de trabalho do repositório
 ├── src/
-│   ├── assets/              # Reservado para recursos estáticos
-│   ├── components/
-│   │   ├── Feedback/        # Componente de mensagem de erro
-│   │   ├── Footer/
-│   │   └── Header/
-│   ├── layouts/
-│   │   └── MainLayout/      # Layout compartilhado
-│   ├── pages/
-│   │   ├── Cadastro/
-│   │   ├── Home/
-│   │   ├── Locais/
-│   │   ├── NotFound/
-│   │   └── Sobre/
-│   ├── routes/             # Definição das rotas
-│   ├── services/           # Reservado para serviços e integrações
-│   ├── types/              # Tipos Local, Categoria e RecursoAcessibilidade
-│   ├── App.tsx             # Composição da aplicação
-│   ├── globals.css         # Estilos globais e Tailwind
-│   └── main.tsx            # Entrada React e BrowserRouter
-├── .env.example            # Modelo de configuração futura
-├── index.html              # Documento de entrada do Vite
-├── package.json            # Dependências e scripts
-├── package-lock.json       # Versões resolvidas das dependências
-├── tsconfig*.json          # Configurações TypeScript
-├── vite.config.ts          # Plugins React e Tailwind
-├── vercel.json             # Configuração de publicação
-├── README.md               # Documento preexistente, preservado
-└── CP1ATUALIZADO.md         # Este documento
+│   ├── assets/              # Recursos visuais estáticos e ícones
+│   ├── components/          # Componentes reutilizáveis (Feedback, Header, Footer, Navegação)
+│   ├── hooks/               # Custom hooks (geolocalização, controle de título, etc.)
+│   ├── layouts/             # Layout base compartilhado (MainLayout)
+│   ├── pages/               # Páginas da aplicação (Início, Locais, Detalhes, Favoritos, etc.)
+│   ├── routes/              # Configuração e declaração das rotas React Router
+│   ├── services/            # Serviços de dados e tratamento de erros
+│   ├── types/               # Definições TypeScript (Local, Filtros, etc.)
+│   ├── utils/               # Funções utilitárias (filtros, histórico, geolocalização)
+│   ├── App.tsx              # Componente raiz da aplicação
+│   ├── globals.css          # Tokens Tailwind CSS e regras globais
+│   └── main.tsx             # Ponto de entrada do cliente Vite
+├── .env.example            # Modelo de variáveis de ambiente
+├── index.html              # Documento HTML principal
+├── package.json            # Manifesto de dependências e scripts npm
+├── package-lock.json       # Versões fixadas das dependências
+├── tsconfig*.json          # Configurações do compilador TypeScript
+├── vite.config.ts          # Configurações do Vite e plugins
+└── vercel.json             # Regras de reescrita para publicação SPA
 ```
-

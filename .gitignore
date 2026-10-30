@@ -24,3 +24,13 @@ pnpm
 *.njsproj
 *.sln
 *.sw?
+
+# Testes e Relatórios
+test-results/
+playwright-report/
+blob-report/
+playwright/.cache/
+
+# Variáveis de ambiente
+.env
+.env*.local
