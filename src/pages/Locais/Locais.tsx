@@ -9,6 +9,8 @@ import LocalCard from '../../components/LocalCard/LocalCard'
 import AvisoDadosReserva from '../../components/Feedback/AvisoDadosReserva'
 import LoadingState from '../../components/Feedback/LoadingState'
 import { useConsulta } from '../../hooks/useConsulta'
+import { useGeolocation } from '../../hooks/useGeolocation'
+import { calcularDistanciaKm } from '../../utils/geolocalizacao'
 import { listarLocais } from '../../services/locais-consulta'
 
 import {
@@ -110,6 +112,38 @@ export default function Locais() {
 
   const houveRetentativa = useRef(false)
 
+  const { coordenadas, solicitarLocalizacao } = useGeolocation()
+
+  /*
+   * Solicita a localização uma única vez
+   * ao entrar na listagem.
+   */
+  useEffect(() => {
+    solicitarLocalizacao()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  /*
+   * Calcula a distância entre o usuário
+   * e o local, quando ambos têm coordenadas.
+   */
+  const calcularDistanciaLocal = (local: Local): number | null => {
+    if (!coordenadas || !local.coordenadas) {
+      return null
+    }
+
+    return calcularDistanciaKm(
+      coordenadas.latitude,
+      coordenadas.longitude,
+      local.coordenadas.latitude,
+      local.coordenadas.longitude,
+    )
+  }
+  /*
+   * Devolve o foco para a contagem de
+   * resultados quando uma nova tentativa
+   * carrega os locais com sucesso.
+   */
   const reexecutarConsulta = () => {
     houveRetentativa.current = true
     tentarNovamente()
@@ -796,7 +830,7 @@ export default function Locais() {
                 className="mt-6 grid gap-5 md:grid-cols-2"
               >
                 {locaisPaginados.map((local) => (
-                  <LocalCard key={local.id} local={local} />
+                  <LocalCard key={local.id} local={local} distanciaEmKm={calcularDistanciaLocal(local)} />
                 ))}
               </section>
             </>
