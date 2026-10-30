@@ -1,5 +1,9 @@
 import usePageTitle from '../../hooks/usePageTitle'
 import { Link } from 'react-router'
+import {
+  focoVisivelInversoOffset4,
+  focoVisivelPrimarioOffset4,
+} from '../../utils/estilosCompartilhados'
 
 const recursos = [
   { titulo: 'Informações verificadas', icone: 'verificacao', descricao: 'Cada recurso listado foi conferido presencialmente por uma dupla da equipe e a ficha do local mostra o mês da última verificação.' },
@@ -45,7 +49,7 @@ export default function Sobre() {
           <nav aria-label="Caminho de navegação" className="mb-6 text-corpo-14">
             <ol className="flex flex-wrap items-center gap-2">
               <li>
-                <Link to="/" className="inline-flex min-h-12 items-center text-texto-inverso underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-texto-inverso">Início</Link>
+                <Link to="/" className={`inline-flex min-h-12 items-center text-texto-inverso underline underline-offset-4 ${focoVisivelInversoOffset4}`}>Início</Link>
               </li>
               <li aria-hidden="true">/</li>
               <li aria-current="page">Sobre</li>
@@ -125,7 +129,7 @@ export default function Sobre() {
 
           <Link
             to="/acessibilidade"
-            className="mt-6 inline-flex min-h-12 items-center text-primaria-700 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primaria-600"
+            className={`mt-6 inline-flex min-h-12 items-center text-primaria-700 underline underline-offset-4 ${focoVisivelPrimarioOffset4}`}
           >
             Consulte nossa Declaração de Acessibilidade completa
           </Link>
@@ -160,7 +164,7 @@ export default function Sobre() {
               informações atualizadas.
             </p>
           </div>
-          <a href="" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-sm border border-fundo bg-fundo px-5 py-3 text-center text-corpo-14 font-bold text-fundo-escuro no-underline hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-texto-inverso">
+          <a href="" className={`inline-flex min-h-12 shrink-0 items-center justify-center rounded-sm border border-fundo bg-fundo px-5 py-3 text-center text-corpo-14 font-bold text-fundo-escuro no-underline hover:bg-fundo-suave ${focoVisivelInversoOffset4}`}>
             Falar com a equipe
           </a>
         </section>
