@@ -43,6 +43,7 @@ import {
   filtrarHistorico,
   obterHistorico,
   salvarTermo,
+  limparHistoricoBuscas,
 } from '../../utils/historicoBusca'
 
 import {
@@ -97,6 +98,8 @@ export default function Locais() {
   const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>(ordemInicial)
 
   const buscaRef = useRef<HTMLInputElement>(null)
+  const limparHistoricoRef = useRef<HTMLButtonElement>(null)
+  const ignorarBuscaAteEditarRef = useRef(false)
   const resultadoRef = useRef<HTMLParagraphElement>(null)
   const tituloRef = useRef<HTMLHeadingElement>(null)
   const listaFiltrosRef = useRef<HTMLUListElement>(null)
@@ -195,12 +198,20 @@ export default function Locais() {
   )
 
   const listaSugestoesVisivel =
-    sugestoesAbertas && sugestoes.length > 0
+  sugestoesAbertas && sugestoes.length > 0
 
   const fecharSugestoes = () => {
     setSugestoesAbertas(false)
     setSugestaoAtiva(-1)
   }
+
+  const executarLimpezaHistorico = () => {
+  limparHistoricoBuscas()
+  setHistorico([])
+  ignorarBuscaAteEditarRef.current = true
+  fecharSugestoes()
+  buscaRef.current?.focus()
+}
 
   /*
    * Grava o termo pesquisado sem
@@ -521,30 +532,43 @@ export default function Locais() {
                 autoComplete="off"
                 value={filtros.busca}
                 onChange={(event) => {
+                  ignorarBuscaAteEditarRef.current = false
+
                   atualizarFiltros({
                     busca: event.target.value,
                   })
+
                   setSugestoesAbertas(true)
                   setSugestaoAtiva(-1)
                 }}
+
                 onFocus={() => setSugestoesAbertas(true)}
                 onClick={() => setSugestoesAbertas(true)}
-                onBlur={() => {
-                  registrarBusca(filtros.busca)
-                  fecharSugestoes()
-                }}
+                onBlur={(event) => {
+  if (event.relatedTarget === limparHistoricoRef.current) {
+    return
+  }
+
+  if (!ignorarBuscaAteEditarRef.current) {
+    registrarBusca(filtros.busca)
+  }
+
+  fecharSugestoes()
+}}
                 onKeyDown={navegarSugestoes}
                 placeholder="Nome, endereço ou CEP"
                 className={campo}
               />
 
-              <ul
-                id={sugestoesId}
-                role="listbox"
-                aria-label="Buscas recentes"
+              <div
                 hidden={!listaSugestoesVisivel}
                 className="absolute left-0 right-0 z-20 mt-1 overflow-hidden rounded-md border border-slate-300 bg-white py-1 shadow-lg"
               >
+                <ul
+                  id={sugestoesId}
+                  role="listbox"
+                  aria-label="Buscas recentes"
+                >
                 {sugestoes.map((termo, indice) => (
                   <li
                     key={termo}
@@ -566,6 +590,33 @@ export default function Locais() {
                 ))}
               </ul>
 
+               {historico.length > 0 && (
+      <button
+        ref={limparHistoricoRef}
+        type="button"
+        aria-label="Limpar todo o histórico de termos buscados"
+        onMouseDown={(event) => event.preventDefault()}
+        onClick={executarLimpezaHistorico}
+        onBlur={fecharSugestoes}
+        onKeyDown={(event) => {
+  if (event.key === 'Escape') {
+    event.preventDefault()
+    buscaRef.current?.focus()
+    fecharSugestoes()
+  }
+
+  if (event.key === 'ArrowUp') {
+    event.preventDefault()
+    buscaRef.current?.focus()
+    setSugestaoAtiva(sugestoes.length - 1)
+  }
+}}
+        className={`block min-h-11 w-full border-t border-slate-200 px-3 text-left font-semibold text-primaria-700 hover:bg-slate-50 ${foco}`}
+      >
+        Limpar histórico de buscas
+      </button>
+    )}
+  </div>
               <p
                 aria-live="polite"
                 className="sr-only"
