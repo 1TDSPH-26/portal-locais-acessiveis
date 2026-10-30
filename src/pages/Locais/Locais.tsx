@@ -613,7 +613,7 @@ export default function Locais() {
     setSugestaoAtiva(sugestoes.length - 1)
   }
 }}
-        className={`block min-h-11 w-full border-t border-slate-200 px-3 text-left font-semibold text-primaria-700 hover:bg-slate-50 ${focoVisivelPrimeiro}`}
+        className={`block min-h-11 w-full border-t border-slate-200 px-3 text-left font-semibold text-primaria-700 hover:bg-slate-50 ${focoVisivelPrimario}`}
       >
         Limpar histórico de buscas
       </button>
@@ -777,7 +777,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('favoritos')}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${focoVisivelPrimario}`}
                     >
                       Somente favoritos{' '}
                       <span aria-hidden="true">×</span>
