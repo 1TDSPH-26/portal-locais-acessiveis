@@ -6,11 +6,11 @@ export type TipoFalha = 'indisponivel' | 'tempo_esgotado' | 'resposta_invalida'
 
 const mensagensUsuario: Record<TipoFalha, string> = {
   indisponivel:
-    'O serviço de dados está indisponível no momento. Verifique sua conexão e tente novamente em instantes.',
+    'O serviço de dados está temporariamente fora do ar. Estamos trabalhando para restabelecê-lo.',
   tempo_esgotado:
-    'O serviço demorou mais do que o esperado para responder. Tente novamente em instantes.',
+    'O serviço demorou mais do que o esperado para responder. Verifique sua conexão e tente novamente.',
   resposta_invalida:
-    'Recebemos dados incompletos do serviço. Tente novamente em instantes.',
+    'Recebemos dados corrompidos ou incompletos do servidor. Tente novamente em instantes.',
 }
 
 export class FalhaServicoError extends Error {
@@ -76,7 +76,9 @@ export function obterMensagemUsuario(erro: unknown): string {
  * Permite ao QA simular falhas sem alterar código, pela URL:
  *   /locais?simularFalha=locais
  *   /locais/1?simularFalha=detalhe
- *   /locais?simularFalha=tempo
+ *   /locais?simularFalha=tempo     -> tempo_esgotado
+ *   /locais?simularFalha=locais    -> indisponivel
+ *   /locais?simularFalha=invalida  -> resposta_invalida
  */
 export function falhaSimulada(recurso: string): TipoFalha | null {
   if (typeof window === 'undefined') {
@@ -87,6 +89,10 @@ export function falhaSimulada(recurso: string): TipoFalha | null {
 
   if (valor === 'tempo') {
     return 'tempo_esgotado'
+  }
+
+  if (valor === 'invalida') {
+    return 'resposta_invalida'
   }
 
   if (valor === recurso || valor === 'todos') {
