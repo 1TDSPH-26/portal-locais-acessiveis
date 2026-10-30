@@ -1,20 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link } from 'react-router'
 import type { Local, RecursoAcessibilidade } from '../../types/local'
 
-const FAVORITOS_STORAGE_KEY = 'locais-favoritos'
-
-function lerFavoritos(): number[] {
-  try {
-    const dados = localStorage.getItem(FAVORITOS_STORAGE_KEY)
-    const favoritos: unknown = dados ? JSON.parse(dados) : []
-    return Array.isArray(favoritos)
-      ? favoritos.filter((id): id is number => Number.isInteger(id))
-      : []
-  } catch {
-    return []
-  }
-}
+import {
+  alternarFavorito,
+  lerIdsFavoritos,
+  observarFavoritos,
+} from '../../utils/favoritos'
 
 const RECURSO_LABELS: Record<RecursoAcessibilidade, string> = {
   rampa_acesso: 'Rampa de acesso',
@@ -63,23 +55,15 @@ interface LocalCardProps {
 
 export default function LocalCard({ local, detalhesUrl, onRemoveFavorite, distanciaEmKm }: LocalCardProps) {
   const [favoritado, setFavoritado] = useState(() =>
-    lerFavoritos().includes(local.id),
+    lerIdsFavoritos().includes(local.id),
   )
 
-  function alternarFavorito() {
-    const favoritos = lerFavoritos()
-    const novosFavoritos = favoritos.includes(local.id)
-      ? favoritos.filter((favoritoId) => favoritoId !== local.id)
-      : [...favoritos, local.id]
-
-    try {
-      localStorage.setItem(FAVORITOS_STORAGE_KEY, JSON.stringify(novosFavoritos))
-      setFavoritado(novosFavoritos.includes(local.id))
-      if (!novosFavoritos.includes(local.id)) onRemoveFavorite?.()
-    } catch {
-      return
-    }
-  }
+  useEffect(() => {
+    const atualizar = () => setFavoritado(lerIdsFavoritos().includes(local.id))
+    const cancelar = observarFavoritos(atualizar)
+    atualizar()
+    return cancelar
+  }, [local.id])
 
   const localizacao = `${local.endereco} · CEP ${local.cep}`
 
@@ -101,7 +85,7 @@ export default function LocalCard({ local, detalhesUrl, onRemoveFavorite, distan
     
       <button
         type="button"
-        onClick={alternarFavorito}
+        onClick={() => alternarFavorito(local.id)}
         aria-label={favoritado ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
         aria-pressed={favoritado}
         className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"

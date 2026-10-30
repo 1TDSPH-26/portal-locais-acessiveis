@@ -2,6 +2,7 @@ import { useEffect, useId, useRef, useState, type KeyboardEvent } from 'react'
 import { useSearchParams } from 'react-router'
 
 import ContagemResultados from '../../components/Feedback/ContagemResultados'
+import DataAtualizacao from '../../components/Feedback/DataAtualizacao'
 import EmptyState from '../../components/Feedback/EmptyState'
 import ErrorMessage from '../../components/Feedback/ErrorMessage'
 import LocalCard from '../../components/LocalCard/LocalCard'
@@ -35,6 +36,7 @@ import {
 import {
   filtrosParaUrl,
   lerFiltrosDaUrl,
+  lerOrdemDaUrl,
 } from '../../utils/filtrosUrl'
 
 import {
@@ -51,6 +53,19 @@ import usePageTitle from '../../hooks/usePageTitle'
 import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
 
 const ITENS_POR_PAGINA = 4
+const FAVORITOS_STORAGE_KEY = 'locais-favoritos'
+
+function lerFavoritos(): number[] {
+  try {
+    const dados = localStorage.getItem(FAVORITOS_STORAGE_KEY)
+    const favoritos: unknown = dados ? JSON.parse(dados) : []
+    return Array.isArray(favoritos)
+      ? favoritos.filter((id): id is number => Number.isInteger(id))
+      : []
+  } catch {
+    return []
+  }
+}
 
 const foco =
   'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600'
@@ -62,6 +77,7 @@ export default function Locais() {
 
   const [searchParams, setSearchParams] = useSearchParams()
   const filtros = lerFiltrosDaUrl(searchParams)
+  const ordemInicial = lerOrdemDaUrl(searchParams)
 
   const { estado, retentando, tentarNovamente } = useConsulta(listarLocais)
 
@@ -75,13 +91,15 @@ export default function Locais() {
 
   const emModoReserva = !Array.isArray(resultado) && resultado?.origem === 'reserva'
 
+  const [somenteFavoritos, setSomenteFavoritos] = useState(false)
   const [filtrosAbertos, setFiltrosAbertos] = useState(false)
   const [paginaAtual, setPaginaAtual] = useState(1)
-  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>('original')
+  const [ordenacao, setOrdenacao] = useState<OrdenacaoLocais>(ordemInicial)
 
   const buscaRef = useRef<HTMLInputElement>(null)
   const resultadoRef = useRef<HTMLParagraphElement>(null)
   const tituloRef = useRef<HTMLHeadingElement>(null)
+  const listaFiltrosRef = useRef<HTMLUListElement>(null)
 
   const buscaId = useId()
   const sugestoesId = useId()
@@ -89,9 +107,7 @@ export default function Locais() {
   const recursosId = useId()
 
   const [historico, setHistorico] = useState(obterHistorico)
-
   const [sugestoesAbertas, setSugestoesAbertas] = useState(false)
-
   const [sugestaoAtiva, setSugestaoAtiva] = useState(-1)
 
   const houveRetentativa = useRef(false)
@@ -263,11 +279,14 @@ export default function Locais() {
 
   /*
    * Limpa todos os filtros.
-   * Com focarBusca, abre o painel no
-   * mobile para levar o foco à busca.
+   * Com focarBusca, abre o painel no mobile
+   * para levar o foco à busca.
    */
-  const limparFiltros = ({ focarBusca = false } = {}) => {
+  const limparFiltros = (
+    { focarBusca = false }: { focarBusca?: boolean } = {},
+  ) => {
     atualizarFiltros(FILTROS_VAZIOS)
+    setSomenteFavoritos(false)
 
     if (buscaRef.current?.offsetParent) {
       buscaRef.current.focus()
@@ -283,19 +302,44 @@ export default function Locais() {
   }
 
   /*
-   * Altera a ordenação e retorna para a primeira página.
+   * Altera a ordenação, atualiza a URL e retorna para a primeira página.
    */
   const alterarOrdenacao = (novaOrdenacao: OrdenacaoLocais) => {
     setOrdenacao(novaOrdenacao)
     setPaginaAtual(1)
+    
+    const parametrosAtualizados = new URLSearchParams(searchParams)
+    
+    if (novaOrdenacao === 'original') {
+      parametrosAtualizados.delete('ordem')
+    } else {
+      parametrosAtualizados.set('ordem', novaOrdenacao)
+    }
+
+    setSearchParams(parametrosAtualizados, { replace: true })
   }
 
   /*
    * Aplica os filtros e a ordenação.
    */
-  const locaisFiltrados = filtrarLocais(locais, filtros)
-  const locaisOrdenados = ordenarLocais(locaisFiltrados, ordenacao)
-  const totalFiltrosAtivos = contarFiltrosAtivos(filtros)
+  const favoritosSalvos = lerFavoritos()
+  const locaisFiltrados = filtrarLocais(
+    locais,
+    filtros,
+  ).filter((local) =>
+    !somenteFavoritos || favoritosSalvos.includes(local.id),
+  )
+
+  /*
+   * Aplica a ordenação depois dos filtros.
+   */
+  const locaisOrdenados = ordenarLocais(
+    locaisFiltrados,
+    ordenacao,
+  )
+
+  const totalFiltrosAtivos =
+    contarFiltrosAtivos(filtros) + Number(somenteFavoritos)
 
   /*
    * Calcula a quantidade de páginas.
@@ -327,11 +371,8 @@ export default function Locais() {
     }
   }
 
-  /*
-   * Remove um filtro específico.
-   */
   const removerFiltro = (
-    tipo: 'busca' | 'categoria' | 'recurso',
+    tipo: 'busca' | 'categoria' | 'recurso' | 'favoritos',
     recurso?: RecursoAcessibilidade,
   ) => {
     if (tipo === 'busca') {
@@ -348,14 +389,22 @@ export default function Locais() {
       })
     }
 
+    if (tipo === 'favoritos') {
+      setSomenteFavoritos(false)
+    }
+
     window.setTimeout(() => {
-      resultadoRef.current?.focus()
+      const botoesRestantes =
+        listaFiltrosRef.current?.querySelectorAll('button')
+
+      if (botoesRestantes && botoesRestantes.length > 0) {
+        botoesRestantes[0].focus()
+      } else {
+        resultadoRef.current?.focus()
+      }
     }, 0)
   }
 
-  /*
-   * Estado de carregamento.
-   */
   if (estado.status === 'carregando') {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
@@ -385,14 +434,13 @@ export default function Locais() {
         >
           Locais acessíveis
         </h1>
-
         <ContagemResultados total={null} />
-
         <ErrorMessage
           title="Não foi possível carregar os locais"
           message={estado.mensagem}
           onRetry={reexecutarConsulta}
           retrying={retentando}
+          focusOnMount
         />
       </main>
     )
@@ -421,6 +469,10 @@ export default function Locais() {
       </p>
 
       <ContagemResultados total={locaisFiltrados.length} />
+      <DataAtualizacao
+        tipo="base"
+        data={!Array.isArray(resultado) ? resultado?.ultimaAtualizacao : undefined}
+      />
 
       <button
         type="button"
@@ -452,7 +504,6 @@ export default function Locais() {
               >
                 Buscar
               </label>
-
               <input
                 ref={buscaRef}
                 id={buscaId}
@@ -506,8 +557,8 @@ export default function Locais() {
                     }
                     onClick={() => selecionarSugestao(termo)}
                     className={`flex min-h-11 cursor-pointer items-center px-3 text-slate-900 ${indice === sugestaoAtiva
-                        ? 'bg-blue-50 font-semibold text-blue-800'
-                        : 'hover:bg-slate-50'
+                      ? 'bg-blue-50 font-semibold text-blue-800'
+                      : 'hover:bg-slate-50'
                       }`}
                   >
                     {termo}
@@ -529,13 +580,9 @@ export default function Locais() {
             </div>
 
             <div className="mt-5">
-              <label
-                htmlFor={categoriaId}
-                className="mb-2 block font-semibold"
-              >
+              <label htmlFor={categoriaId} className="mb-2 block font-semibold">
                 Categoria
               </label>
-
               <select
                 id={categoriaId}
                 value={filtros.categoria}
@@ -560,7 +607,6 @@ export default function Locais() {
               <legend id={recursosId} className="font-semibold">
                 Recursos de acessibilidade
               </legend>
-
               <div className="mt-3 space-y-2">
                 {RECURSOS.map((recurso) => (
                   <label
@@ -581,6 +627,19 @@ export default function Locais() {
                 ))}
               </div>
             </fieldset>
+
+            <label className="mt-5 flex min-h-11 cursor-pointer items-center gap-3 rounded px-2 hover:bg-slate-50">
+              <input
+                type="checkbox"
+                checked={somenteFavoritos}
+                onChange={(event) => {
+                  setSomenteFavoritos(event.target.checked)
+                  setPaginaAtual(1)
+                }}
+                className="h-4 w-4"
+              />
+              <span className="text-sm">Somente favoritos</span>
+            </label>
 
             <button
               type="button"
@@ -614,6 +673,7 @@ export default function Locais() {
 
             {totalFiltrosAtivos > 0 && (
               <ul
+                ref={listaFiltrosRef}
                 aria-label="Filtros aplicados"
                 className="mt-3 flex flex-wrap gap-2"
               >
@@ -624,7 +684,7 @@ export default function Locais() {
                       onClick={() => removerFiltro('busca')}
                       className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
                     >
-                      Busca: {filtros.busca}{' '}
+                      Busca: {filtros.busca.trim()}{' '}
                       <span aria-hidden="true">×</span>
                       <span className="sr-only"> remover filtro</span>
                     </button>
@@ -659,6 +719,20 @@ export default function Locais() {
                   </li>
                 ))}
 
+                {somenteFavoritos && (
+                  <li>
+                    <button
+                      type="button"
+                      onClick={() => removerFiltro('favoritos')}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                    >
+                      Somente favoritos{' '}
+                      <span aria-hidden="true">×</span>
+                      <span className="sr-only"> remover filtro</span>
+                    </button>
+                  </li>
+                )}
+
                 {totalFiltrosAtivos > 1 && (
                   <li>
                     <button
@@ -691,17 +765,12 @@ export default function Locais() {
                 title="Nenhum local encontrado com esses filtros"
                 message="Tente desmarcar alguns recursos de acessibilidade, selecionar outra categoria ou buscar por termos mais genéricos."
                 actionLabel="Limpar todos os filtros"
-                onAction={() =>
-                  limparFiltros({
-                    focarBusca: true,
-                  })
-                }
+                onAction={() => limparFiltros({ focarBusca: true })}
               >
                 {totalFiltrosAtivos > 0 && (
                   <div className="w-full max-w-xl text-left">
                     <p className="font-semibold text-texto">
-                      Filtros que estão
-                      restringindo a busca:
+                      Filtros que estão restringindo a busca:
                     </p>
 
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-texto">
@@ -723,6 +792,10 @@ export default function Locais() {
                           Recurso: {RECURSO_ROTULOS[recurso]}
                         </li>
                       ))}
+
+                      {somenteFavoritos && (
+                        <li>Somente favoritos</li>
+                      )}
                     </ul>
                   </div>
                 )}
@@ -731,13 +804,9 @@ export default function Locais() {
           ) : (
             <>
               <div className="mt-6 flex flex-col gap-2 sm:max-w-xs">
-                <label
-                  htmlFor="ordenacao-locais"
-                  className="font-semibold"
-                >
+                <label htmlFor="ordenacao-locais" className="font-semibold">
                   Ordenar por
                 </label>
-
                 <select
                   id="ordenacao-locais"
                   value={ordenacao}
@@ -801,8 +870,8 @@ export default function Locais() {
                         }
                         aria-label={`Página ${pagina}`}
                         className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
-                            ? 'bg-primaria-600 text-texto-inverso'
-                            : 'border border-borda-funcional hover:bg-fundo-suave'
+                          ? 'bg-primaria-600 text-texto-inverso'
+                          : 'border border-borda-funcional hover:bg-fundo-suave'
                           } ${foco}`}
                       >
                         {pagina}

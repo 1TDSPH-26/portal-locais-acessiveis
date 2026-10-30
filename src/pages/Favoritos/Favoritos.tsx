@@ -5,19 +5,7 @@ import LocalCard from '../../components/LocalCard/LocalCard'
 import { listaLocais } from '../../data/locais'
 import usePageTitle from '../../hooks/usePageTitle'
 
-const CHAVE_FAVORITOS = 'locais-favoritos'
-
-function lerIdsFavoritos(): number[] {
-  try {
-    const dados = localStorage.getItem(CHAVE_FAVORITOS)
-    const ids: unknown = dados ? JSON.parse(dados) : []
-    return Array.isArray(ids)
-      ? ids.filter((id): id is number => Number.isInteger(id))
-      : []
-  } catch {
-    return []
-  }
-}
+import { lerIdsFavoritos, observarFavoritos } from '../../utils/favoritos'
 
 export default function Favoritos() {
   usePageTitle('Meus favoritos')
@@ -30,8 +18,9 @@ export default function Favoritos() {
 
   useEffect(() => {
     const atualizarFavoritos = () => setIdsFavoritos(lerIdsFavoritos())
-    window.addEventListener('storage', atualizarFavoritos)
-    return () => window.removeEventListener('storage', atualizarFavoritos)
+    const cancelar = observarFavoritos(atualizarFavoritos)
+    atualizarFavoritos()
+    return cancelar
   }, [])
 
   const locaisFavoritos = listaLocais.filter((local) => idsFavoritos.includes(local.id))
@@ -41,16 +30,6 @@ export default function Favoritos() {
       tituloRef.current?.focus()
     }
   }, [locaisFavoritos.length])
-
-  function removerFavorito(id: number) {
-    const novosIds = idsFavoritos.filter((favoritoId) => favoritoId !== id)
-    try {
-      localStorage.setItem(CHAVE_FAVORITOS, JSON.stringify(novosIds))
-      setIdsFavoritos(novosIds)
-    } catch {
-      return
-    }
-  }
 
   return (
     <section className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6" aria-labelledby="titulo-favoritos">
@@ -62,7 +41,7 @@ export default function Favoritos() {
       >
         Meus favoritos
       </h1>
-      <p role="status" aria-live="polite" aria-atomic="true" className="mt-2 max-w-2xl text-slate-600">
+      <p className="mt-2 max-w-2xl text-slate-600">
         {locaisFavoritos.length === 0
           ? 'Você não tem locais favoritos salvos.'
           : `${locaisFavoritos.length} ${locaisFavoritos.length === 1 ? 'local favorito salvo' : 'locais favoritos salvos'}.`}
@@ -88,7 +67,6 @@ export default function Favoritos() {
               key={local.id}
               local={local}
               detalhesUrl={`/locais/${local.id}`}
-              onRemoveFavorite={() => removerFavorito(local.id)}
             />
           ))}
         </section>

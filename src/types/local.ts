@@ -24,6 +24,8 @@ export type Local = {
   nome: string;
   endereco: string;
   cep: string;
+  /** Mês da conferência dos recursos (YYYY-MM); ausente quando não informado. */
+  conferidoEm?: string;
   categoria: Categoria;
   recursosAcessibilidade: RecursoAcessibilidade[];
   coordenadas?: {
