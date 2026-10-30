@@ -81,6 +81,7 @@ export default function Locais() {
   const buscaRef = useRef<HTMLInputElement>(null)
   const resultadoRef = useRef<HTMLParagraphElement>(null)
   const tituloRef = useRef<HTMLHeadingElement>(null)
+  const listaFiltrosRef = useRef<HTMLUListElement>(null)
 
   const buscaId = useId()
   const sugestoesId = useId()
@@ -95,11 +96,6 @@ export default function Locais() {
 
   const houveRetentativa = useRef(false)
 
-  /*
-   * Devolve o foco para a contagem de
-   * resultados quando uma nova tentativa
-   * carrega os locais com sucesso.
-   */
   const reexecutarConsulta = () => {
     houveRetentativa.current = true
     tentarNovamente()
@@ -235,10 +231,12 @@ export default function Locais() {
 
   /*
    * Limpa todos os filtros.
-   * Com focarBusca, abre o painel no
-   * mobile para levar o foco à busca.
+   * Com focarBusca, abre o painel no mobile
+   * para levar o foco à busca.
    */
-  const limparFiltros = ({ focarBusca = false } = {}) => {
+  const limparFiltros = (
+    { focarBusca = false }: { focarBusca?: boolean } = {},
+  ) => {
     atualizarFiltros(FILTROS_VAZIOS)
 
     if (buscaRef.current?.offsetParent) {
@@ -299,9 +297,6 @@ export default function Locais() {
     }
   }
 
-  /*
-   * Remove um filtro específico.
-   */
   const removerFiltro = (
     tipo: 'busca' | 'categoria' | 'recurso',
     recurso?: RecursoAcessibilidade,
@@ -321,13 +316,17 @@ export default function Locais() {
     }
 
     window.setTimeout(() => {
-      resultadoRef.current?.focus()
+      const botoesRestantes =
+        listaFiltrosRef.current?.querySelectorAll('button')
+
+      if (botoesRestantes && botoesRestantes.length > 0) {
+        botoesRestantes[0].focus()
+      } else {
+        resultadoRef.current?.focus()
+      }
     }, 0)
   }
 
-  /*
-   * Estado de carregamento.
-   */
   if (estado.status === 'carregando') {
     return (
       <main className="mx-auto w-full max-w-6xl px-4 py-8 sm:px-6">
@@ -357,9 +356,7 @@ export default function Locais() {
         >
           Locais acessíveis
         </h1>
-
         <ContagemResultados total={null} />
-
         <ErrorMessage
           title="Não foi possível carregar os locais"
           message={estado.mensagem}
@@ -429,7 +426,6 @@ export default function Locais() {
               >
                 Buscar
               </label>
-
               <input
                 ref={buscaRef}
                 id={buscaId}
@@ -483,8 +479,8 @@ export default function Locais() {
                     }
                     onClick={() => selecionarSugestao(termo)}
                     className={`flex min-h-11 cursor-pointer items-center px-3 text-slate-900 ${indice === sugestaoAtiva
-                        ? 'bg-blue-50 font-semibold text-blue-800'
-                        : 'hover:bg-slate-50'
+                      ? 'bg-blue-50 font-semibold text-blue-800'
+                      : 'hover:bg-slate-50'
                       }`}
                   >
                     {termo}
@@ -506,13 +502,9 @@ export default function Locais() {
             </div>
 
             <div className="mt-5">
-              <label
-                htmlFor={categoriaId}
-                className="mb-2 block font-semibold"
-              >
+              <label htmlFor={categoriaId} className="mb-2 block font-semibold">
                 Categoria
               </label>
-
               <select
                 id={categoriaId}
                 value={filtros.categoria}
@@ -537,7 +529,6 @@ export default function Locais() {
               <legend id={recursosId} className="font-semibold">
                 Recursos de acessibilidade
               </legend>
-
               <div className="mt-3 space-y-2">
                 {RECURSOS.map((recurso) => (
                   <label
@@ -591,6 +582,7 @@ export default function Locais() {
 
             {totalFiltrosAtivos > 0 && (
               <ul
+                ref={listaFiltrosRef}
                 aria-label="Filtros aplicados"
                 className="mt-3 flex flex-wrap gap-2"
               >
@@ -668,17 +660,12 @@ export default function Locais() {
                 title="Nenhum local encontrado com esses filtros"
                 message="Tente desmarcar alguns recursos de acessibilidade, selecionar outra categoria ou buscar por termos mais genéricos."
                 actionLabel="Limpar todos os filtros"
-                onAction={() =>
-                  limparFiltros({
-                    focarBusca: true,
-                  })
-                }
+                onAction={() => limparFiltros({ focarBusca: true })}
               >
                 {totalFiltrosAtivos > 0 && (
                   <div className="w-full max-w-xl text-left">
                     <p className="font-semibold text-texto">
-                      Filtros que estão
-                      restringindo a busca:
+                      Filtros que estão restringindo a busca:
                     </p>
 
                     <ul className="mt-2 list-disc space-y-1 pl-5 text-texto">
@@ -708,13 +695,9 @@ export default function Locais() {
           ) : (
             <>
               <div className="mt-6 flex flex-col gap-2 sm:max-w-xs">
-                <label
-                  htmlFor="ordenacao-locais"
-                  className="font-semibold"
-                >
+                <label htmlFor="ordenacao-locais" className="font-semibold">
                   Ordenar por
                 </label>
-
                 <select
                   id="ordenacao-locais"
                   value={ordenacao}
@@ -778,8 +761,8 @@ export default function Locais() {
                         }
                         aria-label={`Página ${pagina}`}
                         className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
-                            ? 'bg-primaria-600 text-texto-inverso'
-                            : 'border border-borda-funcional hover:bg-fundo-suave'
+                          ? 'bg-primaria-600 text-texto-inverso'
+                          : 'border border-borda-funcional hover:bg-fundo-suave'
                           } ${foco}`}
                       >
                         {pagina}
