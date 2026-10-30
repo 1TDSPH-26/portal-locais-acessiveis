@@ -40,19 +40,19 @@ export default function Sobre() {
 
   return (
     <article className="bg-fundo font-corpo text-corpo-16 leading-relaxed text-texto" aria-labelledby="sobre-titulo">
-      <header className="bg-primaria-600 text-fundo">
+      <header className="bg-fundo-escuro text-texto-inverso">
         <div className="mx-auto max-w-6xl px-6 py-10 sm:px-10 sm:py-12">
           <nav aria-label="Caminho de navegação" className="mb-6 text-corpo-14">
             <ol className="flex flex-wrap items-center gap-2">
               <li>
-                <Link to="/" className="inline-flex min-h-12 items-center underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-fundo">Início</Link>
+                <Link to="/" className="inline-flex min-h-12 items-center text-texto-inverso underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-texto-inverso">Início</Link>
               </li>
               <li aria-hidden="true">/</li>
               <li aria-current="page">Sobre</li>
             </ol>
           </nav>
           <h1 id="sobre-titulo" className="font-display text-h1 font-bold leading-tight sm:text-display">Sobre o Lugares Acessíveis</h1>
-          <p className="mt-4 max-w-2xl">
+          <p className="mt-4 max-w-2xl text-texto-inverso-suave">
             Um portal para saber, antes de sair de casa, o que um lugar oferece em
             entrada, circulação, banheiro e atendimento. Informação descrita em
             texto, recurso por recurso, com data de verificação.
@@ -122,8 +122,14 @@ export default function Sobre() {
               </li>
             ))}
           </ul>
-        </section>
 
+          <Link
+            to="/acessibilidade"
+            className="mt-6 inline-flex min-h-12 items-center text-primaria-700 underline underline-offset-4 focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-primaria-600"
+          >
+            Consulte nossa Declaração de Acessibilidade completa
+          </Link>
+        </section>
         <section aria-labelledby="sobre-equipe" className="grid gap-5 md:grid-cols-3 md:gap-10">
           <h2 id="sobre-equipe" className={tituloSecao}>Quem faz</h2>
           <div className="space-y-5 md:col-span-2">
@@ -145,16 +151,16 @@ export default function Sobre() {
           </div>
         </section>
 
-        <section aria-labelledby="sobre-contato" className="flex flex-col items-start gap-6 rounded-md bg-primaria-600 p-6 text-fundo sm:p-8 md:flex-row md:items-center md:justify-between">
+        <section aria-labelledby="sobre-contato" className="flex flex-col items-start gap-6 rounded-md bg-fundo-escuro p-6 text-texto-inverso sm:p-8 md:flex-row md:items-center md:justify-between">
           <div className="max-w-2xl">
             <h2 id="sobre-contato" className={tituloSecao}>Encontrou uma informação desatualizada?</h2>
-            <p className="mt-3 text-corpo-14">
+            <p className="mt-3 text-corpo-14 text-texto-inverso-suave">
               Se um recurso mudou ou deixou de existir, avise a equipe pelo
               repositório do projeto. Sua contribuição ajuda a manter as
               informações atualizadas.
             </p>
           </div>
-          <a href="" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-sm border border-fundo bg-fundo px-5 py-3 text-center text-corpo-14 font-bold text-primaria-700 hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-fundo">
+          <a href="" className="inline-flex min-h-12 shrink-0 items-center justify-center rounded-sm border border-fundo bg-fundo px-5 py-3 text-center text-corpo-14 font-bold text-fundo-escuro no-underline hover:bg-fundo-suave focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-texto-inverso">
             Falar com a equipe
           </a>
         </section>

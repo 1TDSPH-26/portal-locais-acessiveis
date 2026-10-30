@@ -1,12 +1,19 @@
+
 import type { Local } from "../types/local";
+
+// Metadados fictícios da base de demonstração, não de visitas reais.
+// Atualizar este instante somente quando publicar uma nova versão dos dados.
+export const ultimaAtualizacaoLocais = '2026-10-23T12:00:00-03:00';
 
 export const listaLocais: Local[] = [
   {
     id: 1,
+    conferidoEm: '2026-10',
     nome: "Restaurante Sabor & Inclusão",
     endereco: "Rua das Flores, 120 - Centro",
     cep: "01001-000",
     categoria: "restaurante",
+    coordenadas: { latitude: -23.5505, longitude: -46.6333 },
     recursosAcessibilidade: [
       "rampa_acesso",
       "banheiro_adaptado",
@@ -16,10 +23,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 2,
+    conferidoEm: '2026-09',
     nome: "Café Horizonte",
     endereco: "Avenida Paulista, 450 - Bela Vista",
     cep: "01310-000",
     categoria: "restaurante",
+    coordenadas: { latitude: -23.5651, longitude: -46.6523 },
     recursosAcessibilidade: [
       "rampa_acesso",
       "piso_tatil",
@@ -29,10 +38,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 3,
+    conferidoEm: '2026-10',
     nome: "Centro de Saúde Vila Nova",
     endereco: "Rua da Saúde, 88 - Vila Nova",
     cep: "01502-000",
     categoria: "saude",
+    coordenadas: { latitude: -23.5630, longitude: -46.6267 },
     recursosAcessibilidade: [
       "elevador",
       "banheiro_adaptado",
@@ -42,10 +53,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 4,
+    conferidoEm: '2026-09',
     nome: "Clínica Bem-Estar",
     endereco: "Rua dos Médicos, 210 - Jardim Saúde",
     cep: "04120-000",
     categoria: "saude",
+    coordenadas: { latitude: -23.6150, longitude: -46.6400 },
     recursosAcessibilidade: [
       "rampa_acesso",
       "vagas_estacionamento",
@@ -54,10 +67,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 5,
+    conferidoEm: '2026-10',
     nome: "Escola Caminhos do Saber",
     endereco: "Rua da Educação, 300 - Mooca",
     cep: "03104-000",
     categoria: "educacao",
+    coordenadas: { latitude: -23.5608, longitude: -46.5970 },
     recursosAcessibilidade: [
       "rampa_acesso",
       "elevador",
@@ -67,10 +82,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 6,
+    conferidoEm: '2026-09',
     nome: "Biblioteca Comunitária Leitura Livre",
     endereco: "Rua dos Livros, 56 - Liberdade",
     cep: "01503-000",
     categoria: "educacao",
+    coordenadas: { latitude: -23.5631, longitude: -46.6359 },
     recursosAcessibilidade: [
       "piso_tatil",
       "braile",
@@ -80,10 +97,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 7,
+    conferidoEm: '2026-10',
     nome: "Parque das Águas",
     endereco: "Avenida do Lago, 900 - Ibirapuera",
     cep: "04094-050",
     categoria: "lazer",
+    coordenadas: { latitude: -23.5874, longitude: -46.6576 },
     recursosAcessibilidade: [
       "rampa_acesso",
       "vagas_estacionamento",
@@ -93,10 +112,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 8,
+    conferidoEm: '2026-09',
     nome: "Centro Cultural Aberto",
     endereco: "Rua da Cultura, 75 - República",
     cep: "01045-000",
     categoria: "lazer",
+    coordenadas: { latitude: -23.5430, longitude: -46.6420 },
     recursosAcessibilidade: [
       "elevador",
       "libras",
@@ -106,10 +127,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 9,
+    conferidoEm: '2026-10',
     nome: "Poupatempo Cidadania",
     endereco: "Rua dos Serviços, 150 - Sé",
     cep: "01005-000",
     categoria: "servico_publico",
+    coordenadas: { latitude: -23.5503, longitude: -46.6358 },
     recursosAcessibilidade: [
       "rampa_acesso",
       "balcao_acessivel",
@@ -119,10 +142,12 @@ export const listaLocais: Local[] = [
   },
   {
     id: 10,
+    conferidoEm: '2026-09',
     nome: "Unidade de Atendimento Municipal",
     endereco: "Avenida Central, 620 - Consolação",
     cep: "01302-000",
     categoria: "servico_publico",
+    coordenadas: { latitude: -23.5535, longitude: -46.6580 },
     recursosAcessibilidade: [
       "elevador",
       "vagas_estacionamento",

@@ -6,6 +6,8 @@ import Sobre from '../pages/Sobre/Sobre'
 import NotFound from '../pages/NotFound/NotFound'
 import Acessibilidade from '../pages/Acessibilidade/Acessibilidade'
 import DetalhesLocal from '../pages/DetalhesLocal/DetalhesLocal'
+import Indisponibilidade from '../pages/Erro/Indisponibilidade'
+import Favoritos from '../pages/Favoritos/Favoritos'
 
 
 export default function AppRoutes() {
@@ -13,11 +15,13 @@ export default function AppRoutes() {
     <Routes>
       <Route path="/" element={<Inicio />} />
       <Route path="/locais" element={<Locais />} />
+      <Route path="/favoritos" element={<Favoritos />} />
       <Route path="/cadastrar" element={<Cadastro />} />
       <Route path="/sobre" element={<Sobre />} />
       <Route path="/acessibilidade" element={<Acessibilidade />} />
       <Route path="/locais/:id" element={<DetalhesLocal />} />
-      <Route path="/*" element={<NotFound/>}/>
+      <Route path="/erro" element={<Indisponibilidade />}/>
+      <Route path="*" element={<NotFound />} />
     </Routes>
   )
 }
