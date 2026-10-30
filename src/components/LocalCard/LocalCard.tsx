@@ -65,6 +65,13 @@ export default function LocalCard({ local, detalhesUrl, onRemoveFavorite, distan
     return cancelar
   }, [local.id])
 
+  const handleAlternarFavorito = () => {
+    alternarFavorito(local.id)
+    if (favoritado) {
+      onRemoveFavorite?.()
+    }
+  }
+
   const localizacao = `${local.endereco} · CEP ${local.cep}`
 
   return (
@@ -72,20 +79,20 @@ export default function LocalCard({ local, detalhesUrl, onRemoveFavorite, distan
       <div>
         <h3 className="text-h3 font-display text-texto">{local.nome}</h3>
         <p className="text-corpo-14 text-secundaria">{localizacao}</p>
-      
-       {distanciaEmKm != null && (
-         <p
-           className="mt-2 inline-flex w-fit max-w-full items-center rounded-full bg-fundo-suave px-2.5 py-1 text-corpo-14 font-semibold text-primaria-700"
-           aria-label={`Distância aproximada: ${descreverDistancia(distanciaEmKm)}`}
-         >
-           A {formatarDistancia(distanciaEmKm)} de você
-         </p>
-      )}
-    </div>
-    
+
+        {distanciaEmKm != null && (
+          <p
+            className="mt-2 inline-flex w-fit max-w-full items-center rounded-full bg-fundo-suave px-2.5 py-1 text-corpo-14 font-semibold text-primaria-700"
+            aria-label={`Distância aproximada: ${descreverDistancia(distanciaEmKm)}`}
+          >
+            A {formatarDistancia(distanciaEmKm)} de você
+          </p>
+        )}
+      </div>
+
       <button
         type="button"
-        onClick={() => alternarFavorito(local.id)}
+        onClick={handleAlternarFavorito}
         aria-label={favoritado ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
         aria-pressed={favoritado}
         className="text-botao font-corpo text-primaria-600 border border-primaria-600 rounded-md px-4 py-2 text-center focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2 hover:bg-fundo-suave"
