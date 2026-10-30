@@ -52,6 +52,11 @@ import {
 } from '../../types/ordenarLocais'
 import usePageTitle from '../../hooks/usePageTitle'
 import BotaoVoltarAoTopo from '../../components/Navegacao/BotaoVoltarAoTopo'
+import {
+  botaoPaginacao,
+  filtroAplicado,
+  focoVisivelPrimario,
+} from '../../utils/estilosCompartilhados'
 
 const ITENS_POR_PAGINA = 4
 const FAVORITOS_STORAGE_KEY = 'locais-favoritos'
@@ -68,10 +73,7 @@ function lerFavoritos(): number[] {
   }
 }
 
-const foco =
-  'focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primaria-600'
-
-const campo = `h-11 w-full rounded-md border border-borda-funcional bg-fundo px-3 text-texto ${foco}`
+const campo = `h-11 w-full rounded-md border border-borda-funcional bg-fundo px-3 text-texto ${focoVisivelPrimario}`
 
 export default function Locais() {
   usePageTitle('Locais acessíveis')
@@ -487,7 +489,7 @@ export default function Locais() {
 
       <button
         type="button"
-        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 lg:hidden ${foco}`}
+        className={`mt-6 inline-flex min-h-11 items-center rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 lg:hidden ${focoVisivelPrimario}`}
         aria-expanded={filtrosAbertos}
         aria-controls="painel-filtros"
         onClick={() => setFiltrosAbertos((aberto) => !aberto)}
@@ -611,7 +613,7 @@ export default function Locais() {
     setSugestaoAtiva(sugestoes.length - 1)
   }
 }}
-        className={`block min-h-11 w-full border-t border-slate-200 px-3 text-left font-semibold text-primaria-700 hover:bg-slate-50 ${foco}`}
+        className={`block min-h-11 w-full border-t border-slate-200 px-3 text-left font-semibold text-primaria-700 hover:bg-slate-50 ${focoVisivelPrimario}`}
       >
         Limpar histórico de buscas
       </button>
@@ -696,7 +698,7 @@ export default function Locais() {
               type="button"
               onClick={() => limparFiltros()}
               disabled={totalFiltrosAtivos === 0}
-              className={`mt-5 min-h-11 w-full rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 hover:bg-fundo-suave disabled:cursor-not-allowed disabled:border-borda-decorativa disabled:text-secundaria ${foco}`}
+              className={`mt-5 min-h-11 w-full rounded-md border-2 border-primaria-600 px-4 font-semibold text-primaria-700 hover:bg-fundo-suave disabled:cursor-not-allowed disabled:border-borda-decorativa disabled:text-secundaria ${focoVisivelPrimario}`}
             >
               Limpar filtros
             </button>
@@ -733,7 +735,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('busca')}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                      className={`${filtroAplicado} ${focoVisivelPrimario}`}
                     >
                       Busca: {filtros.busca.trim()}{' '}
                       <span aria-hidden="true">×</span>
@@ -747,7 +749,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('categoria')}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                      className={`${filtroAplicado} ${focoVisivelPrimario}`}
                     >
                       {CATEGORIA_ROTULOS[filtros.categoria]}{' '}
                       <span aria-hidden="true">×</span>
@@ -761,7 +763,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('recurso', recurso)}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                      className={`${filtroAplicado} ${focoVisivelPrimario}`}
                     >
                       {RECURSO_ROTULOS[recurso]}{' '}
                       <span aria-hidden="true">×</span>
@@ -775,7 +777,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => removerFiltro('favoritos')}
-                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${foco}`}
+                      className={`rounded-full bg-fundo-suave px-3 py-1.5 text-sm font-semibold text-primaria-700 ${focoVisivelPrimario}`}
                     >
                       Somente favoritos{' '}
                       <span aria-hidden="true">×</span>
@@ -789,7 +791,7 @@ export default function Locais() {
                     <button
                       type="button"
                       onClick={() => limparFiltros()}
-                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-primaria-700 underline ${foco}`}
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold text-primaria-700 underline ${focoVisivelPrimario}`}
                     >
                       Limpar todos
                     </button>
@@ -897,7 +899,7 @@ export default function Locais() {
                 onClick={() => mudarPagina(paginaValida - 1)}
                 disabled={paginaValida === 1}
                 aria-label="Ir para a página anterior"
-                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`${botaoPaginacao} ${focoVisivelPrimario}`}
               >
                 Anterior
               </button>
@@ -920,10 +922,11 @@ export default function Locais() {
                           pagina === paginaValida ? 'page' : undefined
                         }
                         aria-label={`Página ${pagina}`}
-                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${pagina === paginaValida
-                          ? 'bg-primaria-600 text-texto-inverso'
-                          : 'border border-borda-funcional hover:bg-fundo-suave'
-                          } ${foco}`}
+                        className={`min-h-11 min-w-11 rounded-md px-3 font-semibold ${
+                        pagina === paginaValida
+                        ? 'bg-primaria-600 text-texto-inverso'
+                        : 'border border-borda-funcional hover:bg-fundo-suave'
+                        } ${focoVisivelPrimario}`}
                       >
                         {pagina}
                       </button>
@@ -937,7 +940,7 @@ export default function Locais() {
                 onClick={() => mudarPagina(paginaValida + 1)}
                 disabled={paginaValida === totalPaginas}
                 aria-label="Ir para a próxima página"
-                className={`min-h-11 rounded-md border border-borda-funcional px-4 font-semibold disabled:cursor-not-allowed disabled:opacity-50 ${foco}`}
+                className={`${botaoPaginacao} ${focoVisivelPrimario}`}
               >
                 Próxima
               </button>

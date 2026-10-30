@@ -3,6 +3,14 @@ import { Link } from 'react-router'
 import LocalCard from '../../components/LocalCard/LocalCard'
 import { listaLocais } from '../../data/locais'
 import usePageTitle from '../../hooks/usePageTitle'
+import {
+  anelFocoPrimario,
+  anelFocoPrimarioComOffset,
+  botaoLinkDestaque,
+  cartaoDestaque,
+  focoVisivelInverso,
+  tituloCartaoDestaque,
+} from '../../utils/estilosCompartilhados'
 
 export default function Inicio() {
   usePageTitle('Página inicial')
@@ -82,14 +90,14 @@ export default function Inicio() {
                   value={termoBusca}
                   onChange={(e) => setTermoBusca(e.target.value)}
                   placeholder="Ex.: biblioteca, parque, restaurante..."
-                  className="w-full h-12 pl-10 pr-10 rounded-lg bg-fundo text-texto text-corpo-16 border border-borda-funcional focus:outline-none focus:ring-2 focus:ring-primaria-600 [&::-webkit-search-cancel-button]:appearance-none"
+                  className={`w-full h-12 pl-10 pr-10 rounded-lg bg-fundo text-texto text-corpo-16 border border-borda-funcional ${anelFocoPrimario} [&::-webkit-search-cancel-button]:appearance-none`}
                 />
                 {termoBusca !== "" ? (
                   <button
                     type="button"
                     onClick={handleLimparBusca}
                     aria-label="Limpar campo de busca"
-                    className="absolute inset-y-0 right-0 flex items-center pr-3 text-secundaria hover:text-texto focus:outline-none focus:ring-2 focus:ring-primaria-600 rounded-r-lg cursor-pointer"
+                    className={`absolute inset-y-0 right-0 flex items-center pr-3 text-secundaria hover:text-texto ${anelFocoPrimario} rounded-r-lg cursor-pointer`}
                   >
                     <svg
                       className="w-5 h-5"
@@ -109,7 +117,7 @@ export default function Inicio() {
               </div>
               <button
                 type="submit"
-                className="w-full sm:w-auto h-12 px-6 bg-fundo text-fundo-escuro font-display font-bold text-botao rounded-lg hover:bg-fundo-suave transition-colors cursor-pointer shrink-0 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-texto-inverso"
+                className={`w-full sm:w-auto h-12 px-6 bg-fundo text-fundo-escuro font-display font-bold text-botao rounded-lg hover:bg-fundo-suave transition-colors cursor-pointer shrink-0 ${focoVisivelInverso}`}
               >
                 Buscar
               </button>
@@ -136,7 +144,7 @@ export default function Inicio() {
 
         {locaisFiltrados.length === 0 ? (
           <div className="max-w-md mx-auto p-6 bg-fundo-suave rounded-xl border border-borda-decorativa text-center flex flex-col items-center gap-4">
-            <h3 className="font-display text-h3 font-bold text-texto">
+            <h3 className={tituloCartaoDestaque}>
               Nenhum local encontrado
             </h3>
             <p className="text-corpo-14 text-secundaria">
@@ -146,7 +154,7 @@ export default function Inicio() {
             <button
               type="button"
               onClick={handleLimparBusca}
-              className="mt-2 px-6 py-2.5 border-2 border-primaria-600 text-primaria-600 font-display font-semibold text-botao rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors cursor-pointer focus:outline-none focus:ring-2 focus:ring-primaria-600 focus:ring-offset-2"
+              className={`mt-2 px-6 py-2.5 border-2 border-primaria-600 text-primaria-600 font-display font-semibold text-botao rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors cursor-pointer ${anelFocoPrimarioComOffset}`}
             >
               Limpar busca
             </button>
@@ -173,9 +181,9 @@ export default function Inicio() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <div className="bg-fundo p-6 rounded-xl border border-borda-decorativa flex flex-col justify-between gap-4">
+            <div className={cartaoDestaque}>
               <div className="flex flex-col gap-2">
-                <h3 className="font-display text-h3 font-bold text-texto">
+                <h3 className={tituloCartaoDestaque}>
                   Explorar catálogo
                 </h3>
                 <p className="text-corpo-14 text-secundaria">
@@ -185,15 +193,15 @@ export default function Inicio() {
               </div>
               <Link
                 to="/locais"
-                className="inline-flex justify-center items-center py-2.5 px-4 bg-primaria-600 text-fundo font-display font-semibold text-botao rounded-lg hover:bg-primaria-700 transition-colors"
+                className={`${botaoLinkDestaque} bg-primaria-600 text-fundo font-display font-semibold text-botao rounded-lg hover:bg-primaria-700 transition-colors`}
               >
                 Ver todos os locais
               </Link>
             </div>
 
-            <div className="bg-fundo p-6 rounded-xl border border-borda-decorativa flex flex-col justify-between gap-4">
+            <div className={cartaoDestaque}>
               <div className="flex flex-col gap-2">
-                <h3 className="font-display text-h3 font-bold text-texto">
+                <h3 className={tituloCartaoDestaque}>
                   Indicar um espaço
                 </h3>
                 <p className="text-corpo-14 text-secundaria">
@@ -203,15 +211,15 @@ export default function Inicio() {
               </div>
               <Link
                 to="/cadastrar"
-                className="inline-flex justify-center items-center py-2.5 px-4 border-2 border-primaria-600 text-primaria-600 font-display font-semibold text-botao rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors"
+                className={`${botaoLinkDestaque} border-2 border-primaria-600 text-primaria-600 font-display font-semibold text-botao rounded-lg hover:bg-primaria-600 hover:text-fundo transition-colors`}
               >
                 Cadastrar local
               </Link>
             </div>
 
-            <div className="bg-fundo p-6 rounded-xl border border-borda-decorativa flex flex-col justify-between gap-4">
+            <div className={cartaoDestaque}>
               <div className="flex flex-col gap-2">
-                <h3 className="font-display text-h3 font-bold text-texto">
+                <h3 className={tituloCartaoDestaque}>
                   Critérios do projeto
                 </h3>
                 <p className="text-corpo-14 text-secundaria">
@@ -221,7 +229,7 @@ export default function Inicio() {
               </div>
               <Link
                 to="/sobre"
-                className="inline-flex justify-center items-center py-2.5 px-4 border-2 border-borda-funcional text-texto font-display font-semibold text-botao rounded-lg hover:bg-borda-decorativa transition-colors"
+                className={`${botaoLinkDestaque} border-2 border-borda-funcional text-texto font-display font-semibold text-botao rounded-lg hover:bg-borda-decorativa transition-colors`}
               >
                 Sobre o projeto
               </Link>

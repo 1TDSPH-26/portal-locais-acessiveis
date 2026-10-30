@@ -1,4 +1,11 @@
 import usePageTitle from '../../hooks/usePageTitle'
+import {
+  campoObrigatorioCadastro,
+  grupoCamposCadastro,
+  mensagemErroCadastro,
+  rotuloCampoCadastro,
+  tituloGrupoCadastro,
+} from '../../utils/estilosCompartilhados'
 import { useRef, useState, type ChangeEvent, type FormEvent } from 'react'
 import { cadastrarLocal } from '../../services/locais-service'
 import type { Categoria, Local, RecursoAcessibilidade } from '../../types/local'
@@ -388,8 +395,8 @@ export default function Cadastro() {
         className="mt-6 sm:mt-8 space-y-6 sm:space-y-8"
         aria-busy={enviando}
       >
-        <fieldset className="w-full min-w-0 rounded-lg border border-borda-decorativa p-4 sm:p-6 shadow-xs">
-          <legend className="px-1.5 font-display text-xl sm:text-h2 font-bold text-texto leading-tight max-w-full">
+        <fieldset className={grupoCamposCadastro}>
+          <legend className={tituloGrupoCadastro}>
             Identificação do local
           </legend>
 
@@ -397,11 +404,11 @@ export default function Cadastro() {
             <div className="md:col-span-2">
               <label
                 htmlFor="nome"
-                className="block font-corpo text-label font-semibold text-texto leading-normal break-words"
+                className={rotuloCampoCadastro}
               >
                 Nome do local{' '}
                 <span
-                  className="font-normal text-corpo-14 text-secundaria ml-1"
+                  className={campoObrigatorioCadastro}
                   aria-hidden="true"
                 >
                   (obrigatório)
@@ -425,7 +432,7 @@ export default function Cadastro() {
               {erros.nome && (
                 <p
                   id="erro-nome"
-                  className="mt-1.5 flex items-start gap-1.5 font-corpo text-corpo-14 font-medium text-erro break-words"
+                  className={mensagemErroCadastro}
                   role="alert"
                 >
                   <span aria-hidden="true" className="shrink-0 font-bold">
@@ -439,11 +446,11 @@ export default function Cadastro() {
             <div className="md:col-span-1">
               <label
                 htmlFor="categoria"
-                className="block font-corpo text-label font-semibold text-texto leading-normal break-words"
+                className={rotuloCampoCadastro}
               >
                 Categoria{' '}
                 <span
-                  className="font-normal text-corpo-14 text-secundaria ml-1"
+                  className={campoObrigatorioCadastro}
                   aria-hidden="true"
                 >
                   (obrigatório)
@@ -476,7 +483,7 @@ export default function Cadastro() {
               {erros.categoria && (
                 <p
                   id="erro-categoria"
-                  className="mt-1.5 flex items-start gap-1.5 font-corpo text-corpo-14 font-medium text-erro break-words"
+                  className={mensagemErroCadastro}
                   role="alert"
                 >
                   <span aria-hidden="true" className="shrink-0 font-bold">
@@ -489,8 +496,8 @@ export default function Cadastro() {
           </div>
         </fieldset>
 
-        <fieldset className="w-full min-w-0 rounded-lg border border-borda-decorativa p-4 sm:p-6 shadow-xs">
-          <legend className="px-1.5 font-display text-xl sm:text-h2 font-bold text-texto leading-tight max-w-full">
+        <fieldset className={grupoCamposCadastro}>
+          <legend className={tituloGrupoCadastro}>
             Localização
           </legend>
 
@@ -498,11 +505,11 @@ export default function Cadastro() {
             <div className="sm:col-span-2">
               <label
                 htmlFor="endereco"
-                className="block font-corpo text-label font-semibold text-texto leading-normal break-words"
+                className={rotuloCampoCadastro}
               >
                 Endereço completo{' '}
                 <span
-                  className="font-normal text-corpo-14 text-secundaria ml-1"
+                  className={campoObrigatorioCadastro}
                   aria-hidden="true"
                 >
                   (obrigatório)
@@ -526,7 +533,7 @@ export default function Cadastro() {
               {erros.endereco && (
                 <p
                   id="erro-endereco"
-                  className="mt-1.5 flex items-start gap-1.5 font-corpo text-corpo-14 font-medium text-erro break-words"
+                  className={mensagemErroCadastro}
                   role="alert"
                 >
                   <span aria-hidden="true" className="shrink-0 font-bold">
@@ -540,11 +547,11 @@ export default function Cadastro() {
             <div className="sm:col-span-1">
               <label
                 htmlFor="cep"
-                className="block font-corpo text-label font-semibold text-texto leading-normal break-words"
+                className={rotuloCampoCadastro}
               >
                 CEP{' '}
                 <span
-                  className="font-normal text-corpo-14 text-secundaria ml-1"
+                  className={campoObrigatorioCadastro}
                   aria-hidden="true"
                 >
                   (obrigatório)
@@ -583,7 +590,7 @@ export default function Cadastro() {
               {erros.cep && (
                 <p
                   id="erro-cep"
-                  className="mt-1.5 flex items-start gap-1.5 font-corpo text-corpo-14 font-medium text-erro break-words"
+                  className={mensagemErroCadastro}
                   role="alert"
                 >
                   <span aria-hidden="true" className="shrink-0 font-bold">
@@ -596,8 +603,8 @@ export default function Cadastro() {
           </div>
         </fieldset>
 
-        <fieldset className="w-full min-w-0 rounded-lg border border-borda-decorativa p-4 sm:p-6 shadow-xs">
-          <legend className="px-1.5 font-display text-xl sm:text-h2 font-bold text-texto leading-tight max-w-full">
+        <fieldset className={grupoCamposCadastro}>
+          <legend className={tituloGrupoCadastro}>
             Recursos de acessibilidade
           </legend>
 
