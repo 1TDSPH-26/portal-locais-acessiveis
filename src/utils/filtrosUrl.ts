@@ -42,6 +42,10 @@ export function filtrosParaUrl(
     params.set('ordem', ordem)
   }
 
+  if (filtros.somenteFavoritos) {
+    params.set('somenteFavoritos', 'true')
+  }
+
   return params
 }
 
@@ -75,6 +79,8 @@ export function lerFiltrosDaUrl(
     busca,
     categoria,
     recursos,
+    somenteFavoritos:
+      searchParams.get('somenteFavoritos') === 'true',
   }
 }
 
